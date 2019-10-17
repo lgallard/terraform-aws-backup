@@ -24,7 +24,6 @@ resource "aws_iam_role_policy_attachment" "ab_policy_attach" {
 }
 
 resource "aws_iam_policy" "ab_tag_policy" {
-  name        = "aws-backup-tag-policy"
   description = "AWS Backup Tag policy"
 
   policy = <<EOF
