@@ -36,4 +36,8 @@ locals {
   # Selections
   selections = concat(local.selection, var.selections)
 
+  # Make sure the role can get tag resources
+  depends_on = [aws_iam_role_policy_attachment.ab_tag_policy_attach]
+
+
 }
