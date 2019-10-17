@@ -1,0 +1,64 @@
+module "aws_backup_example" {
+
+  source = "../modules/tf-aws-backup"
+
+  # Vault
+  vault_name = "vault-3"
+
+  # Plan
+  plan_name = "complete-plan"
+
+  # Multiple rules using a list of maps
+  rules = [
+    {
+      name              = "rule-1"
+      schedule          = "cron(0 12 * * ? *)"
+      target_vault_name = null
+      start_window      = 120
+      completion_window = 360
+      lifecycle = {
+        cold_storage_after = 0
+        delete_after       = 90
+      },
+      recovery_point_tags = {
+        Environment = "production"
+      }
+    },
+    {
+      name                = "rule-2"
+      target_vault_name   = "Default"
+      schedule            = null
+      start_window        = 120
+      completion_window   = 360
+      lifecycle           = {}
+      recovery_point_tags = {}
+    },
+  ]
+
+  # Multiple selections
+  #  - Selection-1: By tag and resources
+  #  - Selection-2: Only by resources
+  selections = [
+    {
+      name      = "selection-1"
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Environment"
+        value = "production"
+      }
+    },
+    {
+      name          = "selection-2"
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
+      selection_tag = {}
+    },
+  ]
+
+  tags = {
+    Owner       = "backup team"
+    Environment = "production"
+    Terraform   = true
+  }
+
+}
