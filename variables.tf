@@ -12,6 +12,7 @@ variable "vault_kms_key_arn" {
   type        = string
   default     = null
 }
+
 variable "tags" {
   description = "A mapping of tags to assign to the resource"
   type        = map(string)
@@ -51,7 +52,6 @@ variable "rule_completion_window" {
   default     = null
 }
 
-
 variable "rule_recovery_point_tags" {
   description = "Metadata that you can assign to help organize the resources that you create"
   type        = map(string)
@@ -64,7 +64,6 @@ variable "rule_cold_storage_after" {
   type        = number
   default     = null
 }
-
 
 variable "rule_delete_after" {
   description = "Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after`"
@@ -91,7 +90,6 @@ variable "selection_resources" {
   type        = list
   default     = []
 }
-
 
 variable "selection_tag_type" {
   description = "An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection"
