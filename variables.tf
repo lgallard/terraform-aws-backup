@@ -59,13 +59,13 @@ variable "rule_recovery_point_tags" {
 }
 
 # Rule lifecycle
-variable "rule_cold_storage_after" {
+variable "rule_lifecycle_cold_storage_after" {
   description = "Specifies the number of days after creation that a recovery point is moved to cold storage"
   type        = number
   default     = null
 }
 
-variable "rule_delete_after" {
+variable "rule_lifecycle_delete_after" {
   description = "Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after`"
   type        = number
   default     = null
