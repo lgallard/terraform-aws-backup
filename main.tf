@@ -50,9 +50,9 @@ locals {
       schedule          = var.rule_schedule
       start_window      = var.rule_start_window
       completion_window = var.rule_completion_window
-      lifecycle = var.rule_cold_storage_after == null ? {} : {
-        cold_storage_after = var.rule_cold_storage_after
-        delete_after       = var.rule_delete_after
+      lifecycle = var.rule_lifecycle_cold_storage_after == null ? {} : {
+        cold_storage_after = var.rule_lifecycle_cold_storage_after
+        delete_after       = var.rule_lifecycle_delete_after
       }
       recovery_point_tags = var.rule_recovery_point_tags
     }
