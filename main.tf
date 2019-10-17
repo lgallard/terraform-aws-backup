@@ -36,6 +36,7 @@ resource "aws_backup_plan" "ab_plan" {
   # Tags
   tags = var.tags
 
+  # First create the vault if needed
   depends_on = [aws_backup_vault.ab_vault]
 }
 
