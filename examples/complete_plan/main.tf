@@ -36,12 +36,12 @@ module "aws_backup_example" {
   ]
 
   # Multiple selections
-  #  - Selection-1: By tag and resources
+  #  - Selection-1: By resources and tag
   #  - Selection-2: Only by resources
   selections = [
     {
       name      = "selection-1"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
       selection_tag = {
         type  = "STRINGEQUALS"
         key   = "Environment"
@@ -50,7 +50,7 @@ module "aws_backup_example" {
     },
     {
       name          = "selection-2"
-      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
       selection_tag = {}
     },
   ]
