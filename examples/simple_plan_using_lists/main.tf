@@ -1,6 +1,6 @@
 module "aws_backup_example" {
 
-  source = "../modulesi/tf-aws-backup"
+  source = "../modulesi/terraform-aws-backup"
 
   # Vault
   vault_name = "vault-1"
