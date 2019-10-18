@@ -1,3 +1,9 @@
+## 0.1.2 (October 18, 2019)
+
+UPDATE:
+
+  * Rename module references in README and examples
+
 ## 0.1.1 (October 18, 2019)
 
 FEATURES:
