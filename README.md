@@ -1,4 +1,4 @@
-# tf-aws-backup
+# terraform-aws-backup
 
 Terraform module to create [AWS Backup](https://aws.amazon.com/backup/) plans.  AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services (EBS volumes, RDS databases, DynamoDB tables, EFS file systems, and Storage Gateway volumes).
 
@@ -17,7 +17,7 @@ The first selection has two assignments, the first defined by a resource ARN and
 ```
 module "aws_backup_example" {
 
-  source = "../modules/tf-aws-backup"
+  source = "../modules/terraform-aws-backup"
 
   # Vault
   vault_name = "vault-3"
