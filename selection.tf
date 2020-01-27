@@ -1,6 +1,6 @@
 resource "aws_backup_selection" "ab_selection" {
 
-  count = length(local.selections)
+  count = var.enabled ? length(local.selections) : 0
 
   iam_role_arn = aws_iam_role.ab_role.arn
   name         = lookup(element(local.selections, count.index), "name", null)

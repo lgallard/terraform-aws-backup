@@ -115,3 +115,9 @@ variable "selections" {
   type        = list
   default     = []
 }
+
+variable "enabled" {
+  description = "Whether or not deploy anything"
+  type        = bool
+  default     = true
+}

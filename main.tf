@@ -1,6 +1,6 @@
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
-  count       = var.vault_name == null ? 0 : 1
+  count       = var.enabled && var.vault_name != null ? 1 : 0
   name        = var.vault_name
   kms_key_arn = var.vault_kms_key_arn
   tags        = var.tags
@@ -8,7 +8,8 @@ resource "aws_backup_vault" "ab_vault" {
 
 # AWS Backup plan
 resource "aws_backup_plan" "ab_plan" {
-  name = var.plan_name
+  count = var.enabled ? 1 : 0
+  name  = var.plan_name
 
   # Rules
   dynamic "rule" {
