@@ -2,9 +2,9 @@ resource "aws_backup_selection" "ab_selection" {
 
   count = var.enabled ? length(local.selections) : 0
 
-  iam_role_arn = aws_iam_role.ab_role.arn
+  iam_role_arn = aws_iam_role.ab_role[0].arn
   name         = lookup(element(local.selections, count.index), "name", null)
-  plan_id      = aws_backup_plan.ab_plan.id
+  plan_id      = aws_backup_plan.ab_plan[0].id
 
   resources = lookup(element(local.selections, count.index), "resources")
 
