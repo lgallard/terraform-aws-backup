@@ -22,7 +22,7 @@ POLICY
 resource "aws_iam_role_policy_attachment" "ab_policy_attach" {
   count      = var.enabled ? 1 : 0
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-  role       = aws_iam_role.ab_role.name
+  role       = aws_iam_role.ab_role[0].name
 }
 
 resource "aws_iam_policy" "ab_tag_policy" {
@@ -51,7 +51,7 @@ EOF
 
 resource "aws_iam_role_policy_attachment" "ab_tag_policy_attach" {
   count      = var.enabled ? 1 : 0
-  policy_arn = aws_iam_policy.ab_tag_policy.arn
-  role       = aws_iam_role.ab_role.name
+  policy_arn = aws_iam_policy.ab_tag_policy[0].arn
+  role       = aws_iam_role.ab_role[0].name
 }
 
