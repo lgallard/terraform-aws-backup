@@ -84,7 +84,7 @@ module "aws_backup_example" {
 
 | Name                                  | Description                                                                                                                         | Type            | Default  | Required |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------- | -------- |
-| enabled                               | Deploy anything or not.                                                                                                             | \`bool\`        | \`true\` | no       |
+| enabled                               | Change to false to avoid deploying any AWS Backup resources                                                                         | \`bool\`        | \`true\` | no       |
 | plan\_name                            | The display name of a backup plan                                                                                                   | \`string\`      | n/a      | yes      |
 | rule\_completion\_window              | The amount of time AWS Backup attempts a backup before canceling the job and returning an error                                     | \`number\`      | n/a      | yes      |
 | rule\_lifecycle\_cold\_storage\_after | Specifies the number of days after creation that a recovery point is moved to cold storage                                          | \`number\`      | n/a      | yes      |

@@ -117,7 +117,7 @@ variable "selections" {
 }
 
 variable "enabled" {
-  description = "Whether or not deploy anything"
+  description = "Change to false to avoid deploying any AWS Backup resources"
   type        = bool
   default     = true
 }
