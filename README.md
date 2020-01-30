@@ -84,25 +84,25 @@ module "aws_backup_example" {
 
 | Name                                  | Description                                                                                                                         | Type            | Default  | Required |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------- | -------- |
-| enabled                               | Change to false to avoid deploying any AWS Backup resources                                                                         | \`bool\`        | \`true\` | no       |
-| plan\_name                            | The display name of a backup plan                                                                                                   | \`string\`      | n/a      | yes      |
-| rule\_completion\_window              | The amount of time AWS Backup attempts a backup before canceling the job and returning an error                                     | \`number\`      | n/a      | yes      |
-| rule\_lifecycle\_cold\_storage\_after | Specifies the number of days after creation that a recovery point is moved to cold storage                                          | \`number\`      | n/a      | yes      |
-| rule\_lifecycle\_delete\_after        | Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than \`cold\_storage\_after\` | \`number\`      | n/a      | yes      |
-| rule\_name                            | An display name for a backup rule                                                                                                   | \`string\`      | n/a      | yes      |
-| rule\_recovery\_point\_tags           | Metadata that you can assign to help organize the resources that you create                                                         | \`map(string)\` | \`{}\`   | no       |
-| rule\_schedule                        | A CRON expression specifying when AWS Backup initiates a backup job                                                                 | \`string\`      | n/a      | yes      |
-| rule\_start\_window                   | The amount of time in minutes before beginning a backup                                                                             | \`number\`      | n/a      | yes      |
-| rules                                 | A list of rule maps                                                                                                                 | \`list\`        | \`\[\]\` | no       |
-| selection\_name                       | The display name of a resource selection document                                                                                   | \`string\`      | n/a      | yes      |
-| selection\_resources                  | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan      | \`list\`        | \`\[\]\` | no       |
-| selection\_tag\_key                   | The key in a key-value pair                                                                                                         | \`string\`      | n/a      | yes      |
-| selection\_tag\_type                  | An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection                     | \`string\`      | n/a      | yes      |
-| selection\_tag\_value                 | The value in a key-value pair                                                                                                       | \`string\`      | n/a      | yes      |
-| selections                            | A list of selction maps                                                                                                             | \`list\`        | \`\[\]\` | no       |
-| tags                                  | A mapping of tags to assign to the resource                                                                                         | \`map(string)\` | \`{}\`   | no       |
-| vault\_kms\_key\_arn                  | The server-side encryption key that is used to protect your backups                                                                 | \`string\`      | n/a      | yes      |
-| vault\_name                           | Name of the backup vault to create. If not given, AWS use default                                                                   | \`string\`      | n/a      | yes      |
+| enabled                               | Change to false to avoid deploying any AWS Backup resources                                                                         | `bool`        | `true` | no       |
+| plan\_name                            | The display name of a backup plan                                                                                                   | `string`      | n/a      | yes      |
+| rule\_completion\_window              | The amount of time AWS Backup attempts a backup before canceling the job and returning an error                                     | `number`      | n/a      | yes      |
+| rule\_lifecycle\_cold\_storage\_after | Specifies the number of days after creation that a recovery point is moved to cold storage                                          | `number`      | n/a      | yes      |
+| rule\_lifecycle\_delete\_after        | Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold\_storage\_after` | `number`      | n/a      | yes      |
+| rule\_name                            | An display name for a backup rule                                                                                                   | `string`      | n/a      | yes      |
+| rule\_recovery\_point\_tags           | Metadata that you can assign to help organize the resources that you create                                                         | `map(string)` | `{}`   | no       |
+| rule\_schedule                        | A CRON expression specifying when AWS Backup initiates a backup job                                                                 | `string`      | n/a      | yes      |
+| rule\_start\_window                   | The amount of time in minutes before beginning a backup                                                                             | `number`      | n/a      | yes      |
+| rules                                 | A list of rule maps                                                                                                                 | `list`        | `[]` | no       |
+| selection\_name                       | The display name of a resource selection document                                                                                   | `string`      | n/a      | yes      |
+| selection\_resources                  | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan      | `list`        | `[]` | no       |
+| selection\_tag\_key                   | The key in a key-value pair                                                                                                         | `string`      | n/a      | yes      |
+| selection\_tag\_type                  | An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection                     | `string`      | n/a      | yes      |
+| selection\_tag\_value                 | The value in a key-value pair                                                                                                       | `string`      | n/a      | yes      |
+| selections                            | A list of selction maps                                                                                                             | `list`        | `[]` | no       |
+| tags                                  | A mapping of tags to assign to the resource                                                                                         | `map(string)` | `{}`   | no       |
+| vault\_kms\_key\_arn                  | The server-side encryption key that is used to protect your backups                                                                 | `string`      | n/a      | yes      |
+| vault\_name                           | Name of the backup vault to create. If not given, AWS use default                                                                   | `string`      | n/a      | yes      |
 
 ## Outputs
 
