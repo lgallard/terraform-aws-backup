@@ -115,3 +115,9 @@ variable "selections" {
   type        = list
   default     = []
 }
+
+variable "enabled" {
+  description = "Change to false to avoid deploying any AWS Backup resources"
+  type        = bool
+  default     = true
+}

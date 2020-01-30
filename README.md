@@ -83,7 +83,8 @@ module "aws_backup_example" {
 ## Inputs
 
 | Name                                  | Description                                                                                                                         | Type            | Default  | Required |
-|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------|----------|
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------- | -------- |
+| enabled                               | Change to false to avoid deploying any AWS Backup resources                                                                         | \`bool\`        | \`true\` | no       |
 | plan\_name                            | The display name of a backup plan                                                                                                   | \`string\`      | n/a      | yes      |
 | rule\_completion\_window              | The amount of time AWS Backup attempts a backup before canceling the job and returning an error                                     | \`number\`      | n/a      | yes      |
 | rule\_lifecycle\_cold\_storage\_after | Specifies the number of days after creation that a recovery point is moved to cold storage                                          | \`number\`      | n/a      | yes      |
@@ -105,13 +106,13 @@ module "aws_backup_example" {
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| plan\_arn | The ARN of the backup plan |
-| plan\_id | The id of the backup plan |
+| Name          | Description                                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| plan\_arn     | The ARN of the backup plan                                                                                 |
+| plan\_id      | The id of the backup plan                                                                                  |
 | plan\_version | Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan |
-| vault\_arn | The ARN of the vault |
-| vault\_id | The name of the vault |
+| vault\_arn    | The ARN of the vault                                                                                       |
+| vault\_id     | The name of the vault                                                                                      |
 
 ## Known issues
 
