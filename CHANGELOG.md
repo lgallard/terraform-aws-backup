@@ -1,3 +1,13 @@
+## 0.2.0 (January 30, 2020)
+
+ENHANCEMENTS: 
+
+  * Add enabled flag which avoid deploying any AWS Backup resources when set to false
+  
+FIXES: 
+  * Fix inputs formatting in README file
+
+  
 ## 0.1.2 (October 18, 2019)
 
 UPDATE:
