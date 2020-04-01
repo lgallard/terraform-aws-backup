@@ -1,3 +1,4 @@
+![Terraform](https://lgallardo.com/images/terraform.jpg)
 # terraform-aws-backup
 
 Terraform module to create [AWS Backup](https://aws.amazon.com/backup/) plans.  AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services (EBS volumes, RDS databases, DynamoDB tables, EFS file systems, and Storage Gateway volumes).
