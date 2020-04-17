@@ -1,3 +1,14 @@
+## 0.3.0 (April 17, 2020)
+
+ENHANCEMENTS:
+
+* Add support for Copy Action
+
+UPDATES:
+
+* Update completed_example to include copy_action block
+* Update simple_plan_using_\* examples
+
 ## 0.2.1 (April 1, 2020)
 
 UPDATES:
