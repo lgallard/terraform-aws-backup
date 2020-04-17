@@ -1,5 +1,5 @@
 variable "env" {
-  type    = "map"
+  type    = map
   default = {}
 }
 
