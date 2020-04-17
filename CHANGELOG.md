@@ -1,3 +1,9 @@
+## 0.3.1 (April 17, 2020)
+
+UPDATES:
+
+* Update README to include copy_action block example
+
 ## 0.3.0 (April 17, 2020)
 
 ENHANCEMENTS:
