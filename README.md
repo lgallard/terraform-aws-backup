@@ -38,6 +38,13 @@ module "aws_backup_example" {
         cold_storage_after = 0
         delete_after       = 90
       },
+      copy_action = {
+        lifecycle = {
+          cold_storage_after = 0
+          delete_after       = 90
+        },
+        destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
+      }
       recovery_point_tags = {
         Environment = "production"
       }
@@ -49,6 +56,7 @@ module "aws_backup_example" {
       start_window        = 120
       completion_window   = 360
       lifecycle           = {}
+      copy_action         = {}
       recovery_point_tags = {}
     },
   ]
