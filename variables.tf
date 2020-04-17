@@ -71,10 +71,24 @@ variable "rule_lifecycle_delete_after" {
   default     = null
 }
 
+# Rule copy action
+variable "rule_copy_action_lifecycle" {
+  description = "The lifecycle defines when a protected resource is copied over to a backup vault and when it expires."
+  type        = map
+  default     = {}
+}
+
+variable "rule_copy_action_destination_vault_arn" {
+  description = "An Amazon Resource Name (ARN) that uniquely identifies the destination backup vault for the copied backup."
+  type        = string
+  default     = null
+}
+
+
 # Rules
 variable "rules" {
   description = "A list of rule maps"
-  type        = list
+  type        = any
   default     = []
 }
 

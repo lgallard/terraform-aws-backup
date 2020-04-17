@@ -30,6 +30,24 @@ resource "aws_backup_plan" "ab_plan" {
           delete_after       = lookup(lifecycle.value, "delete_after", 90)
         }
       }
+
+      # Copy action
+      dynamic "copy_action" {
+        for_each = length(lookup(rule.value, "copy_action", {})) == 0 ? [] : [lookup(rule.value, "copy_action", {})]
+        content {
+          destination_vault_arn = lookup(copy_action.value, "destination_vault_arn", null)
+
+          # Copy Action Lifecycle
+          dynamic "lifecycle" {
+            for_each = length(lookup(copy_action.value, "lifecycle", {})) == 0 ? [] : [lookup(copy_action.value, "lifecycle", {})]
+            content {
+              cold_storage_after = lookup(lifecycle.value, "cold_storage_after", 0)
+              delete_after       = lookup(lifecycle.value, "delete_after", 90)
+            }
+          }
+        }
+      }
+
     }
   }
 
