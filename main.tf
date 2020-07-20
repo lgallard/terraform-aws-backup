@@ -19,7 +19,7 @@ resource "aws_backup_plan" "ab_plan" {
       target_vault_name   = lookup(rule.value, "target_vault_name", null) == null ? var.vault_name : lookup(rule.value, "target_vault_name", "Default")
       schedule            = lookup(rule.value, "schedule", null)
       start_window        = lookup(rule.value, "start_window", null)
-      completion_window   = lookup(rule.value, "completion_window ", null)
+      completion_window   = lookup(rule.value, "completion_window", null)
       recovery_point_tags = length(lookup(rule.value, "recovery_point_tags")) == 0 ? var.tags : lookup(rule.value, "recovery_point_tags")
 
       # Lifecycle  
