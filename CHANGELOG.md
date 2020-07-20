@@ -1,3 +1,9 @@
+## 0.3.2 (July 20, 2020)
+
+FIXES:
+
+* Fix space in `completion_window` value
+
 ## 0.3.1 (April 17, 2020)
 
 UPDATES:
