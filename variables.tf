@@ -126,7 +126,7 @@ variable "selection_tag_value" {
 # Selection
 variable "selections" {
   description = "A list of selction maps"
-  type        = list
+  type        = any
   default     = []
 }
 

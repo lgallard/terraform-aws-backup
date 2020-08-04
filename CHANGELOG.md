@@ -1,3 +1,16 @@
+## 0.4.0 (August 4, 2020)
+
+ENHANCEMENTS:
+
+* Add option to define selections by tags only, without resource definition
+* Now you can define selections with just resources, tags or boths. No need to define empty values.
+* Add README to examples
+
+UPDATES:
+
+* Add selection by tags plan example
+* Update examples
+
 ## 0.3.2 (July 20, 2020)
 
 FIXES:

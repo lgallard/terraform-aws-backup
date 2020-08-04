@@ -1,6 +1,11 @@
-module "aws_backup_example" {
+# Simple plan using lists
 
-  source = "git::https://github.com/lgallard/terraform-aws-backup.git"
+This example shows you how to create a simple plan using lists instead of variables:
+
+```
+module "aws_backup_example" {
+  
+  source = "lgallard/aws/backup"
 
   # Vault
   vault_name = "vault-1"
@@ -29,7 +34,16 @@ module "aws_backup_example" {
   selections = [
     {
       name      = "selection-1"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Environment"
+        value = "production"
+      }
+    },
+    {
+      name      = "selection-2"
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
     },
   ]
 
@@ -40,3 +54,4 @@ module "aws_backup_example" {
   }
 
 }
+```

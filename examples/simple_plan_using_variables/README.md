@@ -1,5 +1,10 @@
-module "aws_backup_example" {
+# Simple plan using variables
 
+This example shows you how to create a simple plan using variables:
+
+```
+module "aws_backup_example" {
+  
   source = "lgallard/aws/backup"
 
   # Vault
@@ -27,3 +32,5 @@ module "aws_backup_example" {
     Terraform   = true
   }
 }
+
+```
