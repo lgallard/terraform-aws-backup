@@ -1,3 +1,8 @@
+# Complete PLan 
+
+This example shows you how to create a complete plan, using several resources and options:
+
+```
 module "aws_backup_example" {
 
   source = "lgallard/aws/backup"
@@ -57,8 +62,8 @@ module "aws_backup_example" {
       }
     },
     {
-      name      = "selection-2"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
+      name          = "selection-2"
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
     },
   ]
 
@@ -67,5 +72,6 @@ module "aws_backup_example" {
     Environment = "production"
     Terraform   = true
   }
-
 }
+```
+

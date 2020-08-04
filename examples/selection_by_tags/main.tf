@@ -3,10 +3,10 @@ module "aws_backup_example" {
   source = "lgallard/aws/backup"
 
   # Vault
-  vault_name = "vault-3"
+  vault_name = "vault-4"
 
   # Plan
-  plan_name = "complete-plan"
+  plan_name = "selection-tags-plan"
 
   # Multiple rules using a list of maps
   rules = [
@@ -20,15 +20,8 @@ module "aws_backup_example" {
         cold_storage_after = 0
         delete_after       = 90
       },
-      copy_action = {
-        lifecycle = {
-          cold_storage_after = 0
-          delete_after       = 90
-        },
-        destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
-      }
       recovery_point_tags = {
-        Environment = "production"
+        Environment = "prod"
       }
     },
     {
@@ -44,27 +37,30 @@ module "aws_backup_example" {
   ]
 
   # Multiple selections
-  #  - Selection-1: By resources and tag
-  #  - Selection-2: Only by resources
+  #  - Selection-1: Environment = prod
+  #  - Selection-2: Backup = critical
   selections = [
     {
-      name      = "selection-1"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      name = "selection-1"
       selection_tag = {
         type  = "STRINGEQUALS"
         key   = "Environment"
-        value = "production"
+        value = "prod"
       }
     },
     {
-      name      = "selection-2"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
+      name = "selection-2"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Backup"
+        value = "critial"
+      }
     },
   ]
 
   tags = {
     Owner       = "backup team"
-    Environment = "production"
+    Environment = "prod"
     Terraform   = true
   }
 
