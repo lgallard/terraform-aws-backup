@@ -1,3 +1,9 @@
+## 0.4.1 (August 13, 2020)
+
+FIXES:
+
+* Fixing registry url (thanks @matthieudolci)
+
 ## 0.4.0 (August 4, 2020)
 
 ENHANCEMENTS:
