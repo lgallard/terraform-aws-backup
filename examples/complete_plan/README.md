@@ -5,7 +5,7 @@ This example shows you how to create a complete plan, using several resources an
 ```
 module "aws_backup_example" {
 
-  source = "lgallard/aws/backup"
+  source = "lgallard/backup/aws"
 
   # Vault
   vault_name = "vault-3"
