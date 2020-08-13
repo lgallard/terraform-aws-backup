@@ -18,7 +18,7 @@ The first selection has two assignments, the first defined by a resource ARN and
 ```
 module "aws_backup_example" {
 
-  source = "lgallard/aws/backup"
+  source = "lgallard/backup/aws"
 
   # Vault
   vault_name = "vault-3"
