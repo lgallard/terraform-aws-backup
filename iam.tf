@@ -25,7 +25,9 @@ resource "aws_iam_role_policy_attachment" "ab_policy_attach" {
   role       = aws_iam_role.ab_role[0].name
 }
 
+# Tag policy
 resource "aws_iam_policy" "ab_tag_policy" {
+
   count       = var.enabled ? 1 : 0
   description = "AWS Backup Tag policy"
 
@@ -55,3 +57,10 @@ resource "aws_iam_role_policy_attachment" "ab_tag_policy_attach" {
   role       = aws_iam_role.ab_role[0].name
 }
 
+
+# Restores policy
+resource "aws_iam_role_policy_attachment" "ab_restores_policy_attach" {
+  count      = var.enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+  role       = aws_iam_role.ab_role[0].name
+}
