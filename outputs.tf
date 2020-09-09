@@ -24,3 +24,8 @@ output "plan_version" {
   description = "Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan"
   value       = join("", aws_backup_plan.ab_plan.*.version)
 }
+
+output "plan_role" {
+  description = "The service role of the backup plan"
+  value       = join("", aws_iam_role.ab_role.*.name)
+}
