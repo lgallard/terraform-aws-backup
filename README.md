@@ -116,7 +116,7 @@ module "aws_backup_example" {
 | selection\_tag\_key | The key in a key-value pair | `string` | n/a | yes |
 | selection\_tag\_type | An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection | `string` | n/a | yes |
 | selection\_tag\_value | The value in a key-value pair | `string` | n/a | yes |
-| selections | A list of selction maps | `list` | `[]` | no |
+| selections | A list of selction maps | `any` | `[]` | no |
 | tags | A mapping of tags to assign to the resource | `map(string)` | `{}` | no |
 | vault\_kms\_key\_arn | The server-side encryption key that is used to protect your backups | `string` | n/a | yes |
 | vault\_name | Name of the backup vault to create. If not given, AWS use default | `string` | n/a | yes |
@@ -127,10 +127,10 @@ module "aws_backup_example" {
 |------|-------------|
 | plan\_arn | The ARN of the backup plan |
 | plan\_id | The id of the backup plan |
+| plan\_role | The service role of the backup plan |
 | plan\_version | Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan |
 | vault\_arn | The ARN of the vault |
 | vault\_id | The name of the vault |
-
 
 ## Known issues
 

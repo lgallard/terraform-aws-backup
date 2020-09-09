@@ -1,3 +1,13 @@
+## 0.5.0 (September 9, 2020)
+
+ENHANCEMENTS:
+
+* Add AWS Backup Service Role output
+
+FIXES:
+
+* Add policy for performing restores
+
 ## 0.4.1 (August 13, 2020)
 
 FIXES:
