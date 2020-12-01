@@ -135,3 +135,10 @@ variable "enabled" {
   type        = bool
   default     = true
 }
+
+## windows backup parameter
+variable "windows_backup" {
+  description = "Boolean to activate VSS for Windows ec2"
+  type        = bool
+  default     = false
+}
