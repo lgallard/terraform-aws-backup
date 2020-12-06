@@ -136,9 +136,9 @@ variable "enabled" {
   default     = true
 }
 
-## windows backup parameter
-variable "windows_backup" {
-  description = "Boolean to activate VSS for Windows ec2"
+# Windows Backup parameter
+variable "windows_vss_backup" {
+  description = "Enable Windows VSS backup option and create a VSS Windows backup"
   type        = bool
   default     = false
 }

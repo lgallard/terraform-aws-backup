@@ -51,8 +51,9 @@ resource "aws_backup_plan" "ab_plan" {
     }
   }
 
+  # Advanced backup setting
   dynamic "advanced_backup_setting" {
-    for_each = var.windows_backup ? [1] : []
+    for_each = var.windows_vss_backup ? [1] : []
     content {
       backup_options = {
         WindowsVSS = "enabled"
