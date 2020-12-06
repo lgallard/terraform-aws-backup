@@ -1,3 +1,11 @@
+## 0.6.0 (December 6, 2020)
+
+ENHANCEMENTS:
+
+* Add support to activate Windows VSS
+
+Thanks @riccardo-salamanna
+
 ## 0.5.0 (September 9, 2020)
 
 ENHANCEMENTS:
