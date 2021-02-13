@@ -142,3 +142,31 @@ variable "windows_vss_backup" {
   type        = bool
   default     = false
 }
+
+#
+# Notifications
+#
+variable "notifications_backup_vault_events" {
+  description = "A list of backup events that you would like to be notified about. Leave it empty to disable notifications."
+  type        = list
+  default     = []
+}
+
+variable "notifications_sns_topic_name" {
+  description = "A name for the SNS topic that will be created to receive AWS Backup Vault notifications."
+  type        = string
+  default     = "backup-events"
+}
+
+variable "notifications_topic_subscriptions" {
+  description = "A map of subscriptions you would like to subscribe to the SNS topic."
+  type = map(object({
+    protocol = string
+    # The protocol to use. The possible values for this are: sqs, sms, lambda, application. (http or https are partially supported, see below) (email is an option but is unsupported, see below).
+    endpoint = string
+    # The endpoint to send data to, the contents will vary with the protocol. (see below for more information)
+    endpoint_auto_confirms = bool
+    # Boolean indicating whether the end point is capable of auto confirming subscription e.g., PagerDuty (default is false)
+  }))
+  default     = {}
+}
