@@ -1,3 +1,9 @@
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
 module "aws_backup_example" {
 
   source = "lgallard/backup/aws"
