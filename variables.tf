@@ -142,3 +142,12 @@ variable "windows_vss_backup" {
   type        = bool
   default     = false
 }
+
+#
+# Notifications
+#
+variable "notifications" {
+  description = "Notification block which defines backup vault events and the SNS Topic ARN to send AWS Backup notifications to. Leave it empty to disable notifications"
+  type        = any
+  default     = {}
+}
