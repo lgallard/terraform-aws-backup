@@ -1,3 +1,11 @@
+## 0.7.0 (December 6, 2020)
+
+ENHANCEMENTS:
+
+* Add support to AWS Backup Notifications
+
+Based on @diego-ojeda-binbash PR
+
 ## 0.6.0 (December 6, 2020)
 
 ENHANCEMENTS:

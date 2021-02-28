@@ -8,6 +8,12 @@ module "aws_backup_example" {
   # Plan
   plan_name = "complete-plan"
 
+  # Notifications
+  notifications = {
+    sns_topic_arn       = aws_sns_topic.backup_vault_notifications.arn
+    backup_vault_events = ["BACKUP_JOB_STARTED", "BACKUP_JOB_COMPLETED", "RESTORE_JOB_COMPLETED"]
+  }
+
   # Multiple rules using a list of maps
   rules = [
     {
