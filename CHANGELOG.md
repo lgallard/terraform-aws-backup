@@ -1,4 +1,4 @@
-## 0.7.0 (December 6, 2020)
+## 0.7.0 (Febeuary 28, 2021)
 
 ENHANCEMENTS:
 
