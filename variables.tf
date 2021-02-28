@@ -146,14 +146,8 @@ variable "windows_vss_backup" {
 #
 # Notifications
 #
-variable "notifications_backup_vault_events" {
-  description = "A list of backup events that you would like to be notified about. Leave it empty to disable notifications."
-  type        = list
-  default     = []
-}
-
-variable "sns_topic_arn" {
-  description = "The SNS Topic ARN to send AWS Backup notifications to"
-  type        = string
-  default     = null
+variable "notifications" {
+  description = "Notification block which defines backup vault events and the SNS Topic ARN to send AWS Backup notifications to. Leave it empty to disable notifications"
+  type        = any
+  default     = {}
 }
