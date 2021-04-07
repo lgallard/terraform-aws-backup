@@ -113,6 +113,7 @@ module "aws_backup_example" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | enabled | Change to false to avoid deploying any AWS Backup resources | `bool` | `true` | no |
+| iam\_role\_arn | If configured, the module will attach this role to selections, instead of creating IAM resources by itself | `string` | `null` | no |
 | notifications | Notification block which defines backup vault events and the SNS Topic ARN to send AWS Backup notifications to. Leave it empty to disable notifications | `any` | `{}` | no |
 | plan\_name | The display name of a backup plan | `string` | n/a | yes |
 | rule\_completion\_window | The amount of time AWS Backup attempts a backup before canceling the job and returning an error | `number` | `null` | no |
@@ -160,7 +161,7 @@ module.aws_backup_example.aws_iam_policy.ab_tag_policy: Destruction complete aft
 module.aws_backup_example.aws_iam_role.ab_role: Destruction complete after 1s
 
 Error: error deleting Backup Plan: InvalidRequestException: Related backup plan selections must be deleted prior to backup plan deletion
-	status code: 400, request id: 4a6637c8-2d46-4714-9929-4df3f694979b
+       status code: 400, request id: 4a6637c8-2d46-4714-9929-4df3f694979b
 
 ```
 
@@ -193,7 +194,7 @@ terraform destroy
 
 ```
 Error: error creating Backup Selection: InvalidParameterValueException: IAM Role arn:aws:iam::111111111111:role/aws-backup-plan-complete-plan-role is not authorized to call tag:GetResources
-	status code: 400, request id: 07ab775d-8885-4240-bb99-41305df969e0
+       status code: 400, request id: 07ab775d-8885-4240-bb99-41305df969e0
 
   on .terraform/modules/aws_backup_example/selection.tf line 1, in resource "aws_backup_selection" "ab_selection":
    1: resource "aws_backup_selection" "ab_selection" {
