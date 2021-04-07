@@ -1,3 +1,11 @@
+## 0.9.0 (April 7, 2021)
+
+FIXES:
+
+* Add support for several selection tags
+* Remove `selection_tag_type`, `selection_tag_key` and `selection_tag_value` in favour of a `selection_tags` list variable
+* Update README and examples folder to include several selection tags examples
+
 ## 0.8.0 (April 7, 2021)
 
 ENHANCEMENTS:

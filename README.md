@@ -74,16 +74,22 @@ module "aws_backup_example" {
     {
       name      = "selection-1"
       resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Environment"
-        value = "production"
-      }
+      selection_tag = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "production"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Owner"
+          value = "production"
+        }
+      ]
     },
     {
-      name          = "selection-2"
-      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
-      selection_tag = {}
+      name      = "selection-2"
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
     },
   ]
 
@@ -145,9 +151,7 @@ No Modules.
 | rules | A list of rule maps | `any` | `[]` | no |
 | selection\_name | The display name of a resource selection document | `string` | `null` | no |
 | selection\_resources | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan | `list` | `[]` | no |
-| selection\_tag\_key | The key in a key-value pair | `string` | `null` | no |
-| selection\_tag\_type | An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection | `string` | `null` | no |
-| selection\_tag\_value | The value in a key-value pair | `string` | `null` | no |
+| selection\_tags | List of tags for `selection_name` var, when using variable definition. | `list` | `[]` | no |
 | selections | A list of selction maps | `any` | `[]` | no |
 | tags | A mapping of tags to assign to the resource | `map(string)` | `{}` | no |
 | vault\_kms\_key\_arn | The server-side encryption key that is used to protect your backups | `string` | `null` | no |

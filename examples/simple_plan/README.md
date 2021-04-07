@@ -48,7 +48,7 @@ module "aws_backup_example" {
   ]
 
   tags = {
-    Owner       = "backup team"
+    Owner       = "devops"
     Environment = "production"
     Terraform   = true
   }

@@ -62,11 +62,18 @@ module "aws_backup_example" {
     {
       name      = "selection-1"
       resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Environment"
-        value = "production"
-      }
+      selection_tag = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "production"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Owner"
+          value = "production"
+        }
+      ]
     },
     {
       name      = "selection-2"
@@ -75,7 +82,7 @@ module "aws_backup_example" {
   ]
 
   tags = {
-    Owner       = "backup team"
+    Owner       = "devops"
     Environment = "production"
     Terraform   = true
   }

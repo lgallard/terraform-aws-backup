@@ -105,22 +105,10 @@ variable "selection_resources" {
   default     = []
 }
 
-variable "selection_tag_type" {
-  description = "An operation, such as StringEquals, that is applied to a key-value pair used to filter resources in a selection"
-  type        = string
-  default     = null
-}
-
-variable "selection_tag_key" {
-  description = "The key in a key-value pair"
-  type        = string
-  default     = null
-}
-
-variable "selection_tag_value" {
-  description = "The value in a key-value pair"
-  type        = string
-  default     = null
+variable "selection_tags" {
+  description = "List of tags for `selection_name` var, when using variable definition."
+  type        = list
+  default     = []
 }
 
 # Selection

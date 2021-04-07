@@ -9,7 +9,7 @@ resource "aws_backup_selection" "ab_selection" {
   resources = lookup(element(local.selections, count.index), "resources", null)
 
   dynamic "selection_tag" {
-    for_each = length(lookup(element(local.selections, count.index), "selection_tag", {})) == 0 ? [] : [lookup(element(local.selections, count.index), "selection_tag", {})]
+    for_each = length(lookup(element(local.selections, count.index), "selection_tag", [])) == 0 ? [] : lookup(element(local.selections, count.index), "selection_tag", [])
     content {
       type  = lookup(selection_tag.value, "type", null)
       key   = lookup(selection_tag.value, "key", null)
@@ -23,13 +23,9 @@ locals {
   # Selection
   selection = var.selection_name == null ? [] : [
     {
-      name      = var.selection_name
-      resources = var.selection_resources
-      selection_tag = var.selection_tag_type == null ? {} : {
-        type  = var.selection_tag_type
-        key   = var.selection_tag_key
-        value = var.selection_tag_value
-      }
+      name          = var.selection_name
+      resources     = var.selection_resources
+      selection_tag = var.selection_tags
     }
   ]
 
