@@ -37,29 +37,27 @@ module "aws_backup_example" {
   ]
 
   # Multiple selections
-  #  - Selection-1: Environment = prod
-  #  - Selection-2: Backup = critical
+  #  - Selection-1: By tags: Environment = prod, Owner = devops
   selections = [
     {
-      name = "selection-1"
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Environment"
-        value = "prod"
-      }
-    },
-    {
-      name = "selection-2"
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Backup"
-        value = "critial"
-      }
-    },
+      name      = "selection-1"
+      selection_tag = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "production"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Owner"
+          value = "devops"
+        }
+      ]
+    }
   ]
 
   tags = {
-    Owner       = "backup team"
+    Owner       = "devops"
     Environment = "prod"
     Terraform   = true
   }
