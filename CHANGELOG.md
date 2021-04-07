@@ -1,3 +1,10 @@
+## 0.8.0 (April 7, 2021)
+
+ENHANCEMENTS:
+
+* Allows attaching an already created IAM role to the Plan (thanks @samcre)
+* Update README to include Terraform rsources used
+
 ## 0.7.0 (February 28, 2021)
 
 ENHANCEMENTS:
