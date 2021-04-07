@@ -1,3 +1,9 @@
+## 0.10.0 (April 7, 2021)
+
+FIXES:
+
+* Rename `selection_tag` for `selection_tags`
+
 ## 0.9.0 (April 7, 2021)
 
 FIXES:

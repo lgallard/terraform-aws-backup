@@ -46,7 +46,7 @@ module "aws_backup_example" {
   selections = [
     {
       name      = "selection-1"
-      selection_tag = [
+      selection_tags = [
         {
           type  = "STRINGEQUALS"
           key   = "Environment"

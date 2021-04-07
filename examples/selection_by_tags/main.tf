@@ -40,8 +40,8 @@ module "aws_backup_example" {
   #  - Selection-1: By tags: Environment = prod, Owner = devops
   selections = [
     {
-      name      = "selection-1"
-      selection_tag = [
+      name = "selection-1"
+      selection_tags = [
         {
           type  = "STRINGEQUALS"
           key   = "Environment"
