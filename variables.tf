@@ -84,6 +84,12 @@ variable "rule_copy_action_destination_vault_arn" {
   default     = null
 }
 
+variable "rule_enable_continuous_backup" {
+  description = " Enable continuous backups for supported resources."
+  type        = bool
+  default     = false
+}
+
 
 # Rules
 variable "rules" {

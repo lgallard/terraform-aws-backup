@@ -15,12 +15,13 @@ resource "aws_backup_plan" "ab_plan" {
   dynamic "rule" {
     for_each = local.rules
     content {
-      rule_name           = lookup(rule.value, "name", null)
-      target_vault_name   = lookup(rule.value, "target_vault_name", null) == null ? var.vault_name : lookup(rule.value, "target_vault_name", "Default")
-      schedule            = lookup(rule.value, "schedule", null)
-      start_window        = lookup(rule.value, "start_window", null)
-      completion_window   = lookup(rule.value, "completion_window", null)
-      recovery_point_tags = length(lookup(rule.value, "recovery_point_tags")) == 0 ? var.tags : lookup(rule.value, "recovery_point_tags")
+      rule_name                = lookup(rule.value, "name", null)
+      target_vault_name        = lookup(rule.value, "target_vault_name", null) == null ? var.vault_name : lookup(rule.value, "target_vault_name", "Default")
+      schedule                 = lookup(rule.value, "schedule", null)
+      start_window             = lookup(rule.value, "start_window", null)
+      completion_window        = lookup(rule.value, "completion_window", null)
+      enable_continuous_backup = lookup(rule.value, "enable_continuous_backup", null)
+      recovery_point_tags      = length(lookup(rule.value, "recovery_point_tags")) == 0 ? var.tags : lookup(rule.value, "recovery_point_tags")
 
       # Lifecycle  
       dynamic "lifecycle" {
@@ -83,7 +84,8 @@ locals {
         cold_storage_after = var.rule_lifecycle_cold_storage_after
         delete_after       = var.rule_lifecycle_delete_after
       }
-      recovery_point_tags = var.rule_recovery_point_tags
+      enable_continuous_backup = var.rule_enable_continuous_backup
+      recovery_point_tags      = var.rule_recovery_point_tags
     }
   ]
 

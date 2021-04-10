@@ -23,11 +23,12 @@ module "aws_backup_example" {
   # Multiple rules using a list of maps
   rules = [
     {
-      name              = "rule-1"
-      schedule          = "cron(0 12 * * ? *)"
-      target_vault_name = null
-      start_window      = 120
-      completion_window = 360
+      name                     = "rule-1"
+      schedule                 = "cron(0 12 * * ? *)"
+      target_vault_name        = null
+      start_window             = 120
+      completion_window        = 360
+      enable_continuous_backup = true
       lifecycle = {
         cold_storage_after = 0
         delete_after       = 90

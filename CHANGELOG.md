@@ -1,3 +1,11 @@
+## 0.11.0 (April 10, 2021)
+
+ENHANCEMENTS:
+
+* Add support for `enable_continuous_backup`
+* Update examples
+* Update README
+
 ## 0.10.0 (April 7, 2021)
 
 FIXES:

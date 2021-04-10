@@ -15,6 +15,7 @@ module "aws_backup_example" {
   rule_completion_window            = 360
   rule_lifecycle_cold_storage_after = 30
   rule_lifecycle_delete_after       = 120
+  rule_enable_continuous_backup     = true
 
   # One selection
   selection_name      = "selection-1"
