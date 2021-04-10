@@ -1,3 +1,9 @@
+## 0.11.1 (April 10, 2021)
+
+FIXES:
+
+* Update complete example & README
+
 ## 0.11.0 (April 10, 2021)
 
 ENHANCEMENTS:
