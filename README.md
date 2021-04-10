@@ -43,7 +43,7 @@ module "aws_backup_example" {
       enable_continuous_backup = true
       lifecycle = {
         cold_storage_after = 0
-        delete_after       = 90
+        delete_after       = 30
       },
       copy_action = {
         lifecycle = {

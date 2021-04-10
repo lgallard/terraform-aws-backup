@@ -29,7 +29,7 @@ module "aws_backup_example" {
       copy_action = {
         lifecycle = {
           cold_storage_after = 0
-          delete_after       = 90
+          delete_after       = 30
         },
         destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
       }
