@@ -1,3 +1,9 @@
+## 0.11.2 (April 10, 2021)
+
+FIXES:
+
+* Add `rule_enable_continuous_backup` variable in README
+
 ## 0.11.1 (April 10, 2021)
 
 FIXES:
