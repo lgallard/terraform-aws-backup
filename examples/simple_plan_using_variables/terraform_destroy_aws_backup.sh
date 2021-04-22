@@ -3,7 +3,7 @@ targets=""
 for i in `terraform state list | grep "selection"`; do targets="${targets} --target=${i}"; done
 
 # Destroy selections
-terraform destroy ${targets} 
+terraform destroy ${targets}
 
 # Destroy all
-terraform destroy 
+terraform destroy

@@ -1,3 +1,12 @@
+## 0.11.3 (April 22, 2021)
+
+ENHANCEMENTS:
+
+* Add pre-commit config file
+* Add .gitignore file
+* Update README
+
+
 ## 0.11.2 (April 10, 2021)
 
 FIXES:
@@ -118,7 +127,7 @@ UPDATES:
 ENHANCEMENTS:
 
 * Add enabled flag which avoid deploying any AWS Backup resources when set to false
-  
+
 FIXES:
 
 * Fix inputs formatting in README file
