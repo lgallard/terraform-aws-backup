@@ -23,7 +23,7 @@ resource "aws_backup_plan" "ab_plan" {
       enable_continuous_backup = lookup(rule.value, "enable_continuous_backup", null)
       recovery_point_tags      = length(lookup(rule.value, "recovery_point_tags")) == 0 ? var.tags : lookup(rule.value, "recovery_point_tags")
 
-      # Lifecycle  
+      # Lifecycle
       dynamic "lifecycle" {
         for_each = length(lookup(rule.value, "lifecycle")) == 0 ? [] : [lookup(rule.value, "lifecycle", {})]
         content {

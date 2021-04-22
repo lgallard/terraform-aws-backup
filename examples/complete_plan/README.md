@@ -1,4 +1,4 @@
-# Complete Plan 
+# Complete Plan
 
 This example shows you how to create a complete plan, using several resources and options:
 
@@ -82,4 +82,3 @@ module "aws_backup_example" {
   }
 }
 ```
-

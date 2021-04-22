@@ -1,4 +1,4 @@
-# Selection by tags 
+# Selection by tags
 
 This example shows you how to define selection using tags, without `resource` definitions:
 
@@ -69,4 +69,3 @@ module "aws_backup_example" {
 
 }
 ```
-

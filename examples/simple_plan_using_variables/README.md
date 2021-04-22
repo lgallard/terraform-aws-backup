@@ -4,7 +4,7 @@ This example shows you how to create a simple plan using variables:
 
 ```
 module "aws_backup_example" {
-  
+
   source = "lgallard/backup/aws"
 
   # Vault
