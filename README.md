@@ -101,6 +101,7 @@ module "aws_backup_example" {
   }
 }
 
+```
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 

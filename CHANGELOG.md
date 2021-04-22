@@ -1,3 +1,9 @@
+## 0.11.3 (April 10, 2021)
+
+FIXES:
+
+* Fix typo in README
+
 ## 0.11.3 (April 22, 2021)
 
 ENHANCEMENTS:
