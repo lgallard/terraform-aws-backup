@@ -1,3 +1,16 @@
+## 0.11.5 (May 5, 2021)
+
+FIXES:
+
+* Fix recovery_point_tags default value
+* Update minimum AWS provider version to 3.20.0
+* Remove know issues note in README
+* Remove bash script to remove / destroy the resouses due to old reported issue
+
+ENHANCEMENTS:
+
+* Add notifications only on failed jobs example (thanks @iainelder)
+
 ## 0.11.4 (April 10, 2021)
 
 FIXES:
