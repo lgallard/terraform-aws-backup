@@ -74,7 +74,7 @@ variable "rule_lifecycle_delete_after" {
 # Rule copy action
 variable "rule_copy_action_lifecycle" {
   description = "The lifecycle defines when a protected resource is copied over to a backup vault and when it expires."
-  type        = map
+  type        = map(any)
   default     = {}
 }
 
@@ -107,13 +107,13 @@ variable "selection_name" {
 
 variable "selection_resources" {
   description = "An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan"
-  type        = list
+  type        = list(any)
   default     = []
 }
 
 variable "selection_tags" {
   description = "List of tags for `selection_name` var, when using variable definition."
-  type        = list
+  type        = list(any)
   default     = []
 }
 
