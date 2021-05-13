@@ -1,3 +1,9 @@
+## 0.11.6 (May 13, 2021)
+
+FIXES:
+
+* Fix `selection_tags` in README
+
 ## 0.11.5 (May 5, 2021)
 
 FIXES:
