@@ -75,7 +75,7 @@ module "aws_backup_example" {
     {
       name      = "selection-1"
       resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
-      selection_tag = [
+      selection_tags = [
         {
           type  = "STRINGEQUALS"
           key   = "Environment"
