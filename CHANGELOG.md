@@ -3,6 +3,7 @@
 ENHANCEMENTS:
 
 * Add multiple `copy_action` support (thanks @unni-kr)
+* Add "Error creating Backup Vault" know issue in README
 
 ## 0.11.6 (May 13, 2021)
 
