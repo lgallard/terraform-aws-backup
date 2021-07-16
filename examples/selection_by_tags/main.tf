@@ -31,7 +31,7 @@ module "aws_backup_example" {
       start_window        = 120
       completion_window   = 360
       lifecycle           = {}
-      copy_action         = {}
+      copy_actions        = []
       recovery_point_tags = {}
     },
   ]
