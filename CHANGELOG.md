@@ -1,3 +1,10 @@
+## 0.12.0 (July 16, 2021)
+
+ENHANCEMENTS:
+
+* Add multiple `copy_action` support (thanks @unni-kr)
+* Add "Error creating Backup Vault" know issue in README
+
 ## 0.11.6 (May 13, 2021)
 
 FIXES:
@@ -30,7 +37,6 @@ ENHANCEMENTS:
 * Add pre-commit config file
 * Add .gitignore file
 * Update README
-
 
 ## 0.11.2 (April 10, 2021)
 
