@@ -1,3 +1,10 @@
+## 0.12.1 (Jan 2, 2022)
+
+FIXES:
+
+* Fix error when missing optional vault_value (thanks @ElSamhaa)
+* Align example readme with code (thanks @daniel-habib)
+
 ## 0.12.0 (July 16, 2021)
 
 ENHANCEMENTS:
