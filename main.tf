@@ -16,7 +16,13 @@ resource "aws_backup_plan" "ab_plan" {
     for_each = local.rules
     content {
       rule_name                = lookup(rule.value, "name", null)
-      target_vault_name        = lookup(rule.value, "target_vault_name", null) == null ? var.vault_name : lookup(rule.value, "target_vault_name", "Default")
+      target_vault_name        = (
+        lookup(rule.value, "target_vault_name", null) != null ?
+        rule.value.target_vault_name :
+        var.vault_name != null ?
+        var.vault_name :
+        "Default"
+      )
       schedule                 = lookup(rule.value, "schedule", null)
       start_window             = lookup(rule.value, "start_window", null)
       completion_window        = lookup(rule.value, "completion_window", null)
