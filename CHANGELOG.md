@@ -1,3 +1,9 @@
+## 0.12.2 (Jan 25, 2022)
+
+FIXES:
+
+* Fix backup selection re-creation issue (thanks @tchernomax)
+
 ## 0.12.1 (Jan 2, 2022)
 
 FIXES:
