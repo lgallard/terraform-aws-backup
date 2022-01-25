@@ -16,6 +16,9 @@ resource "aws_backup_selection" "ab_selection" {
       value = lookup(selection_tag.value, "value", null)
     }
   }
+
+  not_resources = []
+  condition {}
 }
 
 locals {
