@@ -1,3 +1,9 @@
+## 0.13.1 (Jan 26, 2022)
+
+ENHANCEMENTS:
+
+* Update examples and READMEs
+
 ## 0.13.0 (Jan 26, 2022)
 
 ENHANCEMENTS:
