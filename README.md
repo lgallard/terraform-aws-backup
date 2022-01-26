@@ -60,6 +60,7 @@ module "aws_backup_example" {
     },
     {
       name                = "rule-2"
+      schedule            = "cron(0 7 * * ? *)"
       target_vault_name   = "Default"
       schedule            = null
       start_window        = 120
@@ -76,7 +77,39 @@ module "aws_backup_example" {
   selections = [
     {
       name      = "selection-1"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      not_resources = []
+      conditions = {
+        string_equals = [
+          {
+            key   = "aws:ResourceTag/Component"
+            value = "rds"
+          }
+          ,
+          {
+            key   = "aws:ResourceTag/Project"
+            value = "Project1"
+          }
+        ]
+        string_like = [
+          {
+            key   = "aws:ResourceTag/Application"
+            value = "app*"
+          }
+        ]
+        string_not_equals = [
+          {
+            key   = "aws:ResourceTag/Backup"
+            value = "false"
+          }
+        ]
+        string_not_like = [
+          {
+            key   = "aws:ResourceTag/Environment"
+            value = "test*"
+          }
+        ]
+      }
       selection_tags = [
         {
           type  = "STRINGEQUALS"
