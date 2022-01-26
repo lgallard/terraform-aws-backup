@@ -1,3 +1,10 @@
+## 0.13.0 (Jan 26, 2022)
+
+ENHANCEMENTS:
+
+* Add `not_resources` and `condition` support for selections
+* Update complete example & READMEs
+
 ## 0.12.2 (Jan 25, 2022)
 
 FIXES:

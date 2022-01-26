@@ -6,7 +6,8 @@ resource "aws_backup_selection" "ab_selection" {
   name         = lookup(element(local.selections, count.index), "name", null)
   plan_id      = aws_backup_plan.ab_plan[0].id
 
-  resources = lookup(element(local.selections, count.index), "resources", null)
+  resources     = lookup(element(local.selections, count.index), "resources", null)
+  not_resources = lookup(element(local.selections, count.index), "not_resources", null)
 
   dynamic "selection_tag" {
     for_each = length(lookup(element(local.selections, count.index), "selection_tags", [])) == 0 ? [] : lookup(element(local.selections, count.index), "selection_tags", [])
@@ -17,8 +18,36 @@ resource "aws_backup_selection" "ab_selection" {
     }
   }
 
-  not_resources = []
-  condition {}
+  condition {
+    dynamic "string_equals" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_equals", [])
+      content {
+        key   = lookup(string_equals.value, "key", null)
+        value = lookup(string_equals.value, "value", null)
+      }
+    }
+    dynamic "string_like" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_like", [])
+      content {
+        key   = lookup(string_like.value, "key", null)
+        value = lookup(string_like.value, "value", null)
+      }
+    }
+    dynamic "string_not_equals" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_equals", [])
+      content {
+        key   = lookup(string_not_equals.value, "key", null)
+        value = lookup(string_not_equals.value, "value", null)
+      }
+    }
+    dynamic "string_not_like" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_like", [])
+      content {
+        key   = lookup(string_not_like.value, "key", null)
+        value = lookup(string_not_like.value, "value", null)
+      }
+    }
+  }
 }
 
 locals {
@@ -28,6 +57,8 @@ locals {
     {
       name           = var.selection_name
       resources      = var.selection_resources
+      not_resources  = var.selection_not_resources
+      conditions     = var.selection_conditions
       selection_tags = var.selection_tags
     }
   ]
