@@ -26,6 +26,27 @@ resource "aws_backup_selection" "ab_selection" {
         value = lookup(string_equals.value, "value", null)
       }
     }
+    dynamic "string_like" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_like", [])
+      content {
+        key   = lookup(string_like.value, "key", null)
+        value = lookup(string_like.value, "value", null)
+      }
+    }
+    dynamic "string_not_equals" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_equals", [])
+      content {
+        key   = lookup(string_not_equals.value, "key", null)
+        value = lookup(string_not_equals.value, "value", null)
+      }
+    }
+    dynamic "string_not_like" {
+      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_like", [])
+      content {
+        key   = lookup(string_not_like.value, "key", null)
+        value = lookup(string_not_like.value, "value", null)
+      }
+    }
   }
 }
 
