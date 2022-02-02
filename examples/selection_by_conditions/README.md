@@ -1,15 +1,15 @@
-# Selection by Tags
+# Selection by Conditions
 
-This example shows you how to define selection using tags, without `resource` definitions.
+This example shows you how to define selection using conditions, without `resource` definitions.
 
 ## Selection by Tags vs. Conditions
-
-**Tags**
-Selection by tags differs from selection by conditions as follows: When you specify more than one condition, you assign all resources that match **AT LEAST ONE condition** (using `OR` logic).  Selection by tags only supports `StringEquals`. Conditions supports `StringEquals`, `StringLike`, `StringNotEquals`, and `StringNotLike`.
 
 **Conditions**
 
 Selection by conditions differs from selection by tags as follows: When you specify more than one condition, you only assign the resources that match **ALL conditions** (using `AND` logic).  Selection by conditions supports `StringEquals`, `StringLike`, `StringNotEquals`, and `StringNotLike`. Selection by tags only supports `StringEquals`.
+
+**Tags**
+Selection by tags differs from selection by conditions as follows: When you specify more than one condition, you assign all resources that match **AT LEAST ONE condition** (using `OR` logic).  Selection by tags only supports `StringEquals`. Conditions supports `StringEquals`, `StringLike`, `StringNotEquals`, and `StringNotLike`.
 
 ```
 module "aws_backup_example" {
@@ -56,18 +56,37 @@ module "aws_backup_example" {
   selections = [
     {
       name      = "selection-1"
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "production"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "devops"
-        }
-      ]
+      conditions = {
+        string_equals = [
+          {
+            key   = "aws:ResourceTag/Component"
+            value = "rds"
+          }
+          ,
+          {
+            key   = "aws:ResourceTag/Project"
+            value = "Project1"
+          }
+        ]
+        string_like = [
+          {
+            key   = "aws:ResourceTag/Application"
+            value = "app*"
+          }
+        ]
+        string_not_equals = [
+          {
+            key   = "aws:ResourceTag/Backup"
+            value = "false"
+          }
+        ]
+        string_not_like = [
+          {
+            key   = "aws:ResourceTag/Environment"
+            value = "test*"
+          }
+        ]
+      }
     }
   ]
 
