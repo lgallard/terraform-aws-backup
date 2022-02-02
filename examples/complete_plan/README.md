@@ -13,6 +13,12 @@ module "aws_backup_example" {
   # Plan
   plan_name = "complete-plan"
 
+  # Notifications
+  notifications = {
+    sns_topic_arn       = aws_sns_topic.backup_vault_notifications.arn
+    backup_vault_events = ["BACKUP_JOB_STARTED", "BACKUP_JOB_COMPLETED", "BACKUP_JOB_FAILED", "RESTORE_JOB_COMPLETED"]
+  }
+
   # Multiple rules using a list of maps
   rules = [
     {
@@ -24,15 +30,24 @@ module "aws_backup_example" {
       enable_continuous_backup = true
       lifecycle = {
         cold_storage_after = 0
-        delete_after       = 90
+        delete_after       = 30
       },
-      copy_actions = [{
-        lifecycle = {
-          cold_storage_after = 0
-          delete_after       = 30
+      copy_actions = [
+        {
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 90
+          },
+          destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
         },
-        destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
-      }]
+        {
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 90
+          },
+          destination_vault_arn = "arn:aws:backup:us-east-2:123456789101:backup-vault:Default"
+        },
+      ]
       recovery_point_tags = {
         Environment = "production"
       }
@@ -45,7 +60,7 @@ module "aws_backup_example" {
       start_window        = 120
       completion_window   = 360
       lifecycle           = {}
-      copy_actions        = []
+      copy_action         = []
       recovery_point_tags = {}
     },
   ]
@@ -53,10 +68,32 @@ module "aws_backup_example" {
   # Multiple selections
   #  - Selection-1: By resources and tag
   #  - Selection-2: Only by resources
+  #  - Selection-3: By resources and conditions
   selections = [
     {
       name          = "selection-1"
       resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      not_resources = []
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "production"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Owner"
+          value = "production"
+        }
+      ]
+    },
+    {
+      name      = "selection-2"
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
+    },
+    {
+      name          = "selection-3"
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table3"]
       not_resources = []
       conditions = {
         string_equals = [
@@ -89,22 +126,6 @@ module "aws_backup_example" {
           }
         ]
       }
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "production"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
-        }
-      ]
-    },
-    {
-      name      = "selection-2"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
     },
   ]
 
@@ -113,5 +134,6 @@ module "aws_backup_example" {
     Environment = "production"
     Terraform   = true
   }
+
 }
 ```

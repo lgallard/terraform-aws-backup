@@ -61,18 +61,40 @@ module "aws_backup_example" {
       start_window        = 120
       completion_window   = 360
       lifecycle           = {}
-      copy_action         = {}
+      copy_action         = []
       recovery_point_tags = {}
     },
   ]
 
   # Multiple selections
-  #  - Selection-1: By resources and tag
+  #  - Selection-1: By resources and tags
   #  - Selection-2: Only by resources
+  #  - Selection-3: By resources and conditions
   selections = [
     {
       name          = "selection-1"
       resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
+      not_resources = []
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "production"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Owner"
+          value = "production"
+        }
+      ]
+    },
+    {
+      name      = "selection-2"
+      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
+    },
+    {
+      name          = "selection-3"
+      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table3"]
       not_resources = []
       conditions = {
         string_equals = [
@@ -105,22 +127,6 @@ module "aws_backup_example" {
           }
         ]
       }
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "production"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
-        }
-      ]
-    },
-    {
-      name      = "selection-2"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
     },
   ]
 

@@ -1,3 +1,9 @@
+## 0.13.2 (Feb 2, 2022)
+
+ENHANCEMENTS:
+
+* Update examples and READMEs for Tags and Conditions
+
 ## 0.13.1 (Jan 26, 2022)
 
 ENHANCEMENTS:

@@ -38,22 +38,41 @@ module "aws_backup_example" {
   ]
 
   # Multiple selections
-  #  - Selection-1: By tags: Environment = prod, Owner = devops
+  #  - Selection-1: By conditions
   selections = [
     {
       name = "selection-1"
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "production"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "devops"
-        }
-      ]
+      conditions = {
+        string_equals = [
+          {
+            key   = "aws:ResourceTag/Component"
+            value = "rds"
+          }
+          ,
+          {
+            key   = "aws:ResourceTag/Project"
+            value = "Project1"
+          }
+        ]
+        string_like = [
+          {
+            key   = "aws:ResourceTag/Application"
+            value = "app*"
+          }
+        ]
+        string_not_equals = [
+          {
+            key   = "aws:ResourceTag/Backup"
+            value = "false"
+          }
+        ]
+        string_not_like = [
+          {
+            key   = "aws:ResourceTag/Environment"
+            value = "test*"
+          }
+        ]
+      }
     }
   ]
 
