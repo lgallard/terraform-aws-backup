@@ -1,3 +1,9 @@
+## 0.13.3 (Feb 19, 2022)
+
+ENHANCEMENTS:
+
+* Change required provider block definition
+
 ## 0.13.2 (Feb 2, 2022)
 
 ENHANCEMENTS:
