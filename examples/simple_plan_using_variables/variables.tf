@@ -1,4 +1,4 @@
 variable "env" {
-  type    = map
+  type    = map(any)
   default = {}
 }
