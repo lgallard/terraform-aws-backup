@@ -1,3 +1,9 @@
+## 0.14.0 (March 3, 2022)
+
+ENHANCEMENTS:
+
+* Add support for AWS Backup S3 capabilities (thanks @svenlito)
+
 ## 0.13.3 (Feb 19, 2022)
 
 ENHANCEMENTS:
