@@ -64,3 +64,9 @@ resource "aws_iam_role_policy_attachment" "ab_restores_policy_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
   role       = aws_iam_role.ab_role[0].name
 }
+
+resource "aws_iam_role_policy_attachment" "ab_restores_s3_policy_attach" {
+  count      = var.enabled && var.iam_role_arn == null ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
+  role       = aws_iam_role.ab_role[0].name
+}
