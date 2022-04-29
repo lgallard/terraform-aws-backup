@@ -1,3 +1,9 @@
+## 0.15.0 (April 29, 2022)
+
+ENHANCEMENTS:
+
+* Add constrainst for Terraform & AWS provider versions
+
 ## 0.14.0 (March 3, 2022)
 
 ENHANCEMENTS:
