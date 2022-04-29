@@ -2,8 +2,8 @@
 
 FIXES:
 
-* Add constrainst for Terraform & AWS provider versions
-* Remove provider contrainst in examples
+* Add constraints for Terraform & AWS provider versions
+* Remove provider constraints in examples
 
 ## 0.14.0 (March 3, 2022)
 
