@@ -1,3 +1,9 @@
+## 0.16.0 (July 18, 2022)
+
+ENHANCEMENTS:
+
+* Add support for any AWS partitions (thanks @renaudhager)
+
 ## 0.15.0 (April 29, 2022)
 
 FIXES:
