@@ -1,3 +1,5 @@
+data "aws_partition" "current" {}
+
 resource "aws_iam_role" "ab_role" {
   count              = var.enabled && var.iam_role_arn == null ? 1 : 0
   name               = "aws-backup-plan-${var.plan_name}-role"
@@ -21,13 +23,13 @@ POLICY
 
 resource "aws_iam_role_policy_attachment" "ab_policy_attach" {
   count      = var.enabled && var.iam_role_arn == null ? 1 : 0
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
   role       = aws_iam_role.ab_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "ab_backup_s3_policy_attach" {
   count      = var.enabled && var.iam_role_arn == null ? 1 : 0
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"
   role       = aws_iam_role.ab_role[0].name
 }
 
@@ -67,12 +69,12 @@ resource "aws_iam_role_policy_attachment" "ab_tag_policy_attach" {
 # Restores policy
 resource "aws_iam_role_policy_attachment" "ab_restores_policy_attach" {
   count      = var.enabled && var.iam_role_arn == null ? 1 : 0
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
   role       = aws_iam_role.ab_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "ab_restores_s3_policy_attach" {
   count      = var.enabled && var.iam_role_arn == null ? 1 : 0
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
   role       = aws_iam_role.ab_role[0].name
 }
