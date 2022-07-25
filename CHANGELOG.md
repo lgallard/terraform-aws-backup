@@ -1,3 +1,9 @@
+## 0.17.0 (July 24, 2022)
+
+ENHANCEMENTS:
+
+* Update aws provider constraint (Thanks @cloudboyd)
+
 ## 0.16.0 (July 18, 2022)
 
 ENHANCEMENTS:
