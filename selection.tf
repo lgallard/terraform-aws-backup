@@ -1,5 +1,4 @@
 resource "aws_backup_selection" "ab_selection" {
-
   count = var.enabled ? length(local.selections) : 0
 
   iam_role_arn = var.iam_role_arn != null ? var.iam_role_arn : aws_iam_role.ab_role[0].arn
@@ -68,6 +67,4 @@ locals {
 
   # Make sure the role can get tag resources
   depends_on = [aws_iam_role_policy_attachment.ab_tag_policy_attach]
-
-
 }
