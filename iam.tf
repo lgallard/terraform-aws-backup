@@ -4,7 +4,7 @@ data "aws_iam_policy_document" "ab_role_assume_role_policy" {
   count = var.enabled && var.iam_role_arn == null ? 1 : 0
   statement {
     actions = ["sts:AssumeRole"]
-
+    effect  = "Allow"
     principals {
       type        = "Service"
       identifiers = ["backup.amazonaws.com"]
