@@ -6,7 +6,7 @@ ENHANCEMENTS:
 * Prettier IAM policy documents
 * Update pre-commits versions
 
-Thakns @dmitrijn
+Thanks @dmitrijn
 
 ## 0.17.0 (July 24, 2022)
 
