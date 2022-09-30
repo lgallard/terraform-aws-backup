@@ -166,3 +166,9 @@ variable "iam_role_arn" {
   type        = string
   default     = null
 }
+
+variable "iam_role_name" {
+  description = "Allow to set IAM role name, otherwise use predefined default"
+  type        = string
+  default     = ""
+}
