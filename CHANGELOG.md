@@ -1,3 +1,13 @@
+## 0.18.0 (September 30, 2022)
+
+ENHANCEMENTS:
+
+* Allow to set iam role name if u use labels with specific naming otherwise use predefined
+* Prettier IAM policy documents
+* Update pre-commits versions
+
+Thakns @dmitrijn
+
 ## 0.17.0 (July 24, 2022)
 
 ENHANCEMENTS:
