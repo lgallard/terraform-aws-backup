@@ -19,6 +19,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "vault_force_delete" {
+  description = "Force delete the backup vault even if it contains recovery points"
+  type        = bool
+  default     = false
+}
+
 #
 # AWS Backup plan
 #
