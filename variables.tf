@@ -20,6 +20,33 @@ variable "tags" {
 }
 
 #
+# AWS Backup vault lock configuration
+#
+variable "locked" {
+  description = "Change to true to add a lock configuration for the backup vault"
+  type        = bool
+  default     = false
+}
+
+variable "changeable_for_days" {
+  description = "The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create a vault lock in compliance mode"
+  type        = number
+  default     = null
+}
+
+variable "max_retention_days" {
+  description = "The maximum retention period that the vault retains its recovery points"
+  type        = number
+  default     = null
+}
+
+variable "min_retention_days" {
+  description = "The minimum retention period that the vault retains its recovery points"
+  type        = number
+  default     = null
+}
+
+#
 # AWS Backup plan
 #
 variable "plan_name" {

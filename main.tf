@@ -6,6 +6,15 @@ resource "aws_backup_vault" "ab_vault" {
   tags        = var.tags
 }
 
+# AWS Backup vault lock configuration
+resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
+  count               = var.locked && var.vault_name != null ? 1 : 0
+  backup_vault_name   = var.vault_name
+  changeable_for_days = var.changeable_for_days
+  max_retention_days  = var.max_retention_days
+  min_retention_days  = var.min_retention_days
+}
+
 # AWS Backup plan
 resource "aws_backup_plan" "ab_plan" {
   count = var.enabled ? 1 : 0
