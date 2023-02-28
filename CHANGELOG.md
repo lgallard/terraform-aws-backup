@@ -2,7 +2,7 @@
 
 ENHANCEMENTS:
 
-* Add support for ´force-destroy´ flag to backup vault (Thanks @igorzi84)
+* Add support for `force-destroy` flag to backup vault (Thanks @igorzi84)
 * Add new resource `aws_backup_vault_lock_configuration` (Thanks @dhoppe)
 
 
