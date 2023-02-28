@@ -1,3 +1,11 @@
+## 0.19.0 (February 28, 2022)
+
+ENHANCEMENTS:
+
+* Add support for ´force-destroy´ flag to backup vault (Thanks @igorzi84)
+* Add new resource `aws_backup_vault_lock_configuration` (Thanks @dhoppe)
+
+
 ## 0.18.0 (September 30, 2022)
 
 ENHANCEMENTS:
