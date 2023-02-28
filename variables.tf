@@ -19,8 +19,8 @@ variable "tags" {
   default     = {}
 }
 
-variable "vault_force_delete" {
-  description = "Force delete the backup vault even if it contains recovery points"
+variable "vault_force_destroy" {
+  description = "A boolean that indicates that all recovery points stored in the vault are deleted so that the vault can be destroyed without error."
   type        = bool
   default     = false
 }
