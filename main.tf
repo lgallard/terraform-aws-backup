@@ -1,10 +1,10 @@
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
-  count        = var.enabled && var.vault_name != null ? 1 : 0
-  name         = var.vault_name
-  kms_key_arn  = var.vault_kms_key_arn
-  force_delete = var.vault_force_delete
-  tags         = var.tags
+  count         = var.enabled && var.vault_name != null ? 1 : 0
+  name          = var.vault_name
+  kms_key_arn   = var.vault_kms_key_arn
+  force_destroy = var.vault_force_destroy
+  tags          = var.tags
 }
 
 # AWS Backup vault lock configuration
