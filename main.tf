@@ -10,7 +10,7 @@ resource "aws_backup_vault" "ab_vault" {
 # AWS Backup vault lock configuration
 resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
   count               = var.locked && var.vault_name != null ? 1 : 0
-  backup_vault_name   = var.vault_name
+  backup_vault_name   = aws_backup_vault.ab_vault[0].name
   changeable_for_days = var.changeable_for_days
   max_retention_days  = var.max_retention_days
   min_retention_days  = var.min_retention_days
@@ -26,7 +26,7 @@ resource "aws_backup_plan" "ab_plan" {
     for_each = local.rules
     content {
       rule_name                = lookup(rule.value, "name", null)
-      target_vault_name        = lookup(rule.value, "target_vault_name", null) != null ? rule.value.target_vault_name : var.vault_name != null ? var.vault_name : "Default"
+      target_vault_name        = lookup(rule.value, "target_vault_name", null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
       schedule                 = lookup(rule.value, "schedule", null)
       start_window             = lookup(rule.value, "start_window", null)
       completion_window        = lookup(rule.value, "completion_window", null)

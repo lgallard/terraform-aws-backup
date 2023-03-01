@@ -39,8 +39,8 @@ data "aws_iam_policy_document" "ab_tag_policy_document" {
     effect    = "Allow"
     resources = ["*"]
     actions = [
-      "backup:TagResource",
       "backup:ListTags",
+      "backup:TagResource",
       "backup:UntagResource",
       "tag:GetResources"
     ]
