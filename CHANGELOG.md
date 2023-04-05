@@ -1,4 +1,10 @@
-## 0.19.0 (February 28, 2022)
+## 0.19.1 (April 5, 2023)
+
+FIXES:
+
+* Fix dependencies between resources (thanks @dhoppe)
+
+## 0.19.0 (February 28, 2023)
 
 ENHANCEMENTS:
 
