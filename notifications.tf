@@ -24,7 +24,7 @@ resource "aws_sns_topic_policy" "backup_events" {
 
 resource "aws_backup_vault_notifications" "backup_events" {
   count               = var.enabled && length(var.notifications) > 0 ? 1 : 0
-  backup_vault_name   = var.vault_name != null ? var.vault_name : "Default"
+  backup_vault_name   = var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
   sns_topic_arn       = lookup(var.notifications, "sns_topic_arn", null)
   backup_vault_events = lookup(var.notifications, "backup_vault_events", [])
 }
