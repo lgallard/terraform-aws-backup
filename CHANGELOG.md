@@ -2,7 +2,7 @@
 
 FIXES:
 
-* Fix incosistent plan role output (thanks @miachm)
+* Fix inconsistent plan role output (thanks @miachm)
 
 ## 0.19.1 (April 5, 2023)
 
