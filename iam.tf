@@ -51,6 +51,7 @@ resource "aws_iam_policy" "ab_tag_policy" {
   count       = var.enabled && var.iam_role_arn == null ? 1 : 0
   description = "AWS Backup Tag policy"
   policy      = data.aws_iam_policy_document.ab_tag_policy_document[0].json
+  tags        = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "ab_tag_policy_attach" {
