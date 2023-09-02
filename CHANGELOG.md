@@ -1,3 +1,9 @@
+## 0.19.3 (September 1, 2023)
+
+ENHANCEMENTS:
+
+* Add tags to `aws_iam_policy` resources
+
 ## 0.19.2 (April 28, 2023)
 
 FIXES:
