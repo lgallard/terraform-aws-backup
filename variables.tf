@@ -58,6 +58,7 @@ variable "min_retention_days" {
 variable "plan_name" {
   description = "The display name of a backup plan"
   type        = string
+  default     = null
 }
 
 # Default rule
