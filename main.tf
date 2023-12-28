@@ -18,7 +18,7 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
 
 # AWS Backup plan
 resource "aws_backup_plan" "ab_plan" {
-  count = var.enabled ? 1 : 0
+  count = var.enabled && length(local.rules) > 0 ? 1 : 0
   name  = var.plan_name
 
   # Rules
