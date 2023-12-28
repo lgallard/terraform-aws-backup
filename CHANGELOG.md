@@ -1,3 +1,9 @@
+## 0.20.0. (December 27, 2023)
+
+ENHANCEMENTS:
+
+* Add conditional for `aws_backup_plan` to avoid creation if no rules are provided (thanks @gpdenny)
+
 ## 0.19.3 (September 1, 2023)
 
 ENHANCEMENTS:
