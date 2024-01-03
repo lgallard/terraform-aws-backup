@@ -43,7 +43,7 @@ module "aws_backup_example" {
     {
       name            = "report-vault-1"
       formats         = ["CSV"]
-      s3_bucket_name  = module.s3_bucket.s3_bucket_id
+      s3_bucket_name  = "my-backup-reports""
       s3_key_prefix   = "vault-1/"
       report_template = "BACKUP_JOB_REPORT"
     }
