@@ -206,3 +206,23 @@ variable "iam_role_name" {
   type        = string
   default     = ""
 }
+
+#
+# AWS Backup Report Plan
+#
+variable "reports" {
+  description = "The default cache behavior for this distribution."
+  type = list(object({
+    name               = string
+    description        = optional(string, null)
+    formats            = optional(list(string), null)
+    s3_bucket_name     = string
+    s3_key_prefix      = optional(string, null)
+    report_template    = string
+    accounts           = optional(list(string), null)
+    organization_units = optional(list(string), null)
+    regions            = optional(list(string), null)
+    framework_arns     = optional(list(string), [])
+  }))
+  default = []
+}
