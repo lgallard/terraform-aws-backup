@@ -1,3 +1,9 @@
+## 0.21.0. (January 5, 2024)
+
+ENHANCEMENTS:
+
+* Add backup report feature (thanks @gpdenny)
+
 ## 0.20.0. (December 27, 2023)
 
 ENHANCEMENTS:

@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "bucket_policy" {
   statement {
     principals {
       type        = "AWS"
-      identifiers = [aws_iam_service_linked_role.backup_role.backup_role.arn]
+      identifiers = [aws_iam_service_linked_role.backup_role.arn]
     }
 
     actions = [
