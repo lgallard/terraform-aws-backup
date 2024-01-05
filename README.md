@@ -155,7 +155,7 @@ module "aws_backup_example" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.31.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.15.0 |
 
 ## Modules
 
@@ -166,6 +166,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_backup_plan.ab_plan](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
+| [aws_backup_report_plan.ab_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_report_plan) | resource |
 | [aws_backup_selection.ab_selection](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
 | [aws_backup_vault.ab_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault) | resource |
 | [aws_backup_vault_lock_configuration.ab_vault_lock_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_lock_configuration) | resource |
@@ -196,6 +197,7 @@ No modules.
 | <a name="input_min_retention_days"></a> [min\_retention\_days](#input\_min\_retention\_days) | The minimum retention period that the vault retains its recovery points | `number` | `null` | no |
 | <a name="input_notifications"></a> [notifications](#input\_notifications) | Notification block which defines backup vault events and the SNS Topic ARN to send AWS Backup notifications to. Leave it empty to disable notifications | `any` | `{}` | no |
 | <a name="input_plan_name"></a> [plan\_name](#input\_plan\_name) | The display name of a backup plan | `string` | `null` | no |
+| <a name="input_reports"></a> [reports](#input\_reports) | The default cache behavior for this distribution. | <pre>list(object({<br>    name               = string<br>    description        = optional(string, null)<br>    formats            = optional(list(string), null)<br>    s3_bucket_name     = string<br>    s3_key_prefix      = optional(string, null)<br>    report_template    = string<br>    accounts           = optional(list(string), null)<br>    organization_units = optional(list(string), null)<br>    regions            = optional(list(string), null)<br>    framework_arns     = optional(list(string), [])<br>  }))</pre> | `[]` | no |
 | <a name="input_rule_completion_window"></a> [rule\_completion\_window](#input\_rule\_completion\_window) | The amount of time AWS Backup attempts a backup before canceling the job and returning an error | `number` | `null` | no |
 | <a name="input_rule_copy_action_destination_vault_arn"></a> [rule\_copy\_action\_destination\_vault\_arn](#input\_rule\_copy\_action\_destination\_vault\_arn) | An Amazon Resource Name (ARN) that uniquely identifies the destination backup vault for the copied backup. | `string` | `null` | no |
 | <a name="input_rule_copy_action_lifecycle"></a> [rule\_copy\_action\_lifecycle](#input\_rule\_copy\_action\_lifecycle) | The lifecycle defines when a protected resource is copied over to a backup vault and when it expires. | `map(any)` | `{}` | no |
