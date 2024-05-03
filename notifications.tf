@@ -1,5 +1,5 @@
 data "aws_iam_policy_document" "backup_events" {
-  count = var.enabled && length(var.notifications) > 0 ? 1 : 0
+  count = var.enabled && !var.notifications_disable_sns_policy && length(var.notifications) > 0 ? 1 : 0
   statement {
     actions = [
       "SNS:Publish",
@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "backup_events" {
 }
 
 resource "aws_sns_topic_policy" "backup_events" {
-  count  = var.enabled && length(var.notifications) > 0 ? 1 : 0
+  count  = var.enabled && !var.notifications_disable_sns_policy && length(var.notifications) > 0 ? 1 : 0
   arn    = lookup(var.notifications, "sns_topic_arn", null)
   policy = data.aws_iam_policy_document.backup_events[0].json
 }
