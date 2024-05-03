@@ -192,6 +192,12 @@ variable "notifications" {
   default     = {}
 }
 
+variable "notifications_disable_sns_policy" {
+  description = "Disable the creation of the SNS policy. Enable if you need to manage the policy elsewhere."
+  type        = bool
+  default     = false
+}
+
 #
 # IAM
 #
