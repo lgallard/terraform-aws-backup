@@ -1,3 +1,9 @@
+## 0.22.0. (May 3, 2024)
+
+ENHANCEMENTS:
+
+* Add input variable to opt-out of SNS policy (thanks @henriknj)
+
 ## 0.21.0. (January 5, 2024)
 
 ENHANCEMENTS:
