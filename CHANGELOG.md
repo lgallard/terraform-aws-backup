@@ -1,3 +1,31 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## 0.23.0. (March 2, 2025)
+
+### Added
+- Added terraform-docs template for organization_backup_policy example
+- Added terraform-docs template for selection_by_conditions example
+- Added terraform-docs template for selection_by_tags example
+- Added SNS topic for backup notifications in multiple examples
+
+### Changed
+- Updated organization_backup_policy example to use standard backup configuration
+- Updated selection_by_conditions example to use STRINGEQUALS for tag conditions
+- Updated selection_by_tags example with proper tag-based selection
+- Modified complete_audit_framework example to use direct configuration instead of variables
+- Simplified simple_plan_using_variables example by removing unused variables
+- Improved documentation across all examples with detailed descriptions and usage instructions
+
+### Fixed
+- Fixed vault retention settings in multiple examples
+- Fixed selection tags format to comply with AWS Backup requirements
+- Fixed recovery point tags configuration
+- Fixed organization backup policy configuration
+- Removed unused variables to address TFLint warnings
+- Fixed copy actions configuration to prevent null value errors
+
 ## 0.22.0. (May 3, 2024)
 
 ENHANCEMENTS:

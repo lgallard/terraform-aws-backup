@@ -13,8 +13,9 @@ data "aws_iam_policy_document" "ab_role_assume_role_policy" {
 }
 
 resource "aws_iam_role" "ab_role" {
-  count              = var.enabled && var.iam_role_arn == null ? 1 : 0
-  name               = var.iam_role_name == "" ? "aws-backup-plan-${var.plan_name}-role" : var.iam_role_name
+  count = var.enabled && var.iam_role_arn == null ? 1 : 0
+
+  name               = coalesce(var.iam_role_name, "aws-backup-${var.vault_name != null ? var.vault_name : "default"}")
   assume_role_policy = data.aws_iam_policy_document.ab_role_assume_role_policy[0].json
 
   tags = var.tags

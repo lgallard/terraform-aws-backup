@@ -5,135 +5,88 @@ resource "aws_sns_topic" "backup_vault_notifications" {
 
 # AWS Backup
 module "aws_backup_example" {
+  source = "../.."
 
-  source = "lgallard/backup/aws"
+  # Vault configuration
+  vault_name          = "complete_vault"
+  vault_kms_key_arn   = "arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+  vault_force_destroy = true
+  min_retention_days  = 7
+  max_retention_days  = 360
+  locked              = true
+  changeable_for_days = 3
 
-  # Vault
-  vault_name = "vault-3"
+  # Backup plan configuration
+  plan_name = "complete_backup_plan"
 
-  # Plan
-  plan_name = "complete-plan"
-
-  # Notifications
-  notifications = {
-    sns_topic_arn       = aws_sns_topic.backup_vault_notifications.arn
-    backup_vault_events = ["BACKUP_JOB_STARTED", "BACKUP_JOB_COMPLETED", "BACKUP_JOB_FAILED", "RESTORE_JOB_COMPLETED"]
-  }
-
-  # Multiple rules using a list of maps
+  # Backup rules configuration
   rules = [
     {
-      name                     = "rule-1"
-      schedule                 = "cron(0 12 * * ? *)"
-      target_vault_name        = null
-      start_window             = 120
-      completion_window        = 360
-      enable_continuous_backup = true
+      name                     = "rule_1"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
-        cold_storage_after = 0
-        delete_after       = 30
-      },
+        cold_storage_after = 30
+        delete_after       = 180
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+      }
       copy_actions = [
         {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
           lifecycle = {
-            cold_storage_after = 0
-            delete_after       = 90
-          },
-          destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
-        },
-        {
-          lifecycle = {
-            cold_storage_after = 0
-            delete_after       = 90
-          },
-          destination_vault_arn = "arn:aws:backup:us-east-2:123456789101:backup-vault:Default"
-        },
-      ]
-      recovery_point_tags = {
-        Environment = "production"
-      }
-    },
-    {
-      name                = "rule-2"
-      schedule            = "cron(0 7 * * ? *)"
-      target_vault_name   = "Default"
-      schedule            = null
-      start_window        = 120
-      completion_window   = 360
-      lifecycle           = {}
-      copy_action         = []
-      recovery_point_tags = {}
-    },
-  ]
-
-  # Multiple selections
-  #  - Selection-1: By resources and tags
-  #  - Selection-2: Only by resources
-  #  - Selection-3: By resources and conditions
-  selections = [
-    {
-      name          = "selection-1"
-      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
-      not_resources = []
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "production"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
+            cold_storage_after = 30
+            delete_after       = 180
+          }
         }
       ]
     },
     {
-      name      = "selection-2"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"]
-    },
-    {
-      name          = "selection-3"
-      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table3"]
-      not_resources = []
-      conditions = {
-        string_equals = [
-          {
-            key   = "aws:ResourceTag/Component"
-            value = "rds"
-          }
-          ,
-          {
-            key   = "aws:ResourceTag/Project"
-            value = "Project1"
-          }
-        ]
-        string_like = [
-          {
-            key   = "aws:ResourceTag/Application"
-            value = "app*"
-          }
-        ]
-        string_not_equals = [
-          {
-            key   = "aws:ResourceTag/Backup"
-            value = "false"
-          }
-        ]
-        string_not_like = [
-          {
-            key   = "aws:ResourceTag/Environment"
-            value = "test*"
-          }
-        ]
+      name                     = "rule_2"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 30
+        delete_after       = 360
       }
-    },
+      recovery_point_tags = {
+        Environment = "prod"
+      }
+      copy_actions = [
+        {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 360
+          }
+        }
+      ]
+    }
+  ]
+
+  # Backup selection configuration
+  selections = [
+    {
+      name = "complete_selection"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Environment"
+        value = "prod"
+      }
+      resources = [
+        "arn:aws:dynamodb:us-west-2:123456789012:table/my-table",
+        "arn:aws:ec2:us-west-2:123456789012:volume/vol-12345678"
+      ]
+    }
   ]
 
   tags = {
-    Owner       = "devops"
-    Environment = "production"
-    Terraform   = true
+    Environment = "prod"
+    Project     = "complete_backup"
   }
-
 }

@@ -1,70 +1,93 @@
 resource "aws_backup_selection" "ab_selection" {
-  count = var.enabled ? length(local.selections) : 0
+  count = var.enabled && var.selection_name != null ? 1 : 0
 
-  iam_role_arn = var.iam_role_arn != null ? var.iam_role_arn : aws_iam_role.ab_role[0].arn
-  name         = lookup(element(local.selections, count.index), "name", null)
+  iam_role_arn = var.iam_role_arn == null ? aws_iam_role.ab_role[0].arn : var.iam_role_arn
+  name         = var.selection_name
   plan_id      = aws_backup_plan.ab_plan[0].id
 
-  resources     = lookup(element(local.selections, count.index), "resources", null)
-  not_resources = lookup(element(local.selections, count.index), "not_resources", null)
+  resources     = var.selection_resources
+  not_resources = var.selection_not_resources
+
+  dynamic "condition" {
+    for_each = var.selection_conditions
+    content {
+      string_equals {
+        key   = condition.key
+        value = condition.value
+      }
+    }
+  }
 
   dynamic "selection_tag" {
-    for_each = length(lookup(element(local.selections, count.index), "selection_tags", [])) == 0 ? [] : lookup(element(local.selections, count.index), "selection_tags", [])
+    for_each = var.selection_tags
     content {
-      type  = lookup(selection_tag.value, "type", null)
-      key   = lookup(selection_tag.value, "key", null)
-      value = lookup(selection_tag.value, "value", null)
+      type  = try(selection_tag.value.type, null)
+      key   = try(selection_tag.value.key, null)
+      value = try(selection_tag.value.value, null)
     }
   }
 
-  condition {
-    dynamic "string_equals" {
-      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_equals", [])
-      content {
-        key   = lookup(string_equals.value, "key", null)
-        value = lookup(string_equals.value, "value", null)
-      }
-    }
-    dynamic "string_like" {
-      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_like", [])
-      content {
-        key   = lookup(string_like.value, "key", null)
-        value = lookup(string_like.value, "value", null)
-      }
-    }
-    dynamic "string_not_equals" {
-      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_equals", [])
-      content {
-        key   = lookup(string_not_equals.value, "key", null)
-        value = lookup(string_not_equals.value, "value", null)
-      }
-    }
-    dynamic "string_not_like" {
-      for_each = lookup(lookup(element(local.selections, count.index), "conditions", {}), "string_not_like", [])
-      content {
-        key   = lookup(string_not_like.value, "key", null)
-        value = lookup(string_not_like.value, "value", null)
-      }
-    }
-  }
+  # Make sure the IAM role is ready before creating the selection
+  depends_on = [
+    aws_iam_role.ab_role,
+    aws_iam_role_policy_attachment.ab_policy_attach,
+    aws_iam_role_policy_attachment.ab_backup_s3_policy_attach,
+    aws_iam_role_policy_attachment.ab_tag_policy_attach,
+    aws_iam_role_policy_attachment.ab_restores_policy_attach,
+    aws_iam_role_policy_attachment.ab_restores_s3_policy_attach
+  ]
 }
 
 locals {
+  # Convert selections to map format
+  selections_map = {
+    for k, v in try(
+      # If it's already a map, use it
+      tomap(var.selections),
+      # If it's a list, convert it to a map
+      { for idx, selection in try(tolist(var.selections), []) :
+        tostring(coalesce(try(selection.name, null), idx)) => selection
+      }
+    ) : k => v if var.enabled
+  }
+}
 
-  # Selection
-  selection = var.selection_name == null ? [] : [
-    {
-      name           = var.selection_name
-      resources      = var.selection_resources
-      not_resources  = var.selection_not_resources
-      conditions     = var.selection_conditions
-      selection_tags = var.selection_tags
+# Create additional selections from the selections variable
+resource "aws_backup_selection" "ab_selections" {
+  for_each = local.selections_map
+
+  iam_role_arn = var.iam_role_arn == null ? aws_iam_role.ab_role[0].arn : var.iam_role_arn
+  name         = each.key
+  plan_id      = aws_backup_plan.ab_plan[0].id
+
+  resources     = try(each.value.resources, [])
+  not_resources = try(each.value.not_resources, [])
+
+  dynamic "condition" {
+    for_each = try(each.value.conditions, {})
+    content {
+      string_equals {
+        key   = condition.key
+        value = condition.value
+      }
     }
+  }
+
+  dynamic "selection_tag" {
+    for_each = try(each.value.selection_tags, [])
+    content {
+      type  = try(selection_tag.value.type, null)
+      key   = try(selection_tag.value.key, null)
+      value = try(selection_tag.value.value, null)
+    }
+  }
+
+  depends_on = [
+    aws_iam_role.ab_role,
+    aws_iam_role_policy_attachment.ab_policy_attach,
+    aws_iam_role_policy_attachment.ab_backup_s3_policy_attach,
+    aws_iam_role_policy_attachment.ab_tag_policy_attach,
+    aws_iam_role_policy_attachment.ab_restores_policy_attach,
+    aws_iam_role_policy_attachment.ab_restores_s3_policy_attach
   ]
-
-  # Selections
-  selections = concat(local.selection, var.selections)
-
-  # Make sure the role can get tag resources
-  depends_on = [aws_iam_role_policy_attachment.ab_tag_policy_attach]
 }

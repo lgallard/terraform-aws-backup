@@ -1,10 +1,20 @@
 terraform {
-  required_version = ">= 0.12.31"
+  required_version = ">= 1.0.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 4.26"
+      version = ">= 4.0.0"
+    }
+  }
+}
+
+provider "aws" {
+  # Configuration options
+  default_tags {
+    tags = {
+      Terraform   = "true"
+      Environment = terraform.workspace
     }
   }
 }
