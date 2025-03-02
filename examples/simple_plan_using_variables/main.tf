@@ -1,6 +1,6 @@
 module "aws_backup_example" {
 
-  source = "lgallard/backup/aws"
+  source = "../.."
 
   # Vault
   vault_name = "vault-0"

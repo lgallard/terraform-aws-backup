@@ -1,6 +1,6 @@
 module "aws_backup_example" {
 
-  source = "lgallard/backup/aws"
+  source = "../.."
 
   # Vault
   vault_name = "vault-1"
@@ -53,7 +53,8 @@ module "aws_backup_example" {
 }
 
 module "s3_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.6.0"
 
   bucket        = "my-backup-reports"
   attach_policy = true

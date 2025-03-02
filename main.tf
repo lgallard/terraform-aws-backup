@@ -1,15 +1,24 @@
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
-  count         = var.enabled && var.vault_name != null ? 1 : 0
+  count = var.enabled && var.vault_name != null ? 1 : 0
+
   name          = var.vault_name
   kms_key_arn   = var.vault_kms_key_arn
   force_destroy = var.vault_force_destroy
   tags          = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = !var.locked || var.min_retention_days == null || var.max_retention_days == null || var.min_retention_days <= var.max_retention_days
+      error_message = "When vault locking is enabled, min_retention_days must be less than or equal to max_retention_days."
+    }
+  }
 }
 
 # AWS Backup vault lock configuration
 resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
-  count               = var.locked && var.vault_name != null ? 1 : 0
+  count = var.locked && var.vault_name != null ? 1 : 0
+
   backup_vault_name   = aws_backup_vault.ab_vault[0].name
   changeable_for_days = var.changeable_for_days
   max_retention_days  = var.max_retention_days
@@ -19,41 +28,41 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
 # AWS Backup plan
 resource "aws_backup_plan" "ab_plan" {
   count = var.enabled && length(local.rules) > 0 ? 1 : 0
-  name  = var.plan_name
+  name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
 
   # Rules
   dynamic "rule" {
     for_each = local.rules
     content {
-      rule_name                = lookup(rule.value, "name", null)
-      target_vault_name        = lookup(rule.value, "target_vault_name", null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
-      schedule                 = lookup(rule.value, "schedule", null)
-      start_window             = lookup(rule.value, "start_window", null)
-      completion_window        = lookup(rule.value, "completion_window", null)
-      enable_continuous_backup = lookup(rule.value, "enable_continuous_backup", null)
-      recovery_point_tags      = length(lookup(rule.value, "recovery_point_tags", {})) == 0 ? var.tags : lookup(rule.value, "recovery_point_tags")
+      rule_name                = try(rule.value.name, null)
+      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
+      schedule                 = try(rule.value.schedule, null)
+      start_window             = try(rule.value.start_window, null)
+      completion_window        = try(rule.value.completion_window, null)
+      enable_continuous_backup = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags      = length(try(rule.value.recovery_point_tags, {})) == 0 ? var.tags : rule.value.recovery_point_tags
 
       # Lifecycle
       dynamic "lifecycle" {
-        for_each = length(lookup(rule.value, "lifecycle", {})) == 0 ? [] : [lookup(rule.value, "lifecycle", {})]
+        for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
         content {
-          cold_storage_after = lookup(lifecycle.value, "cold_storage_after", 0)
-          delete_after       = lookup(lifecycle.value, "delete_after", 90)
+          cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
+          delete_after       = try(lifecycle.value.delete_after, 90)
         }
       }
 
       # Copy action
       dynamic "copy_action" {
-        for_each = lookup(rule.value, "copy_actions", [])
+        for_each = try(rule.value.copy_actions, [])
         content {
-          destination_vault_arn = lookup(copy_action.value, "destination_vault_arn", null)
+          destination_vault_arn = try(copy_action.value.destination_vault_arn, null)
 
           # Copy Action Lifecycle
           dynamic "lifecycle" {
-            for_each = length(lookup(copy_action.value, "lifecycle", {})) == 0 ? [] : [lookup(copy_action.value, "lifecycle", {})]
+            for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
             content {
-              cold_storage_after = lookup(lifecycle.value, "cold_storage_after", 0)
-              delete_after       = lookup(lifecycle.value, "delete_after", 90)
+              cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
+              delete_after       = try(lifecycle.value.delete_after, 90)
             }
           }
         }
@@ -77,10 +86,22 @@ resource "aws_backup_plan" "ab_plan" {
 
   # First create the vault if needed
   depends_on = [aws_backup_vault.ab_vault]
+
+  lifecycle {
+    precondition {
+      condition     = !var.windows_vss_backup || can(regex(".*EC2.*", join(",", local.selection_resources)))
+      error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup."
+    }
+
+    # Add lifecycle validations at the plan level
+    precondition {
+      condition     = local.lifecycle_validations
+      error_message = "In one or more rules, cold_storage_after must be less than or equal to delete_after."
+    }
+  }
 }
 
 locals {
-
   # Rule
   rule = var.rule_name == null ? [] : [
     {
@@ -101,4 +122,22 @@ locals {
   # Rules
   rules = concat(local.rule, var.rules)
 
+  # Helper for VSS validation
+  selection_resources = flatten([
+    for selection in var.backup_selections : try(selection.resources, [])
+  ])
+
+  # Lifecycle validations
+  lifecycle_validations = alltrue([
+    for rule in local.rules : (
+      length(try(rule.lifecycle, {})) == 0 ? true :
+      try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)
+    ) &&
+    alltrue([
+      for copy_action in try(rule.copy_actions, []) : (
+        length(try(copy_action.lifecycle, {})) == 0 ? true :
+        try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90)
+      )
+    ])
+  ])
 }

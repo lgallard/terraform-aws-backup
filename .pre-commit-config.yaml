@@ -2,15 +2,30 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.5.0  # Updated to latest stable version
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-added-large-files
+        args: ['--maxkb=500']  # Set specific file size limit
       - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']  # Avoid false positives
+      - id: check-yaml  # Added YAML validation
+      - id: check-merge-conflict  # Added merge conflict detection
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.75.0 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
+    rev: v1.83.5  # Updated to latest stable version
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
+        args:
+          - --tf-init-args=-upgrade  # Ensure latest provider versions
       - id: terraform_docs
+        args:
+          - --args=--config=.terraform-docs.yml  # Use config file for consistent documentation
+      - id: terraform_tflint  # Added terraform linter
+        args:
+          - --args=--config=.tflint.hcl
+#      - id: terraform_checkov  # Added security scanner
+#        args:
+#          - --args=--quiet
+#          - --args=--skip-check CKV_AWS_1  # Skip specific rules if needed
