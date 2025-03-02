@@ -1,4 +1,4 @@
-![AWS Backup](https://github.com/lgallard/terraform-aws-backup/raw/master/images/aws-backup.png)
+![Terraform](https://lgallardo.com/images/terraform.jpg)
 
 # terraform-aws-backup
 
