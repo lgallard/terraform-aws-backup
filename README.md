@@ -1,3 +1,4 @@
+<!-- BEGIN_TF_DOCS -->
 ![Terraform](https://lgallardo.com/images/terraform.jpg)
 
 # terraform-aws-backup
@@ -31,13 +32,23 @@ You can use this module to create a simple plan using the module's `rule_*` vari
 Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
 ### Simple plan
-```hcl
-module "aws_backup_example" {
 
+```hcl
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
+module "aws_backup_example" {
   source = "../.."
 
   # Vault
   vault_name = "vault-3"
+
+  # Vault lock configuration
+  min_retention_days = 7  # Minimum retention of 7 days
+  max_retention_days = 90 # Maximum retention of 90 days
 
   # Plan
   plan_name = "simple-plan"
@@ -46,28 +57,29 @@ module "aws_backup_example" {
   rules = [
     {
       name              = "rule-1"
-      schedule         = "cron(0 12 * * ? *)"
-      target_vault_name = null
-      start_window     = 120
+      schedule          = "cron(0 12 * * ? *)"
+      start_window      = 120
       completion_window = 360
       lifecycle = {
         cold_storage_after = 0
-        delete_after      = 90
-      },
+        delete_after       = 90
+      }
+      copy_actions = []
       recovery_point_tags = {
         Environment = "prod"
       }
     },
     {
-      name                = "rule-2"
-      target_vault_name   = "Default"
-      schedule           = "cron(0 7 * * ? *)"
-      start_window       = 120
-      completion_window   = 360
+      name              = "rule-2"
+      target_vault_name = "Default"
+      schedule          = "cron(0 7 * * ? *)"
+      start_window      = 120
+      completion_window = 360
       lifecycle = {
         cold_storage_after = 0
-        delete_after      = 90
-      },
+        delete_after       = 90
+      }
+      copy_actions = []
       recovery_point_tags = {
         Environment = "prod"
       }
@@ -75,8 +87,6 @@ module "aws_backup_example" {
   ]
 
   # Multiple selections
-  #  - Selection-1: By resources and tags
-  #  - Selection-2: Only by tags
   selections = [
     {
       name = "selection-1"
@@ -89,26 +99,6 @@ module "aws_backup_example" {
           type  = "STRINGEQUALS"
           key   = "Environment"
           value = "prod"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
-        }
-      ]
-    },
-    {
-      name = "selection-2"
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "prod"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
         }
       ]
     }
@@ -123,25 +113,34 @@ module "aws_backup_example" {
 ```
 
 ### Simple plan using variables
-```hcl
-module "aws_backup_example" {
 
+```hcl
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
+module "aws_backup_example" {
   source = "../.."
 
   # Vault
   vault_name = "vault-1"
 
-  # Plan
-  plan_name = "complete-plan"
+  # Vault lock configuration
+  min_retention_days = 7
+  max_retention_days = 120
 
-  # Rules
-  rule_name                = "rule-1"
-  rule_schedule           = "cron(0 12 * * ? *)"
-  rule_start_window       = 120
-  rule_completion_window   = 360
+  # Plan
+  plan_name = "simple-plan"
+
+  # Rule
+  rule_name                         = "rule-1"
+  rule_schedule                     = "cron(0 12 * * ? *)"
+  rule_start_window                 = 120
+  rule_completion_window            = 360
   rule_lifecycle_cold_storage_after = 30
   rule_lifecycle_delete_after       = 120
-
   rule_recovery_point_tags = {
     Environment = "prod"
   }
@@ -152,7 +151,6 @@ module "aws_backup_example" {
     "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
     "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
   ]
-
   selection_tags = [
     {
       type  = "STRINGEQUALS"
@@ -161,267 +159,234 @@ module "aws_backup_example" {
     }
   ]
 
+  # Tags
   tags = {
     Owner       = "backup team"
     Environment = "prod"
     Terraform   = true
   }
-
 }
 ```
+
 
 ### Complete plan
-```hcl
-module "aws_backup_example" {
 
+```hcl
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
+module "aws_backup_example" {
   source = "../.."
 
-  # Vault
-  vault_name = "vault-2"
+  # Vault configuration
+  vault_name          = "complete_vault"
+  vault_kms_key_arn   = "arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+  vault_force_destroy = true
+  min_retention_days  = 7
+  max_retention_days  = 360
+  locked              = true
+  changeable_for_days = 3
 
-  # Plan
-  plan_name = "complete-plan"
+  # Backup plan configuration
+  plan_name = "complete_backup_plan"
 
-  # Multiple rules using a list of maps
+  # Backup rules configuration
   rules = [
     {
-      name                = "rule-1"
-      schedule           = "cron(0 12 * * ? *)"
-      target_vault_name   = null
-      start_window       = 120
-      completion_window   = 360
+      name                     = "rule_1"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
-        cold_storage_after = 0
-        delete_after      = 90
-      },
+        cold_storage_after = 30
+        delete_after       = 180
+      }
       recovery_point_tags = {
         Environment = "prod"
-      }
-    },
-    {
-      name                = "rule-2"
-      target_vault_name   = "Default"
-      schedule           = "cron(0 7 * * ? *)"
-      start_window       = 120
-      completion_window   = 360
-      lifecycle = {
-        cold_storage_after = 0
-        delete_after      = 90
-      },
-      recovery_point_tags = {
-        Environment = "prod"
-      }
-    }
-  ]
-
-  # Multiple selections
-  #  - Selection-1: By resources and tags
-  #  - Selection-2: Only by tags
-  selections = [
-    {
-      name = "selection-1"
-      resources = [
-        "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
-        "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
-      ]
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "prod"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
-        }
-      ]
-    },
-    {
-      name = "selection-2"
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "prod"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Owner"
-          value = "production"
-        }
-      ]
-    }
-  ]
-
-  tags = {
-    Owner       = "backup team"
-    Environment = "prod"
-    Terraform   = true
-  }
-}
-```
-
-### Simple plan using AWS Organizations backup policies
-```hcl
-# Required variables
-variable "organization_root_id" {
-  description = "The ID of the organization root or OU where the policy will be applied"
-  type        = string
-}
-
-variable "management_account_id" {
-  description = "The ID of the management account"
-  type        = string
-}
-
-module "aws_backup_example" {
-  source = "../.."
-
-  # Enable Organization backup policies
-  enable_org_policy = true
-  org_policy_name   = "backup-policy"
-  org_policy_target_id = var.organization_root_id
-
-  backup_policies = {
-    critical_systems = {
-      target_vault_name = "critical-systems-vault"
-      schedule          = "cron(0 5 ? * * *)" # Daily at 5 AM
-      start_window     = 60
-      completion_window = 120
-      lifecycle = {
-        delete_after       = 365
-        cold_storage_after = 90
-      }
-      enable_continuous_backup = true
-      recovery_point_tags = {
-        Environment = "Production"
-        Criticality = "High"
       }
       copy_actions = [
         {
-          destination_vault_arn = "arn:aws:backup:us-east-1:${var.management_account_id}:backup-vault:dr-vault"
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
           lifecycle = {
-            delete_after = 365
+            cold_storage_after = 30
+            delete_after       = 180
+          }
+        }
+      ]
+    },
+    {
+      name                     = "rule_2"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 30
+        delete_after       = 360
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+      }
+      copy_actions = [
+        {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 360
           }
         }
       ]
     }
-    standard_systems = {
-      target_vault_name = "standard-systems-vault"
-      schedule          = "cron(0 1 ? * * *)" # Daily at 1 AM
-      start_window      = 120
-      completion_window = 360
-      lifecycle = {
-        delete_after = 90
-      }
-      recovery_point_tags = {
-        Environment = "Production"
-        Criticality = "Standard"
-      }
-    }
-  }
+  ]
 
-  # Selection configuration using the correct structure
+  # Backup selection configuration
   selections = [
     {
-      name = "critical-databases"
+      name = "complete_selection"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Environment"
+        value = "prod"
+      }
       resources = [
-        "arn:aws:rds:*:*:db:*",
-        "arn:aws:dynamodb:*:*:table/*"
+        "arn:aws:dynamodb:us-west-2:123456789012:table/my-table",
+        "arn:aws:ec2:us-west-2:123456789012:volume/vol-12345678"
       ]
-      selection_tags = [
+    }
+  ]
+
+  tags = {
+    Environment = "prod"
+    Project     = "complete_backup"
+  }
+}
+```
+
+
+### Simple plan using AWS Organizations backup policies
+
+```hcl
+module "aws_backup_example" {
+  source = "../.."
+
+  # Backup Plan configuration
+  plan_name = "organization_backup_plan"
+
+  # Vault configuration
+  vault_name         = "organization_backup_vault"
+  min_retention_days = 7
+  max_retention_days = 365
+
+  rules = [
+    {
+      name                     = "critical_systems"
+      target_vault_name        = "critical_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 30
+        delete_after       = 365
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+        Criticality = "high"
+      }
+      copy_actions = [
         {
-          type  = "STRINGEQUALS"
-          key   = "Backup"
-          value = "critical"
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 365
+          }
         }
       ]
     },
     {
-      name = "production-volumes"
-      resources = ["arn:aws:ec2:*:*:volume/*"]
-      selection_tags = [
+      name                     = "standard_systems"
+      target_vault_name        = "standard_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 0
+        delete_after       = 90
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+        Criticality = "standard"
+      }
+      copy_actions = [
         {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "Production"
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 90
+          }
         }
       ]
     }
   ]
 
-  advanced_backup_settings = {
-    ec2 = {
-      windows_vss = "enabled"
+  # Selection configuration
+  selections = [
+    {
+      name = "critical_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "high"
+      }
+    },
+    {
+      name = "standard_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "standard"
+      }
     }
-  }
-
-  backup_regions = [
-    "us-west-2",
-    "us-east-1"
   ]
 
   tags = {
-    Environment = "production"
-    Management  = "organizations"
+    Environment = "prod"
+    Project     = "organization_backup"
   }
 }
 ```
 
 ### AWS Backup Audit Manager Framework
+
 ```hcl
+# AWS Backup
 module "aws_backup_example" {
   source = "../.."
 
-  # Enable Audit Manager Framework
+  # Audit Framework
   audit_framework = {
     create      = true
-    name        = "backup-framework"
-    description = "AWS Backup Audit Manager Framework"
+    name        = "exampleFramework"
+    description = "this is an example framework"
+
     controls = [
+      # Vault lock check - ensures resources are protected by vault lock
       {
-        name            = "BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = "35"
+        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK"
+        parameter_name  = "maxRetentionDays"
+        parameter_value = "100" # Maximum retention period allowed by vault lock
       },
-      {
-        name            = "BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK"
-        parameter_name  = "requiredFrequencyUnit"
-        parameter_value = "hours"
-      },
-      {
-        name            = "BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = "35"
-      },
-      {
-        name            = "BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK"
-        parameter_name  = "requiredFrequencyValue"
-        parameter_value = "24"
-      },
-      {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "resourceType"
-        parameter_value = "EBS"
-      },
-      {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "resourceType"
-        parameter_value = "RDS"
-      },
-      {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "resourceType"
-        parameter_value = "AURORA"
-      }
     ]
-    policy_assignment = {
-      opt_in_preference       = true
-      policy_id              = "backup-policy"
-      regions                = ["us-east-1", "us-west-2"]
-      organizational_unit_ids = ["ou-12345678"]
-    }
+  }
+
+  # Tags are now specified separately
+  tags = {
+    Name = "Example Framework"
   }
 }
 ```
@@ -476,7 +441,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_advanced_backup_settings"></a> [advanced\_backup\_settings](#input\_advanced\_backup\_settings) | Advanced backup settings by resource type | `map(map(string))` | `{}` | no |
-| <a name="input_audit_framework"></a> [audit\_framework](#input\_audit\_framework) | Configuration for AWS Backup Audit Manager framework | <pre>object({<br/>    create      = bool<br/>    name        = string<br/>    description = optional(string)<br/>    controls = list(object({<br/>      name            = string<br/>      parameter_name  = string<br/>      parameter_value = string<br/>    }))<br/>    policy_assignment = optional(object({<br/>      opt_in_preference       = bool<br/>      policy_id               = string<br/>      regions                 = list(string)<br/>      organizational_unit_ids = optional(list(string))<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controls": [],<br/>  "create": false,<br/>  "description": null,<br/>  "name": null,<br/>  "policy_assignment": null<br/>}</pre> | no |
+| <a name="input_audit_framework"></a> [audit\_framework](#input\_audit\_framework) | Configuration for AWS Backup Audit Manager framework | <pre>object({<br/>    create      = bool<br/>    name        = string<br/>    description = optional(string)<br/>    controls = list(object({<br/>      name            = string<br/>      parameter_name  = optional(string)<br/>      parameter_value = optional(string)<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controls": [],<br/>  "create": false,<br/>  "description": null,<br/>  "name": null<br/>}</pre> | no |
 | <a name="input_backup_policies"></a> [backup\_policies](#input\_backup\_policies) | Map of backup policies to create | <pre>map(object({<br/>    target_vault_name = string<br/>    schedule          = string<br/>    start_window      = number<br/>    completion_window = number<br/>    lifecycle = object({<br/>      delete_after       = number<br/>      cold_storage_after = optional(number)<br/>    })<br/>    recovery_point_tags      = optional(map(string))<br/>    copy_actions             = optional(list(map(string)))<br/>    enable_continuous_backup = optional(bool)<br/>  }))</pre> | `{}` | no |
 | <a name="input_backup_regions"></a> [backup\_regions](#input\_backup\_regions) | List of regions where backups should be created | `list(string)` | `[]` | no |
 | <a name="input_backup_selections"></a> [backup\_selections](#input\_backup\_selections) | Map of backup selections | <pre>map(object({<br/>    resources     = optional(list(string))<br/>    not_resources = optional(list(string))<br/>    conditions    = optional(map(any))<br/>    tags          = optional(map(string))<br/>  }))</pre> | `{}` | no |
@@ -539,3 +504,4 @@ During the development of the module, the following issues were found:
 ### Error creating Backup Selection
 
 ```
+<!-- END_TF_DOCS -->
