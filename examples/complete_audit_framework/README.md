@@ -1,102 +1,127 @@
+<!-- BEGIN_TF_DOCS -->
 # Complete AWS Backup Audit Framework Example
 
-This example demonstrates a comprehensive AWS Backup Audit Framework configuration with organization-wide policy assignment, reporting, and notifications.
+This example demonstrates a comprehensive setup of AWS Backup with audit framework, controls, and reporting capabilities.
+
+## Features
+
+- Creates an AWS Backup Vault with lock configuration
+- Implements an AWS Backup Audit Framework with controls
+- Configures backup reporting with S3 bucket integration
+- Sets up SNS notifications for backup events
+- Implements comprehensive tagging strategy
 
 ## Usage
 
-To run this example you need to execute:
+```hcl
+# Create an SNS topic for backup notifications
+resource "aws_sns_topic" "backup_notifications" {
+  name = "backup_notifications"
+}
 
-```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
+module "aws_backup_example" {
+  source = "../.."
+
+  # Vault Configuration
+  vault_name     = "complete_audit_vault"
+  locked         = true
+  min_retention_days = 7    # Adding minimum retention
+  max_retention_days = 360  # Adding maximum retention
+
+  # Framework Configuration
+  audit_framework = {
+    create      = true                         # Added required create attribute
+    name        = "enterprise_audit_framework"  # Changed hyphen to underscore
+    description = "Enterprise Audit Framework for AWS Backup"
+    control_scope = {
+      tags = {
+        Environment = "prod"
+      }
+    }
+    controls = [  # Changed from map to list
+      {
+        control_name = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
+        name         = "backup_resources_protected_by_backup_plan"
+        input_parameters = [
+          {
+            parameter_name  = "requiredBackupPlanFrequencyUnit"
+            parameter_value = "hours"
+          },
+          {
+            parameter_name  = "requiredBackupPlanFrequencyValue"
+            parameter_value = "24"
+          },
+          {
+            parameter_name  = "requiredRetentionDays"
+            parameter_value = "35"
+          }
+        ]
+      }
+    ]
+  }
+
+  # Report Configuration
+  reports = [
+    {
+      name            = "audit_compliance_report"  # Changed hyphen to underscore
+      description     = "Audit compliance report for AWS Backup"
+      formats         = ["CSV", "JSON"]
+      s3_bucket_name  = "my_backup_report_bucket"  # Changed to use underscores
+      report_template = "BACKUP_JOB_REPORT"
+      accounts        = ["123456789012"]
+      regions        = ["us-west-2"]
+      framework_arns  = ["arn:aws:backup:us-west-2:123456789012:framework/enterprise_audit_framework"]  # Updated ARN to use underscore
+    }
+  ]
+
+  tags = {
+    Environment = "prod"
+    Project     = "backup_audit"  # Changed to use underscore
+  }
+}
 ```
 
-Note that this example may create resources which cost money. Run `terraform destroy` when you don't need these resources.
+## Audit Framework Configuration
 
-## Requirements
+This example configures an enterprise-level audit framework with the following components:
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.0.0 |
-| aws | >= 5.0.0 |
+### Control Scope
+- Targets resources based on environment tags
+- Applies to production workloads
 
-## Providers
+### Audit Controls
+1. **BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN**
+   - Ensures critical resources are protected by backup plans
+   - Frequency: Every 24 hours
+   - Minimum retention: 35 days
+   - Parameters configured for frequency and retention requirements
 
-| Name | Version |
-|------|---------|
-| aws | >= 5.0.0 |
-
-## Features Demonstrated
-
-This example demonstrates:
-- Comprehensive AWS Backup Audit Framework setup
-- Organization-wide policy assignment
-- Multi-region backup compliance
-- Backup reporting configuration
-- SNS notifications for backup events
-- KMS encryption for backup vault
-- Multiple audit controls with various parameters
-
-## Audit Controls Explained
-
-The example includes five comprehensive controls:
-
-1. `BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN`
-   - Ensures resources are protected by a backup plan
-   - Requires minimum 35-day retention
-
-2. `BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK`
-   - Verifies recovery points meet minimum retention period
-   - Set to 35 days in this example
-
-3. `BACKUP_RECOVERY_POINT_ENCRYPTED`
-   - Ensures all resource type backups are encrypted
-   - Applies to all supported resource types
-
-4. `BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN`
-   - Specific check for RDS resources
-   - Ensures RDS databases are included in backup plans
-
-5. `BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK`
-   - Validates backup frequency
-   - Configured for hourly checks
-
-## Organization-wide Policy
-
-The example configures organization-wide backup policies:
-- Applies to multiple AWS regions
-- Targets specific organizational units
-- Implements opt-in preference for new accounts
-
-## Reporting Configuration
-
-Demonstrates comprehensive backup reporting:
-- Multiple output formats (CSV, JSON)
-- Custom S3 bucket destination
-- Multi-account coverage
-- Multi-region reporting
-- Daily compliance reporting
+### Reporting Configuration
+- Generates CSV and JSON format reports
+- Stores reports in a dedicated S3 bucket
+- Covers specified AWS accounts and regions
+- Uses BACKUP_JOB_REPORT template for standardized reporting
 
 ## Important Notes
 
-Before applying this example:
+1. **AWS Config Requirement**
+   - For the Framework Deployment Status to be successful, you must enable AWS Config resource tracking
+   - This can be configured through the AWS Console
+   - Required to track configuration changes of backup resources
 
-1. Replace these placeholder values with your actual values:
-   - KMS key ARN
-   - AWS Account IDs
-   - Organization Unit IDs
-   - S3 bucket name
-   - Backup policy ID
+2. **Vault Configuration**
+   - Vault is configured with lock settings
+   - Minimum retention: 7 days
+   - Maximum retention: 360 days
+   - Ensures compliance with data retention policies
 
-2. Ensure you have:
-   - Appropriate IAM permissions
-   - AWS Organizations setup (if using organization features)
-   - S3 bucket created for reports
-   - KMS key with proper permissions
+3. **SNS Notifications**
+   - Backup events are published to an SNS topic
+   - Enables real-time monitoring and alerting
+   - Can be integrated with other notification systems
 
-3. Consider costs associated with:
-   - AWS Backup storage
-   - Cross-region backup copies
-   - S3 storage for reports
-   - SNS message delivery
+4. **Naming Conventions**
+   - All resource names use underscores instead of hyphens
+   - Complies with AWS Backup naming requirements
+   - Consistent across all components
+<!-- END_TF_DOCS -->

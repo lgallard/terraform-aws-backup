@@ -1,83 +1,104 @@
+# AWS Backup
 module "aws_backup_example" {
-
   source = "../.."
 
   # Vault
-  vault_name = "vault-1"
+  vault_name = "vault-5"
+
+  # Vault lock configuration
+  min_retention_days = 7
+  max_retention_days = 90
 
   # Plan
-  plan_name = "simple-plan-list"
+  plan_name = "backup-plan-with-report"
 
-  # One rule using a list of maps
+  # Rules
   rules = [
     {
-      name                     = "rule-1"
-      schedule                 = "cron(0 12 * * ? *)"
-      start_window             = 120
-      completion_window        = 360
-      enable_continuous_backup = true
+      name              = "rule-1"
+      schedule          = "cron(0 12 * * ? *)"
+      target_vault_name = null
+      start_window      = 120
+      completion_window = 360
       lifecycle = {
         cold_storage_after = 0
         delete_after       = 90
-      },
-      recovery_point_tags = {
-        Environment = "production"
       }
-    },
+      copy_actions = []
+      recovery_point_tags = {
+        Environment = "prod"
+      }
+    }
   ]
 
-  # One selection using a list of maps
+  # Selection
   selections = [
     {
-      name      = "selection-1"
-      resources = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table"]
-    },
+      name = "selection-1"
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "prod"
+        }
+      ]
+    }
   ]
 
+  # Reports configuration
   reports = [
     {
-      name            = "report-vault-1"
-      formats         = ["CSV"]
-      s3_bucket_name  = module.s3_bucket.s3_bucket_id
-      s3_key_prefix   = "vault-1/"
+      name            = "backup_report_plan_1"
+      description     = "Daily backup report"
       report_template = "BACKUP_JOB_REPORT"
+      s3_bucket_name  = "my-backup-reports"
+      formats         = ["CSV", "JSON"]
+      accounts        = []
+      regions         = []
+      framework_arns  = []
     }
   ]
 
   tags = {
-    Owner       = "devops"
-    Environment = "production"
+    Owner       = "backup team"
+    Environment = "prod"
     Terraform   = true
   }
+}
 
+# Configure AWS Provider for S3 bucket in us-east-1
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
 }
 
 module "s3_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "4.6.0"
 
+  providers = {
+    aws = aws.us_east_1
+  }
+
   bucket        = "my-backup-reports"
   attach_policy = true
   policy        = data.aws_iam_policy_document.bucket_policy.json
 }
 
-resource "aws_iam_service_linked_role" "backup_role" {
-  aws_service_name = "reports.backup.amazonaws.com"
-}
-
 data "aws_iam_policy_document" "bucket_policy" {
   statement {
     principals {
-      type        = "AWS"
-      identifiers = [aws_iam_service_linked_role.backup_role.arn]
+      type        = "Service"
+      identifiers = ["reports.backup.amazonaws.com"]
     }
 
     actions = [
-      "s3:PutObject",
+      "s3:PutObject"
     ]
 
     resources = [
-      "arn:aws:s3:::my-backup-reports/*",
+      module.s3_bucket.s3_bucket_arn,
+      "${module.s3_bucket.s3_bucket_arn}/*"
     ]
 
     condition {

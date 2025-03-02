@@ -281,22 +281,15 @@ variable "audit_framework" {
     description = optional(string)
     controls = list(object({
       name            = string
-      parameter_name  = string
-      parameter_value = string
-    }))
-    policy_assignment = optional(object({
-      opt_in_preference       = bool
-      policy_id               = string
-      regions                 = list(string)
-      organizational_unit_ids = optional(list(string))
+      parameter_name  = optional(string)
+      parameter_value = optional(string)
     }))
   })
   default = {
-    create            = false
-    name              = null
-    description       = null
-    controls          = []
-    policy_assignment = null
+    create      = false
+    name        = null
+    description = null
+    controls    = []
   }
 }
 

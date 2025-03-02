@@ -1,100 +1,117 @@
-# Selection by Conditions
+<!-- BEGIN_TF_DOCS -->
+# AWS Backup - Selection by Conditions Example
 
-This example shows you how to define selection using conditions, without `resource` definitions.
+Configuration in this directory creates AWS Backup plan with selections based on tag conditions and an SNS topic for notifications.
 
-## Selection by Tags vs. Conditions
+## Features
 
-**Conditions**
+This example showcases the following features:
 
-Selection by conditions differs from selection by tags as follows: When you specify more than one condition, you only assign the resources that match **ALL conditions** (using `AND` logic).  Selection by conditions supports `StringEquals`, `StringLike`, `StringNotEquals`, and `StringNotLike`. Selection by tags only supports `StringEquals`.
+- Tag-based resource selection using STRINGEQUALS conditions
+- Backup vault with retention policies
+- Daily backup schedule with lifecycle rules
+- SNS topic for backup notifications
+- Resource tagging strategy
 
-**Tags**
-Selection by tags differs from selection by conditions as follows: When you specify more than one condition, you assign all resources that match **AT LEAST ONE condition** (using `OR` logic).  Selection by tags only supports `StringEquals`. Conditions supports `StringEquals`, `StringLike`, `StringNotEquals`, and `StringNotLike`.
+## Selection Strategy
 
-```
+Resources are selected for backup based on tag matching:
+- Environment tag must equal "prod"
+- Service tag must equal "web"
+
+This allows for precise targeting of resources that need to be backed up.
+
+## Backup Configuration
+
+The backup plan includes:
+- Daily backups at 5 AM
+- 30-day transition to cold storage
+- 180-day retention period
+- 8-hour start window
+- 9.35-hour completion window
+
+## Vault Settings
+
+The backup vault is configured with:
+- Minimum retention: 7 days
+- Maximum retention: 365 days
+
+## Notifications
+
+An SNS topic is created for backup vault notifications:
+- Topic name: backup-vault-events
+- Enables monitoring of backup events and status
+
+## Example Usage
+
+```hcl
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
 module "aws_backup_example" {
+  source = "../.."
 
-  source = "lgallard/backup/aws"
+  # Backup Plan configuration
+  plan_name = "selection_by_conditions_plan"
 
-  # Vault
-  vault_name = "vault-4"
+  # Vault configuration
+  vault_name         = "selection_by_conditions_vault"
+  min_retention_days = 7
+  max_retention_days = 365
 
-  # Plan
-  plan_name = "selection-tags-plan"
-
-  # Multiple rules using a list of maps
   rules = [
     {
-      name              = "rule-1"
-      schedule          = "cron(0 12 * * ? *)"
-      target_vault_name = null
-      start_window      = 120
-      completion_window = 360
+      name                     = "rule_1"
+      target_vault_name        = "selection_by_conditions_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
-        cold_storage_after = 0
-        delete_after       = 90
-      },
+        cold_storage_after = 30
+        delete_after       = 180
+      }
       recovery_point_tags = {
         Environment = "prod"
+        Service     = "backup"
       }
-    },
-    {
-      name                = "rule-2"
-      schedule            = "cron(0 7 * * ? *)"
-      target_vault_name   = "Default"
-      schedule            = null
-      start_window        = 120
-      completion_window   = 360
-      lifecycle           = {}
-      copy_action         = {}
-      recovery_point_tags = {}
-    },
+      copy_actions = []
+    }
   ]
 
-  # Multiple selections
-  #  - Selection-1: By tags: Environment = prod, Owner = devops
+  # Selection configuration using conditions
   selections = [
     {
-      name      = "selection-1"
-      conditions = {
-        string_equals = [
-          {
-            key   = "aws:ResourceTag/Component"
-            value = "rds"
-          }
-          ,
-          {
-            key   = "aws:ResourceTag/Project"
-            value = "Project1"
-          }
-        ]
-        string_like = [
-          {
-            key   = "aws:ResourceTag/Application"
-            value = "app*"
-          }
-        ]
-        string_not_equals = [
-          {
-            key   = "aws:ResourceTag/Backup"
-            value = "false"
-          }
-        ]
-        string_not_like = [
-          {
-            key   = "aws:ResourceTag/Environment"
-            value = "test*"
-          }
-        ]
-      }
+      name = "selection_by_conditions"
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "prod"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Service"
+          value = "web"
+        }
+      ]
     }
   ]
 
   tags = {
-    Owner       = "devops"
     Environment = "prod"
-    Terraform   = true
+    Project     = "selection_by_conditions"
   }
-
 }
 ```
+
+## Notes
+
+- Only STRINGEQUALS is supported for tag conditions
+- Multiple tags can be combined for more precise resource selection
+- Recovery points are tagged with Environment and Service tags
+- Cross-region copies are not enabled in this example
+<!-- END_TF_DOCS -->

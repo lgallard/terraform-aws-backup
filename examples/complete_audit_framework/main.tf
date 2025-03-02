@@ -1,86 +1,65 @@
 # Create an SNS topic for backup notifications
 resource "aws_sns_topic" "backup_notifications" {
-  name = "backup-notifications"
+  name = "backup_notifications"
 }
 
 module "aws_backup_example" {
-  source = "../../"
+  source = "../.."
 
-  # Vault configuration
-  vault_name        = "audit-framework-vault"
-  vault_kms_key_arn = var.kms_key_arn
+  # Vault Configuration
+  vault_name         = "complete_audit_vault"
+  locked             = true
+  min_retention_days = 7
+  max_retention_days = 360
 
-  # Enable notifications
-  notifications = {
-    sns_topic_arn = aws_sns_topic.backup_notifications.arn
-    backup_vault_events = [
-      "BACKUP_JOB_STARTED",
-      "BACKUP_JOB_COMPLETED",
-      "BACKUP_JOB_FAILED",
-      "AUDIT_REPORT_CREATED"
-    ]
-  }
-
-  # Configure AWS Backup Audit Manager framework
+  # Framework Configuration
   audit_framework = {
     create      = true
-    name        = var.audit_framework_name
-    description = var.audit_framework_description
-
-    controls = [
+    name        = "enterprise_audit_framework"
+    description = "Enterprise Audit Framework for AWS Backup"
+    control_scope = {
+      tags = {
+        Environment = "prod"
+      }
+    }
+    controls = [ # Changed from map to list
       {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = tostring(var.retention_period)
-      },
-      {
-        name            = "BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = tostring(var.retention_period)
-      },
-      {
-        name            = "BACKUP_RECOVERY_POINT_ENCRYPTED"
-        parameter_name  = "resourceType"
-        parameter_value = var.resource_types["all"]
-      },
-      {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "resourceType"
-        parameter_value = var.resource_types["rds"]
-      },
-      {
-        name            = "BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK"
-        parameter_name  = "requiredFrequencyUnit"
-        parameter_value = var.frequency_unit
+        control_name = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
+        name         = "backup_resources_protected_by_backup_plan"
+        input_parameters = [
+          {
+            parameter_name  = "requiredBackupPlanFrequencyUnit"
+            parameter_value = "hours"
+          },
+          {
+            parameter_name  = "requiredBackupPlanFrequencyValue"
+            parameter_value = "24"
+          },
+          {
+            parameter_name  = "requiredRetentionDays"
+            parameter_value = "35"
+          }
+        ]
       }
     ]
-
-    policy_assignment = {
-      opt_in_preference       = true
-      policy_id               = var.backup_policy_id
-      regions                 = var.backup_regions
-      organizational_unit_ids = var.organizational_units
-    }
   }
 
-  # Configure backup reports
+  # Report Configuration
   reports = [
     {
-      name            = "audit-compliance-report"
-      description     = "Daily backup compliance report"
+      name            = "audit_compliance_report"
+      description     = "Audit compliance report for AWS Backup"
       formats         = ["CSV", "JSON"]
-      s3_bucket_name  = var.report_bucket
-      s3_key_prefix   = "audit-reports/"
+      s3_bucket_name  = "my_backup_report_bucket"
       report_template = "BACKUP_JOB_REPORT"
-      accounts        = var.account_ids
-      regions         = var.backup_regions
+      accounts        = ["123456789012"]
+      regions         = ["us-west-2"]
+      framework_arns  = ["arn:aws:backup:us-west-2:123456789012:framework/enterprise_audit_framework"]
     }
   ]
 
   tags = {
-    Environment = "production"
-    Project     = "backup-audit"
-    Owner       = "backup-team"
-    Compliance  = "required"
+    Environment = "prod"
+    Project     = "backup_audit"
   }
 }

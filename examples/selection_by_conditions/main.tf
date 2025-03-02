@@ -7,87 +7,55 @@ resource "aws_sns_topic" "backup_vault_notifications" {
 module "aws_backup_example" {
   source = "../.."
 
-  # Vault
-  vault_name = "vault-2"
+  # Backup Plan configuration
+  plan_name = "selection_by_conditions_plan"
 
-  # Plan
-  plan_name = "selection-tags-plan"
+  # Vault configuration
+  vault_name         = "selection_by_conditions_vault"
+  min_retention_days = 7
+  max_retention_days = 365
 
-  # Multiple rules using a list of maps
   rules = [
     {
-      name              = "rule-1"
-      schedule          = "cron(0 12 * * ? *)"
-      target_vault_name = null
-      start_window      = 120
-      completion_window = 360
+      name                     = "rule_1"
+      target_vault_name        = "selection_by_conditions_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
-        cold_storage_after = 0
-        delete_after       = 90
+        cold_storage_after = 30
+        delete_after       = 180
       }
       recovery_point_tags = {
         Environment = "prod"
-      }
-    },
-    {
-      name              = "rule-2"
-      target_vault_name = "Default"
-      schedule          = "cron(0 7 * * ? *)"
-      start_window      = 120
-      completion_window = 360
-      lifecycle = {
-        cold_storage_after = 0
-        delete_after       = 90
+        Service     = "backup"
       }
       copy_actions = []
-      recovery_point_tags = {
-        Environment = "prod"
-      }
     }
   ]
 
-  # Multiple selections with conditions
+  # Selection configuration using conditions
   selections = [
     {
-      name          = "selection-1"
-      resources     = ["arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"]
-      not_resources = []
-      conditions = {
-        string_equals = [
-          {
-            key   = "aws:ResourceTag/Component"
-            value = "rds"
-          },
-          {
-            key   = "aws:ResourceTag/Project"
-            value = "Project1"
-          }
-        ]
-        string_like = [
-          {
-            key   = "aws:ResourceTag/Application"
-            value = "app*"
-          }
-        ]
-        string_not_equals = [
-          {
-            key   = "aws:ResourceTag/Backup"
-            value = "false"
-          }
-        ]
-        string_not_like = [
-          {
-            key   = "aws:ResourceTag/Environment"
-            value = "test*"
-          }
-        ]
-      }
+      name = "selection_by_conditions"
+      selection_tags = [
+        {
+          type  = "STRINGEQUALS"
+          key   = "Environment"
+          value = "prod"
+        },
+        {
+          type  = "STRINGEQUALS"
+          key   = "Service"
+          value = "web"
+        }
+      ]
     }
   ]
 
   tags = {
-    Owner       = "devops"
-    Environment = "production"
-    Terraform   = true
+    Environment = "prod"
+    Project     = "selection_by_conditions"
   }
 }

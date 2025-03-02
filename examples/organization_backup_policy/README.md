@@ -1,143 +1,154 @@
-# AWS Organizations Backup Policy Example
+<!-- BEGIN_TF_DOCS -->
+# Organization Backup Policy Example
 
-This example demonstrates how to implement AWS Organizations backup policies to manage backups across your entire organization.
+This example demonstrates how to create an AWS Backup configuration that implements organization backup policies. It showcases how to:
 
-## Overview
+- Create backup policies for different types of systems (critical and standard)
+- Implement tag-based backup selection strategies
+- Configure backup vaults with appropriate retention settings
+- Set up cross-region backup copies for disaster recovery
+- Apply resource tagging for organization and management
 
-AWS Organizations backup policies allow you to:
-- Centrally manage backup policies across your organization
-- Enforce backup compliance standards
-- Implement consistent backup strategies
-- Manage backup settings across multiple accounts and regions
+## Organization Backup Strategy
 
-## Features
+This example implements a comprehensive backup strategy for an organization with:
 
-1. **Centralized Policy Management**
-   - Define backup policies at the organization level
-   - Apply policies to organizational units (OUs) or specific accounts
-   - Enforce consistent backup standards
+### Critical Systems (High Criticality)
+- Daily backups executed at 5 AM
+- 30-day transition to cold storage for cost optimization
+- 365-day retention period for long-term compliance
+- Cross-region backup copies for disaster recovery
+- Tagged with "Criticality = high"
 
-2. **Tiered Backup Strategies**
-   - Different policies for critical and standard systems
-   - Customized retention periods
-   - Varied backup frequencies
-   - Resource-specific settings
+### Standard Systems
+- Daily backups at 5 AM
+- Direct deletion after 90 days (no cold storage)
+- Cross-region backup copies with matching lifecycle
+- Tagged with "Criticality = standard"
 
-3. **Cross-Region Disaster Recovery**
-   - Automatic cross-region backup copies
-   - Geographic redundancy
-   - Regional compliance support
+## Vault Configuration
 
-4. **Resource Selection**
-   - Tag-based selection
-   - Resource type filtering
-   - Conditional selections
-   - Exclusion patterns
-
-## Prerequisites
-
-1. **AWS Organizations Setup**
-   - Organizations must be enabled
-   - Service control policies (SCPs) must be enabled
-   - Backup policies must be enabled
-   ```bash
-   aws organizations enable-aws-service-access --service-principal=backup.amazonaws.com
-   ```
-
-2. **IAM Permissions**
-   - Management account access
-   - Organizations policy management permissions
-   - Backup policy permissions
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "organizations:CreatePolicy",
-           "organizations:UpdatePolicy",
-           "organizations:AttachPolicy",
-           "organizations:DetachPolicy"
-         ],
-         "Resource": "*"
-       }
-     ]
-   }
-   ```
-
-## Usage
-
-1. Configure variables in `terraform.tfvars`:
-```hcl
-management_account_id = "123456789012"
-organization_root_id  = "r-abcd"
-```
-
-2. Initialize and apply:
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-## Policy Structure
-
-The backup policy structure follows AWS best practices:
-
-1. **Critical Systems**
-   - Daily backups
-   - 365-day retention
-   - Cross-region copies
-   - Continuous backup enabled
-   - Cold storage transition
-
-2. **Standard Systems**
-   - Daily backups
-   - 90-day retention
-   - Standard backup settings
+The backup vault is configured with:
+- Minimum retention period: 7 days
+- Maximum retention period: 365 days
+- Ensures compliance with organization's data retention policies
 
 ## Resource Selection
 
-Resources can be selected using:
-1. **Direct ARN Patterns**
-   ```hcl
-   resources = ["arn:aws:rds:*:*:db:*"]
-   ```
+Resources are selected for backup based on tags:
+- Critical systems are identified by tag "Criticality = high"
+- Standard systems are identified by tag "Criticality = standard"
+- This allows for automatic backup policy assignment based on system classification
 
-2. **Tag-Based Selection**
-   ```hcl
-   tags = {
-     Backup = "critical"
-   }
-   ```
+## Example Usage
 
-3. **Conditional Selection**
-   ```hcl
-   conditions = {
-     StringEquals = [{
-       key   = "Environment"
-       value = "Production"
-     }]
-   }
-   ```
+```hcl
+module "aws_backup_example" {
+  source = "../.."
 
-## Important Notes
+  # Backup Plan configuration
+  plan_name = "organization_backup_plan"
 
-1. **Cost Management**
-   - Monitor backup storage costs
-   - Review retention periods
-   - Optimize selection criteria
-   - Consider cross-region copy costs
+  # Vault configuration
+  vault_name         = "organization_backup_vault"
+  min_retention_days = 7
+  max_retention_days = 365
 
-2. **Compliance**
-   - Document policy decisions
-   - Regular policy reviews
-   - Audit backup compliance
-   - Test restore procedures
+  rules = [
+    {
+      name                     = "critical_systems"
+      target_vault_name        = "critical_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 30
+        delete_after       = 365
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+        Criticality = "high"
+      }
+      copy_actions = [
+        {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 365
+          }
+        }
+      ]
+    },
+    {
+      name                     = "standard_systems"
+      target_vault_name        = "standard_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
+      lifecycle = {
+        cold_storage_after = 0
+        delete_after       = 90
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+        Criticality = "standard"
+      }
+      copy_actions = [
+        {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 90
+          }
+        }
+      ]
+    }
+  ]
 
-3. **Operational Considerations**
-   - Monitor backup success rates
-   - Review backup reports
-   - Test restores regularly
-   - Update policies as needed
+  # Selection configuration
+  selections = [
+    {
+      name = "critical_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "high"
+      }
+    },
+    {
+      name = "standard_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "standard"
+      }
+    }
+  ]
+
+  tags = {
+    Environment = "prod"
+    Project     = "organization_backup"
+  }
+}
+```
+
+## Implementation Notes
+
+1. **Backup Rules**:
+   - Each rule has specific windows for backup operations
+   - Start window: 480 minutes (8 hours)
+   - Completion window: 561 minutes (9.35 hours)
+   - Continuous backup is disabled for both rule sets
+
+2. **Copy Actions**:
+   - Both rules include cross-region copies
+   - Copies maintain the same lifecycle rules as source backups
+   - Secondary vault is in us-east-1 region
+
+3. **Resource Tags**:
+   - Environment tagging for production systems
+   - Project-specific tags for resource management
+   - Criticality tags for backup policy assignment
+<!-- END_TF_DOCS -->

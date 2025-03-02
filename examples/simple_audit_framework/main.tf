@@ -1,33 +1,25 @@
+# AWS Backup
 module "aws_backup_example" {
-  source = "../../"
+  source = "../.."
 
-  # Enable AWS Backup Audit Manager framework
+  # Audit Framework
   audit_framework = {
     create      = true
-    name        = var.audit_config.framework.name
-    description = var.audit_config.framework.description
+    name        = "exampleFramework"
+    description = "this is an example framework"
 
     controls = [
+      # Vault lock check - ensures resources are protected by vault lock
       {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = tostring(var.audit_config.controls.retention_period)
+        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK"
+        parameter_name  = "maxRetentionDays"
+        parameter_value = "100" # Maximum retention period allowed by vault lock
       },
-      {
-        name            = "BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK"
-        parameter_name  = "requiredRetentionDays"
-        parameter_value = tostring(var.audit_config.controls.retention_period)
-      },
-      {
-        name            = "BACKUP_RECOVERY_POINT_ENCRYPTED"
-        parameter_name  = "resourceType"
-        parameter_value = var.audit_config.controls.resource_type
-      }
     ]
   }
 
+  # Tags are now specified separately
   tags = {
-    Environment = "test"
-    Project     = "backup-audit"
+    Name = "Example Framework"
   }
 }

@@ -1,98 +1,89 @@
 module "aws_backup_example" {
   source = "../.."
 
-  # Enable Organization backup policies
-  enable_org_policy    = true
-  org_policy_name      = "backup-policy"
-  org_policy_target_id = var.organization_root_id
+  # Backup Plan configuration
+  plan_name = "organization_backup_plan"
 
-  # Plan
-  plan_name = "org-backup-plan"
+  # Vault configuration
+  vault_name         = "organization_backup_vault"
+  min_retention_days = 7
+  max_retention_days = 365
 
-  # Rules using list of maps
   rules = [
     {
-      name                     = "critical-systems"
-      target_vault_name        = "critical-systems-vault"
-      schedule                 = "cron(0 5 ? * * *)" # Daily at 5 AM
-      start_window             = 60
-      completion_window        = 120
-      enable_continuous_backup = true
+      name                     = "critical_systems"
+      target_vault_name        = "critical_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
+        cold_storage_after = 30
         delete_after       = 365
-        cold_storage_after = 90
+      }
+      recovery_point_tags = {
+        Environment = "prod"
+        Criticality = "high"
       }
       copy_actions = [
         {
-          destination_vault_arn = "arn:aws:backup:us-east-1:${var.management_account_id}:backup-vault:dr-vault"
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
           lifecycle = {
-            delete_after = 365
+            cold_storage_after = 30
+            delete_after       = 365
           }
         }
       ]
-      recovery_point_tags = {
-        Environment = "Production"
-        Criticality = "High"
-      }
     },
     {
-      name              = "standard-systems"
-      target_vault_name = "standard-systems-vault"
-      schedule          = "cron(0 1 ? * * *)" # Daily at 1 AM
-      start_window      = 120
-      completion_window = 360
+      name                     = "standard_systems"
+      target_vault_name        = "standard_systems_vault"
+      schedule                 = "cron(0 5 ? * * *)"
+      start_window             = 480
+      completion_window        = 561
+      enable_continuous_backup = false
       lifecycle = {
-        delete_after = 90
+        cold_storage_after = 0
+        delete_after       = 90
       }
       recovery_point_tags = {
-        Environment = "Production"
-        Criticality = "Standard"
+        Environment = "prod"
+        Criticality = "standard"
       }
+      copy_actions = [
+        {
+          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 90
+          }
+        }
+      ]
     }
   ]
 
-  # Selections using list of maps
+  # Selection configuration
   selections = [
     {
-      name = "critical-databases"
-      resources = [
-        "arn:aws:rds:*:*:db:*",
-        "arn:aws:dynamodb:*:*:table/*"
-      ]
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Backup"
-          value = "critical"
-        }
-      ]
+      name = "critical_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "high"
+      }
     },
     {
-      name      = "production-volumes"
-      resources = ["arn:aws:ec2:*:*:volume/*"]
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "Production"
-        }
-      ]
+      name = "standard_systems"
+      selection_tag = {
+        type  = "STRINGEQUALS"
+        key   = "Criticality"
+        value = "standard"
+      }
     }
-  ]
-
-  advanced_backup_settings = {
-    ec2 = {
-      windows_vss = "enabled"
-    }
-  }
-
-  backup_regions = [
-    "us-west-2",
-    "us-east-1"
   ]
 
   tags = {
-    Environment = "production"
-    Management  = "organizations"
+    Environment = "prod"
+    Project     = "organization_backup"
   }
 }

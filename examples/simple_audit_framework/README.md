@@ -1,58 +1,78 @@
-# Simple AWS Backup Audit Framework Example
+<!-- BEGIN_TF_DOCS -->
+# AWS Backup Audit Framework Example
 
-This example demonstrates how to create a basic AWS Backup Audit Framework configuration using this Terraform module.
+This example demonstrates how to create an AWS Backup Audit Framework with various controls and their configurations.
+
+## Features
+
+- Creates an AWS Backup Audit Framework
+- Configures multiple audit controls with different parameters
+- Demonstrates parameter handling for controls with and without parameters
+- Shows how to properly configure framework tags
 
 ## Usage
 
-To run this example you need to execute:
+```hcl
+# AWS Backup
+module "aws_backup_example" {
+  source = "../.."
 
-```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
+  # Audit Framework
+  audit_framework = {
+    create      = true
+    name        = "exampleFramework"
+    description = "this is an example framework"
+
+    controls = [
+      # Vault lock check - ensures resources are protected by vault lock
+      {
+        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK"
+        parameter_name  = "maxRetentionDays"
+        parameter_value = "100"  # Maximum retention period allowed by vault lock
+      },
+    ]
+  }
+
+  # Tags are now specified separately
+  tags = {
+    Name = "Example Framework"
+  }
+}
 ```
 
-Note that this example may create resources which cost money. Run `terraform destroy` when you don't need these resources.
+## Controls Configuration
 
-## Requirements
+This example includes several controls:
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.0.0 |
-| aws | >= 5.0.0 |
+1. **BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK**
+   - Ensures recovery points meet minimum retention period
+   - Parameter: requiredRetentionDays = 35
 
-## Providers
+2. **BACKUP_PLAN_MIN_FREQUENCY_AND_MIN_RETENTION_CHECK**
+   - Ensures regular backups with minimum retention
+   - Parameter: requiredRetentionDays = 35
 
-| Name | Version |
-|------|---------|
-| aws | >= 5.0.0 |
+3. **BACKUP_RECOVERY_POINT_ENCRYPTED**
+   - Ensures recovery points are encrypted
+   - No parameters required
 
-## Features Demonstrated
+4. **BACKUP_RECOVERY_POINT_MANUAL_DELETION_DISABLED**
+   - Prevents manual deletion of recovery points
+   - No parameters required
 
-This example demonstrates:
-- Basic AWS Backup Audit Framework setup
-- Configuration of common backup controls
-- Setting retention period requirements
-- Encryption requirements for EBS volumes
+5. **BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK**
+   - Ensures resources are protected by vault lock
+   - Parameter: maxRetentionDays = 100
 
-## Audit Controls Explained
-
-The example includes three essential controls:
-
-1. `BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN`
-   - Ensures resources are protected by a backup plan
-   - Requires minimum 30-day retention
-
-2. `BACKUP_RECOVERY_POINT_MINIMUM_RETENTION_CHECK`
-   - Verifies recovery points meet minimum retention period
-   - Set to 30 days in this example
-
-3. `BACKUP_RECOVERY_POINT_ENCRYPTED`
-   - Ensures EBS volume backups are encrypted
-   - Specifically targets EBS resources
+6. **BACKUP_LAST_RECOVERY_POINT_CREATED**
+   - Monitors recent backup creation
+   - Parameter: recoveryPointAgeUnit = days
 
 ## Notes
 
-- This is a basic example intended for testing and learning
-- For production use, consider the complete example with additional security controls
-- Remember to replace placeholder values with your actual AWS resource identifiers
+1. Some controls don't accept parameters and should have parameter_name and parameter_value set to null
+2. The framework creation can take up to 20 minutes
+3. Tags are applied at the framework level
+4. Framework policy assignments must be managed through AWS Console or AWS CLI
+5. **Important:** For the Deployment Status of the Framework to be successful, you must enable AWS Config resource tracking to monitor configuration changes of your backup resources. This can be done from the AWS Console.
+<!-- END_TF_DOCS -->
