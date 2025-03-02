@@ -1,0 +1,121 @@
+formatter: markdown
+
+header-from: main.tf
+footer-from: ""
+
+sections:
+  hide: []
+  show: []
+
+content: |-
+  ![Terraform](https://lgallardo.com/images/terraform.jpg)
+
+  # terraform-aws-backup
+
+  Terraform module to create AWS Backup plans. AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services (EBS volumes, RDS databases, DynamoDB tables, EFS file systems, and Storage Gateway volumes).
+
+  ## Features
+
+  * Flexible backup plan customization
+  * Comprehensive backup management:
+    - Rules and selections
+    - Copy actions and lifecycle policies
+    - Retention periods and windows
+    - Resource tagging
+  * Advanced capabilities:
+    - IAM role management
+    - Multi-region support
+    - Vault management
+    - Framework integration
+    - Organization policies
+  * Enterprise features:
+    - Notifications system
+    - Audit Manager integration
+    - Cross-account backups
+    - Compliance controls
+
+  ## Usage
+
+  You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once.
+
+  Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
+
+  ### Simple plan
+
+  ```hcl
+  {{ include "examples/simple_plan/main.tf" }}
+  ```
+
+  ### Simple plan using variables
+
+  ```hcl
+  {{ include "examples/simple_plan_using_variables/main.tf" }}
+  ```
+
+
+  ### Complete plan
+
+  ```hcl
+  {{ include "examples/complete_plan/main.tf" }}
+  ```
+
+
+  ### Simple plan using AWS Organizations backup policies
+
+  ```hcl
+  {{ include "examples/organization_backup_policy/main.tf" }}
+  ```
+
+  ### AWS Backup Audit Manager Framework
+
+  ```hcl
+  {{ include "examples/simple_audit_framework/main.tf" }}
+  ```
+
+  <!-- BEGIN_TF_DOCS -->
+  {{ .Requirements }}
+
+  {{ .Providers }}
+
+  {{ .Modules }}
+
+  {{ .Resources }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+  <!-- END_TF_DOCS -->
+
+  ## Known Issues
+
+  During the development of the module, the following issues were found:
+
+  ### Error creating Backup Selection
+
+  ```
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+sort:
+  enabled: true
+  by: required
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: false
+  html: true
+  indent: 2
+  lockfile: true
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true
