@@ -8,13 +8,3 @@ terraform {
     }
   }
 }
-
-provider "aws" {
-  # Configuration options
-  default_tags {
-    tags = {
-      Terraform   = "true"
-      Environment = terraform.workspace
-    }
-  }
-}
