@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.23.1 (March 4, 2025)
+
+FIXES:
+
+* Remove local AWS provider instance to prevent conflicts with root module provider configuration (#90)
+
 ## 0.23.0. (March 2, 2025)
 
 ### Added
