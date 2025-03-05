@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.23.2 (March 5, 2025)
+
+FIXES:
+
+* Add missing README file
+
 ## 0.23.1 (March 4, 2025)
 
 FIXES:
