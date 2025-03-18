@@ -10,19 +10,12 @@ resource "aws_backup_vault" "ab_vault" {
 
 # AWS Backup vault lock configuration
 resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
-  count = var.locked && var.vault_name != null ? 1 : 0
+  count = var.enabled && var.vault_name != null && var.locked ? 1 : 0
 
   backup_vault_name   = aws_backup_vault.ab_vault[0].name
-  changeable_for_days = var.changeable_for_days
-  max_retention_days  = var.max_retention_days
   min_retention_days  = var.min_retention_days
-
-  lifecycle {
-    precondition {
-      condition     = var.min_retention_days != null && var.max_retention_days != null && var.min_retention_days <= var.max_retention_days
-      error_message = "For vault lock configuration, min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
-    }
-  }
+  max_retention_days  = var.max_retention_days
+  changeable_for_days = var.changeable_for_days
 }
 
 # AWS Backup plan

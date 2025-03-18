@@ -42,6 +42,11 @@ variable "locked" {
   description = "Change to true to add a lock configuration for the backup vault"
   type        = bool
   default     = false
+
+  validation {
+    condition     = !var.locked || (var.min_retention_days != null && var.max_retention_days != null && var.min_retention_days <= var.max_retention_days)
+    error_message = "When vault locking is enabled (locked = true), min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
+  }
 }
 
 variable "changeable_for_days" {
