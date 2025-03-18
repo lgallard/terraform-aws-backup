@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.4](https://github.com/lgallard/terraform-aws-backup/compare/0.23.3...v0.23.4) (2025-03-18)
+
+
+### Bug Fixes
+
+* Add release automation configuration and fix variable default ([f9345af](https://github.com/lgallard/terraform-aws-backup/commit/f9345afbe20baee1b9c699c2e148481a6221d10e))
+
 ## 0.23.3 (March 19, 2025)
 
 FIXES:
