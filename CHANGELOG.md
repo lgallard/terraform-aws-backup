@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.23.4...v0.23.5) (2025-03-18)
+
+
+### Bug Fixes
+
+* retention days validations ([4a21a68](https://github.com/lgallard/terraform-aws-backup/commit/4a21a681f2eeae92f1318b59f0739c2ae61fdf36))
+
 ## [0.23.4](https://github.com/lgallard/terraform-aws-backup/compare/0.23.3...v0.23.4) (2025-03-18)
 
 
