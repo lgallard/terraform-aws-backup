@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.23.3 (March 19, 2025)
+
+FIXES:
+
+* Fix vault retention days validation to only require values when vault locking is enabled (#95)
+* Fix conditions to re-allow flexible use of them in backup selections (#94)
+
 ## 0.23.2 (March 5, 2025)
 
 FIXES:
