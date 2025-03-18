@@ -9,11 +9,35 @@ resource "aws_backup_selection" "ab_selection" {
   not_resources = var.selection_not_resources
 
   dynamic "condition" {
-    for_each = var.selection_conditions
+    for_each = length(try(var.selection_conditions, {})) > 0 ? { "conditions" : var.selection_conditions } : {}
     content {
-      string_equals {
-        key   = condition.key
-        value = condition.value
+      dynamic "string_equals" {
+        for_each = try(condition.value["string_equals"], {})
+        content {
+          key   = string_equals.key
+          value = string_equals.value
+        }
+      }
+      dynamic "string_like" {
+        for_each = try(condition.value["string_like"], {})
+        content {
+          key   = string_like.key
+          value = string_like.value
+        }
+      }
+      dynamic "string_not_equals" {
+        for_each = try(condition.value["string_not_equals"], {})
+        content {
+          key   = string_not_equals.key
+          value = string_not_equals.value
+        }
+      }
+      dynamic "string_not_like" {
+        for_each = try(condition.value["string_not_like"], {})
+        content {
+          key   = string_not_like.key
+          value = string_not_like.value
+        }
       }
     }
   }
@@ -64,11 +88,35 @@ resource "aws_backup_selection" "ab_selections" {
   not_resources = try(each.value.not_resources, [])
 
   dynamic "condition" {
-    for_each = try(each.value.conditions, {})
+    for_each = length(try(each.value["conditions"], {})) > 0 ? { "conditions" : each.value["conditions"] } : {}
     content {
-      string_equals {
-        key   = condition.key
-        value = condition.value
+      dynamic "string_equals" {
+        for_each = try(condition.value["string_equals"], {})
+        content {
+          key   = string_equals.key
+          value = string_equals.value
+        }
+      }
+      dynamic "string_like" {
+        for_each = try(condition.value["string_like"], {})
+        content {
+          key   = string_like.key
+          value = string_like.value
+        }
+      }
+      dynamic "string_not_equals" {
+        for_each = try(condition.value["string_not_equals"], {})
+        content {
+          key   = string_not_equals.key
+          value = string_not_equals.value
+        }
+      }
+      dynamic "string_not_like" {
+        for_each = try(condition.value["string_not_like"], {})
+        content {
+          key   = string_not_like.key
+          value = string_not_like.value
+        }
       }
     }
   }
