@@ -403,7 +403,7 @@ module "aws_backup_example" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.89.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.91.0 |
 
 ## Modules
 
