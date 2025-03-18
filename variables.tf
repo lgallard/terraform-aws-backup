@@ -157,7 +157,7 @@ variable "rules" {
         cold_storage_after = optional(number)
         delete_after       = number
       }))
-    })))
+    })), [])
   }))
   default = []
 }

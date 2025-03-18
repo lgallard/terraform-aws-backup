@@ -1,0 +1,35 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "terraform-module",
+      "package-name": "terraform-aws-backup"
+    }
+  },
+  "changelog-types": [
+    {"type": "feat", "section": "Added", "hidden": false},
+    {"type": "fix", "section": "Fixed", "hidden": false},
+    {"type": "chore", "section": "Changed", "hidden": false},
+    {"type": "refactor", "section": "Refactored", "hidden": false},
+    {"type": "style", "section": "Styled", "hidden": false},
+    {"type": "security", "section": "Security", "hidden": false},
+    {"type": "docs", "section": "Documentation", "hidden": false},
+    {"type": "perf", "section": "Performance", "hidden": false}
+  ],
+  "changelog-sections": {
+    "header": "## ${version} (${date})",
+    "sections": {
+      "Added": "### Added",
+      "Changed": "### Changed",
+      "Fixed": "### Fixed",
+      "Documentation": "### Documentation",
+      "Security": "### Security",
+      "Performance": "### Performance"
+    }
+  },
+  "release-search-depth": 10,
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "date-formats": {
+    "changelogDate": "(%B %d, %Y)"
+  }
+} 
