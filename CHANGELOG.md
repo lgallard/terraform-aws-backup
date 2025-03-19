@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.7](https://github.com/lgallard/terraform-aws-backup/compare/0.23.6...v0.23.7) (2025-03-19)
+
+
+### Bug Fixes
+
+* Enhance Windows VSS backup validation and add example configuration ([f2afcfd](https://github.com/lgallard/terraform-aws-backup/commit/f2afcfd559da235b1c726ae0394f6f4398e9abdb))
+* Enhance Windows VSS backup validation and add example configuration ([5ff6228](https://github.com/lgallard/terraform-aws-backup/commit/5ff6228addc28b2b9227cd9dbdb6c6ad806ef969))
+
 ## [0.23.6](https://github.com/lgallard/terraform-aws-backup/compare/0.23.5...v0.23.6) (2025-03-19)
 
 
