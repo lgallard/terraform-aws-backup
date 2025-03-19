@@ -28,7 +28,7 @@
   },
   "release-search-depth": 10,
   "include-component-in-tag": false,
-  "include-v-in-tag": true,
+  "include-v-in-tag": false,
   "date-formats": {
     "changelogDate": "(%B %d, %Y)"
   }
