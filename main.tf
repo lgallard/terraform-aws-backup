@@ -16,6 +16,13 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
   min_retention_days  = var.min_retention_days
   max_retention_days  = var.max_retention_days
   changeable_for_days = var.changeable_for_days
+
+  lifecycle {
+    precondition {
+      condition     = local.check_retention_days
+      error_message = "When vault locking is enabled (locked = true), min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
+    }
+  }
 }
 
 # AWS Backup plan
@@ -133,4 +140,13 @@ locals {
       )
     ])
   ])
+
+  # Check retention days - handling null values properly
+  check_retention_days = var.locked ? (
+    var.min_retention_days == null ? false : (
+      var.max_retention_days == null ? false : (
+        var.min_retention_days <= var.max_retention_days
+      )
+    )
+  ) : true
 }
