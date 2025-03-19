@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.6](https://github.com/lgallard/terraform-aws-backup/compare/0.23.5...v0.23.6) (2025-03-19)
+
+
+### Bug Fixes
+
+* Improve validation and configuration for AWS Backup vault ([81d9bd2](https://github.com/lgallard/terraform-aws-backup/commit/81d9bd20fe963531d0492e47651cc926cfd25daa))
+* Improve validation and configuration for AWS Backup vault ([28ac0fa](https://github.com/lgallard/terraform-aws-backup/commit/28ac0faf5c873a4648b8f98927a905acd128007a))
+
 ## [0.23.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.23.4...v0.23.5) (2025-03-18)
 
 
