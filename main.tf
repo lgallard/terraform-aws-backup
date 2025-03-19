@@ -89,8 +89,8 @@ resource "aws_backup_plan" "ab_plan" {
 
   lifecycle {
     precondition {
-      condition     = !var.windows_vss_backup || can(regex(".*EC2.*", join(",", local.selection_resources)))
-      error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup."
+      condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex(".*EC2.*", join(",", local.selection_resources))))
+      error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
     }
 
     # Add lifecycle validations at the plan level
