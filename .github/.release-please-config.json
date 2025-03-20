@@ -7,12 +7,14 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "include-v-in-tag": false,
+      "tag-format": "${version}",
       "extra-files": []
     }
   },
   "release-search-depth": 10,
   "include-component-in-tag": false,
   "include-v-in-tag": false,
+  "tag-format": "${version}",
   "release-title-pattern": "${package-name} ${version}",
   "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
   "changelog-types": [
