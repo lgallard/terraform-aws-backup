@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.8](https://github.com/lgallard/terraform-aws-backup/compare/0.23.7...v0.23.8) (2025-03-20)
+
+
+### Bug Fixes
+
+* simplify recovery point tags assignment ([c64d98f](https://github.com/lgallard/terraform-aws-backup/commit/c64d98fcc8813814521acc0225a899ccd5852810))
+* simplify recovery point tags assignment in AWS Backup plan (thanks @Edward-Ireson) ([94f4581](https://github.com/lgallard/terraform-aws-backup/commit/94f458103d504f9f67c89ae35f920da9e1b16a87))
+
 ## [0.23.7](https://github.com/lgallard/terraform-aws-backup/compare/0.23.6...v0.23.7) (2025-03-19)
 
 
