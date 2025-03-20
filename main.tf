@@ -40,7 +40,7 @@ resource "aws_backup_plan" "ab_plan" {
       start_window             = try(rule.value.start_window, null)
       completion_window        = try(rule.value.completion_window, null)
       enable_continuous_backup = try(rule.value.enable_continuous_backup, null)
-      recovery_point_tags      = length(try(rule.value.recovery_point_tags, {})) == 0 ? var.tags : rule.value.recovery_point_tags
+      recovery_point_tags      = coalesce(rule.value.recovery_point_tags, var.tags)
 
       # Lifecycle
       dynamic "lifecycle" {
