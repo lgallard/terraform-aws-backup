@@ -10,6 +10,7 @@ Terraform module to create AWS Backup plans. AWS Backup is a fully managed backu
 * Flexible backup plan customization
 * Comprehensive backup management:
   - Rules and selections
+  - Multiple plans per vault
   - Copy actions and lifecycle policies
   - Retention periods and windows
   - Resource tagging
@@ -27,7 +28,7 @@ Terraform module to create AWS Backup plans. AWS Backup is a fully managed backu
 
 ## Usage
 
-You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once.
+You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once. For multiple backup plans, you can use the `plans` variable to create several plans with their own rules and selections.
 
 Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
@@ -360,6 +361,91 @@ module "aws_backup_example" {
   }
 }
 ```
+
+### Multiple backup plans
+
+```hcl
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+
+  # Vault
+  vault_name = "vault-1"
+
+  # Multiple plans
+  plans = {
+    # First plan for daily backups
+    daily = {
+      name = "daily-backup-plan"
+      rules = [
+        {
+          name              = "daily-rule"
+          schedule          = "cron(0 12 * * ? *)"
+          start_window      = 120
+          completion_window = 360
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 30
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "daily"
+          }
+        }
+      ]
+      selections = {
+        prod_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
+          ]
+          selection_tags = [
+            {
+              type  = "STRINGEQUALS"
+              key   = "Environment"
+              value = "prod"
+            }
+          ]
+        }
+      }
+    },
+    # Second plan for weekly backups
+    weekly = {
+      name = "weekly-backup-plan"
+      rules = [
+        {
+          name              = "weekly-rule"
+          schedule          = "cron(0 0 ? * 1 *)" # Run every Sunday at midnight
+          start_window      = 120
+          completion_window = 480
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 120
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "weekly"
+          }
+        }
+      ]
+      selections = {
+        all_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
+          ]
+        }
+      }
+    }
+  }
+
+  # Tags
+  tags = {
+    Owner       = "backup team"
+    Environment = "prod"
+    Terraform   = true
+  }
+}
+```
+
 
 ### AWS Backup Audit Manager Framework
 
