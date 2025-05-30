@@ -104,7 +104,7 @@ resource "aws_backup_selection" "ab_selections" {
   not_resources = try(each.value.not_resources, [])
 
   dynamic "condition" {
-    for_each = length(try(each.value["conditions"], {})) > 0 ? { "conditions" : each.value["conditions"] } : {}
+    for_each = length(coalesce(try(each.value["conditions"], null), {})) > 0 ? { "conditions" : each.value["conditions"] } : {}
     content {
       dynamic "string_equals" {
         for_each = try(condition.value["string_equals"], {})
@@ -138,7 +138,7 @@ resource "aws_backup_selection" "ab_selections" {
   }
 
   dynamic "selection_tag" {
-    for_each = try(each.value.selection_tags, [])
+    for_each = coalesce(try(each.value.selection_tags, null), [])
     content {
       type  = try(selection_tag.value.type, null)
       key   = try(selection_tag.value.key, null)
@@ -168,7 +168,7 @@ resource "aws_backup_selection" "plan_selections" {
   not_resources = try(each.value.selection.not_resources, [])
 
   dynamic "condition" {
-    for_each = length(try(each.value.selection["conditions"], {})) > 0 ? { "conditions" : each.value.selection["conditions"] } : {}
+    for_each = length(coalesce(try(each.value.selection["conditions"], null), {})) > 0 ? { "conditions" : each.value.selection["conditions"] } : {}
     content {
       dynamic "string_equals" {
         for_each = try(condition.value["string_equals"], {})
@@ -202,7 +202,7 @@ resource "aws_backup_selection" "plan_selections" {
   }
 
   dynamic "selection_tag" {
-    for_each = try(each.value.selection.selection_tags, [])
+    for_each = coalesce(try(each.value.selection.selection_tags, null), [])
     content {
       type  = try(selection_tag.value.type, null)
       key   = try(selection_tag.value.key, null)
