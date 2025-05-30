@@ -446,6 +446,129 @@ module "aws_backup_example" {
 }
 ```
 
+### Migrating from Single Plan to Multiple Plans
+
+When upgrading from a previous version that used single plan configuration to the new multiple plans feature, you have two options:
+
+#### Option 1: Continue using single plan (recommended for simple cases)
+
+The module maintains full backward compatibility. Your existing configuration will continue to work without changes:
+
+```hcl
+# This will continue to work as before
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  plan_name  = "my-plan"
+  
+  # Single rule using variables
+  rule_name     = "daily-rule"
+  rule_schedule = "cron(0 12 * * ? *)"
+  
+  # Or multiple rules using list
+  rules = [
+    {
+      name     = "rule-1"
+      schedule = "cron(0 12 * * ? *)"
+      lifecycle = {
+        delete_after = 30
+      }
+    }
+  ]
+  
+  # Single selection using variables
+  selection_name = "my-selection"
+  selection_resources = ["arn:aws:dynamodb:..."]
+  
+  # Or multiple selections using list
+  selections = [
+    {
+      name = "selection-1"
+      resources = ["arn:aws:dynamodb:..."]
+    }
+  ]
+}
+```
+
+#### Option 2: Migrate to multiple plans (recommended for complex scenarios)
+
+If you want to use the new multiple plans feature, follow these steps:
+
+1. **Update your configuration** to use the `plans` variable:
+
+```hcl
+# Before: Single plan configuration
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  plan_name  = "my-plan"
+  
+  rules = [
+    {
+      name = "daily-rule"
+      schedule = "cron(0 12 * * ? *)"
+      lifecycle = { delete_after = 30 }
+    }
+  ]
+  
+  selections = [
+    {
+      name = "my-selection"
+      resources = ["arn:aws:dynamodb:..."]
+    }
+  ]
+}
+
+# After: Multiple plans configuration
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  
+  plans = {
+    default = {  # Use "default" as the plan key for smooth migration
+      name = "my-plan"
+      rules = [
+        {
+          name = "daily-rule"
+          schedule = "cron(0 12 * * ? *)"
+          lifecycle = { delete_after = 30 }
+        }
+      ]
+      selections = {
+        my-selection = {
+          resources = ["arn:aws:dynamodb:..."]
+        }
+      }
+    }
+  }
+}
+```
+
+2. **Handle resource migration** using Terraform state commands:
+
+```bash
+# Move the backup plan
+terraform state mv 'module.aws_backup_example.aws_backup_plan.ab_plan[0]' 'module.aws_backup_example.aws_backup_plan.ab_plans["default"]'
+
+# Move the backup selection(s) - adjust the selection key as needed
+terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selection[0]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-my-selection"]'
+
+# If using multiple selections, move each one:
+terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selections["selection-name"]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-selection-name"]'
+```
+
+3. **Run terraform plan** to verify no resources will be recreated:
+
+```bash
+terraform plan
+# Should show "No changes" if migration was successful
+```
+
+> **Note**: The exact state move commands depend on your current configuration. Use `terraform state list` to see your current resource addresses, and `terraform plan` to see what changes would be made before running the state move commands.
+
 
 ### AWS Backup Audit Manager Framework
 

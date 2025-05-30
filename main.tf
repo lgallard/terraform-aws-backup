@@ -1,3 +1,25 @@
+# Automatic migration support for upgrading from single plan to multiple plans
+# These moved blocks automatically handle the most common migration case:
+# - Migrating from a single plan (ab_plan[0]) to multiple plans with "default" key
+# - Migrating from single selection (ab_selection[0]) to plan selection with "default-selection" key
+#
+# To benefit from automatic migration:
+# 1. Structure your new config with plans = { default = { ... } }
+# 2. Name your selection "selection" in the new structure
+# 3. Run terraform plan/apply - resources will be moved automatically
+#
+# For other migration scenarios, see examples/migration_guide/
+
+moved {
+  from = aws_backup_plan.ab_plan[0]
+  to   = aws_backup_plan.ab_plans["default"]
+}
+
+moved {
+  from = aws_backup_selection.ab_selection[0]
+  to   = aws_backup_selection.plan_selections["default-selection"]
+}
+
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
   count = var.enabled && var.vault_name != null ? 1 : 0
