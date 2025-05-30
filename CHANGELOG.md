@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.24.0](https://github.com/lgallard/terraform-aws-backup/compare/0.23.8...v0.24.0) (2025-05-30)
+
+
+### Features
+
+* Add support for multiple backup plans ([#115](https://github.com/lgallard/terraform-aws-backup/issues/115)) ([a97e915](https://github.com/lgallard/terraform-aws-backup/commit/a97e9159ea3e02df6088e2ed132f8e1521a4fb21))
+
 ## [0.23.8](https://github.com/lgallard/terraform-aws-backup/compare/0.23.7...v0.23.8) (2025-03-20)
 
 
