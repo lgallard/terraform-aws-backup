@@ -9,7 +9,7 @@ output "vault_arn" {
   value       = try(aws_backup_vault.ab_vault[0].arn, null)
 }
 
-# Plan
+# Legacy Plan
 output "plan_id" {
   description = "The id of the backup plan"
   value       = try(aws_backup_plan.ab_plan[0].id, null)
@@ -23,6 +23,19 @@ output "plan_arn" {
 output "plan_version" {
   description = "Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan"
   value       = try(aws_backup_plan.ab_plan[0].version, null)
+}
+
+# Multiple Plans
+output "plans" {
+  description = "Map of plans created and their attributes"
+  value = {
+    for k, v in aws_backup_plan.ab_plans : k => {
+      id      = v.id
+      arn     = v.arn
+      version = v.version
+      name    = v.name
+    }
+  }
 }
 
 output "plan_role" {

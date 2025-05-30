@@ -1,3 +1,5 @@
+
+
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
   count = var.enabled && var.vault_name != null ? 1 : 0
@@ -25,9 +27,9 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
   }
 }
 
-# AWS Backup plan
+# Legacy AWS Backup plan (for backward compatibility)
 resource "aws_backup_plan" "ab_plan" {
-  count = var.enabled && length(local.rules) > 0 ? 1 : 0
+  count = var.enabled && length(var.plans) == 0 && length(local.rules) > 0 ? 1 : 0
   name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
 
   # Rules
@@ -101,6 +103,69 @@ resource "aws_backup_plan" "ab_plan" {
   }
 }
 
+# Multiple AWS Backup plans
+resource "aws_backup_plan" "ab_plans" {
+  for_each = var.enabled ? local.plans_map : {}
+  name     = coalesce(each.value.name, each.key)
+
+  # Rules
+  dynamic "rule" {
+    for_each = each.value.rules
+    content {
+      rule_name                = try(rule.value.name, null)
+      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
+      schedule                 = try(rule.value.schedule, null)
+      start_window             = try(rule.value.start_window, null)
+      completion_window        = try(rule.value.completion_window, null)
+      enable_continuous_backup = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags      = coalesce(rule.value.recovery_point_tags, var.tags)
+
+      # Lifecycle
+      dynamic "lifecycle" {
+        for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
+        content {
+          cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
+          delete_after       = try(lifecycle.value.delete_after, 90)
+        }
+      }
+
+      # Copy action
+      dynamic "copy_action" {
+        for_each = try(rule.value.copy_actions, [])
+        content {
+          destination_vault_arn = try(copy_action.value.destination_vault_arn, null)
+
+          # Copy Action Lifecycle
+          dynamic "lifecycle" {
+            for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
+            content {
+              cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
+              delete_after       = try(lifecycle.value.delete_after, 90)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # Advanced backup setting
+  dynamic "advanced_backup_setting" {
+    for_each = var.windows_vss_backup ? [1] : []
+    content {
+      backup_options = {
+        WindowsVSS = "enabled"
+      }
+      resource_type = "EC2"
+    }
+  }
+
+  # Tags
+  tags = var.tags
+
+  # First create the vault if needed
+  depends_on = [aws_backup_vault.ab_vault]
+}
+
 locals {
   # Rule
   rule = var.rule_name == null ? [] : [
@@ -121,6 +186,9 @@ locals {
 
   # Rules
   rules = concat(local.rule, var.rules)
+
+  # Plans map for multiple plans
+  plans_map = var.plans
 
   # Helper for VSS validation
   selection_resources = flatten([

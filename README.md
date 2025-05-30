@@ -10,6 +10,7 @@ Terraform module to create AWS Backup plans. AWS Backup is a fully managed backu
 * Flexible backup plan customization
 * Comprehensive backup management:
   - Rules and selections
+  - Multiple plans per vault
   - Copy actions and lifecycle policies
   - Retention periods and windows
   - Resource tagging
@@ -27,7 +28,7 @@ Terraform module to create AWS Backup plans. AWS Backup is a fully managed backu
 
 ## Usage
 
-You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once.
+You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once. For multiple backup plans, you can use the `plans` variable to create several plans with their own rules and selections.
 
 Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
@@ -360,6 +361,214 @@ module "aws_backup_example" {
   }
 }
 ```
+
+### Multiple backup plans
+
+```hcl
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+
+  # Vault
+  vault_name = "vault-1"
+
+  # Multiple plans
+  plans = {
+    # First plan for daily backups
+    daily = {
+      name = "daily-backup-plan"
+      rules = [
+        {
+          name              = "daily-rule"
+          schedule          = "cron(0 12 * * ? *)"
+          start_window      = 120
+          completion_window = 360
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 30
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "daily"
+          }
+        }
+      ]
+      selections = {
+        prod_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
+          ]
+          selection_tags = [
+            {
+              type  = "STRINGEQUALS"
+              key   = "Environment"
+              value = "prod"
+            }
+          ]
+        }
+      }
+    },
+    # Second plan for weekly backups
+    weekly = {
+      name = "weekly-backup-plan"
+      rules = [
+        {
+          name              = "weekly-rule"
+          schedule          = "cron(0 0 ? * 1 *)" # Run every Sunday at midnight
+          start_window      = 120
+          completion_window = 480
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 120
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "weekly"
+          }
+        }
+      ]
+      selections = {
+        all_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
+          ]
+        }
+      }
+    }
+  }
+
+  # Tags
+  tags = {
+    Owner       = "backup team"
+    Environment = "prod"
+    Terraform   = true
+  }
+}
+```
+
+### Migrating from Single Plan to Multiple Plans
+
+When upgrading from a previous version that used single plan configuration to the new multiple plans feature, you have two options:
+
+#### Option 1: Continue using single plan (recommended for simple cases)
+
+The module maintains full backward compatibility. Your existing configuration will continue to work without changes:
+
+```hcl
+# This will continue to work as before
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  plan_name  = "my-plan"
+  
+  # Single rule using variables
+  rule_name     = "daily-rule"
+  rule_schedule = "cron(0 12 * * ? *)"
+  
+  # Or multiple rules using list
+  rules = [
+    {
+      name     = "rule-1"
+      schedule = "cron(0 12 * * ? *)"
+      lifecycle = {
+        delete_after = 30
+      }
+    }
+  ]
+  
+  # Single selection using variables
+  selection_name = "my-selection"
+  selection_resources = ["arn:aws:dynamodb:..."]
+  
+  # Or multiple selections using list
+  selections = [
+    {
+      name = "selection-1"
+      resources = ["arn:aws:dynamodb:..."]
+    }
+  ]
+}
+```
+
+#### Option 2: Migrate to multiple plans (recommended for complex scenarios)
+
+If you want to use the new multiple plans feature, follow these steps:
+
+1. **Update your configuration** to use the `plans` variable:
+
+```hcl
+# Before: Single plan configuration
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  plan_name  = "my-plan"
+  
+  rules = [
+    {
+      name = "daily-rule"
+      schedule = "cron(0 12 * * ? *)"
+      lifecycle = { delete_after = 30 }
+    }
+  ]
+  
+  selections = [
+    {
+      name = "my-selection"
+      resources = ["arn:aws:dynamodb:..."]
+    }
+  ]
+}
+
+# After: Multiple plans configuration
+module "aws_backup_example" {
+  source = "lgallard/backup/aws"
+  
+  vault_name = "my-vault"
+  
+  plans = {
+    default = {  # Use "default" as the plan key for smooth migration
+      name = "my-plan"
+      rules = [
+        {
+          name = "daily-rule"
+          schedule = "cron(0 12 * * ? *)"
+          lifecycle = { delete_after = 30 }
+        }
+      ]
+      selections = {
+        my-selection = {
+          resources = ["arn:aws:dynamodb:..."]
+        }
+      }
+    }
+  }
+}
+```
+
+2. **Handle resource migration** using Terraform state commands:
+
+```bash
+# Move the backup plan
+terraform state mv 'module.aws_backup_example.aws_backup_plan.ab_plan[0]' 'module.aws_backup_example.aws_backup_plan.ab_plans["default"]'
+
+# Move the backup selection(s) - adjust the selection key as needed
+terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selection[0]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-my-selection"]'
+
+# If using multiple selections, move each one:
+terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selections["selection-name"]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-selection-name"]'
+```
+
+3. **Run terraform plan** to verify no resources will be recreated:
+
+```bash
+terraform plan
+# Should show "No changes" if migration was successful
+```
+
+> **Note**: The exact state move commands depend on your current configuration. Use `terraform state list` to see your current resource addresses, and `terraform plan` to see what changes would be made before running the state move commands.
+
 
 ### AWS Backup Audit Manager Framework
 

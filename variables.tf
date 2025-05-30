@@ -86,6 +86,44 @@ variable "plan_name" {
   default     = null
 }
 
+variable "plans" {
+  description = "A map of backup plans to create. Each key is the plan name and each value is a map of plan configuration."
+  type = map(object({
+    name = optional(string)
+    rules = list(object({
+      name                     = string
+      target_vault_name        = optional(string)
+      schedule                 = optional(string)
+      start_window             = optional(number)
+      completion_window        = optional(number)
+      enable_continuous_backup = optional(bool)
+      lifecycle = optional(object({
+        cold_storage_after = optional(number)
+        delete_after       = number
+      }))
+      recovery_point_tags = optional(map(string))
+      copy_actions = optional(list(object({
+        destination_vault_arn = string
+        lifecycle = optional(object({
+          cold_storage_after = optional(number)
+          delete_after       = number
+        }))
+      })), [])
+    }))
+    selections = optional(map(object({
+      resources     = optional(list(string))
+      not_resources = optional(list(string))
+      conditions    = optional(map(any))
+      selection_tags = optional(list(object({
+        type  = string
+        key   = string
+        value = string
+      })))
+    })), {})
+  }))
+  default = {}
+}
+
 # Default rule
 variable "rule_name" {
   description = "An display name for a backup rule"

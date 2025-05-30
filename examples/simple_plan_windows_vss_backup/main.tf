@@ -23,7 +23,7 @@ module "aws_backup_windows_vss" {
   selection_resources = [
     # Include an EC2 instance to satisfy the validation
     "arn:aws:ec2:us-west-2:123456789012:instance/i-1234567890abcdef0",
-    
+
     # You can also include other resources
     "arn:aws:dynamodb:us-west-2:123456789012:table/my-table"
   ]
