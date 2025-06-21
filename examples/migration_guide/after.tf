@@ -1,14 +1,14 @@
 # After migration - multiple plans configuration
 module "aws_backup_example" {
   source = "../.."
-  
+
   # Vault (unchanged)
   vault_name = "my-backup-vault"
-  
+
   # Multiple plans configuration
   plans = {
     default = {
-      name = "daily-backup-plan"  # Keep the same plan name
+      name = "daily-backup-plan" # Keep the same plan name
       rules = [
         {
           name     = "daily-rule"
@@ -33,7 +33,7 @@ module "aws_backup_example" {
       }
     }
   }
-  
+
   tags = {
     Environment = "production"
     Team        = "platform"

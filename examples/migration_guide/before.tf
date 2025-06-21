@@ -1,10 +1,10 @@
 # Before migration - legacy single plan configuration
 module "aws_backup_example" {
   source = "../.."
-  
+
   # Vault
   vault_name = "my-backup-vault"
-  
+
   # Single plan using rules list
   plan_name = "daily-backup-plan"
   rules = [
@@ -16,7 +16,7 @@ module "aws_backup_example" {
       }
     }
   ]
-  
+
   # Multiple selections
   selections = [
     {
@@ -33,7 +33,7 @@ module "aws_backup_example" {
       ]
     }
   ]
-  
+
   tags = {
     Environment = "production"
     Team        = "platform"

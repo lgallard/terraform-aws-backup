@@ -25,7 +25,7 @@ repos:
       - id: terraform_tflint  # Added terraform linter
         args:
           - --args=--config=.tflint.hcl
-#      - id: terraform_checkov  # Added security scanner
-#        args:
-#          - --args=--quiet
-#          - --args=--skip-check CKV_AWS_1  # Skip specific rules if needed
+      - id: terraform_checkov  # Added security scanner
+        args:
+          - --args=--quiet
+          - --args=--skip-check CKV_AWS_1  # Skip specific rules if needed
