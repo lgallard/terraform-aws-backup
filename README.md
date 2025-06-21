@@ -719,19 +719,97 @@ error creating Backup Vault (): AccessDeniedException: status code: 403, request
 ```
 
 Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
 
-## Known Issues
+## Testing
 
-During the development of the module, the following issues were found:
+This module includes comprehensive testing to ensure reliability and prevent regressions.
 
-### Error creating Backup Vault
+### Test Types
 
-In case you get an error message similar to this one:
+1. **Validation Tests**: Terraform syntax, formatting, and configuration validation
+2. **Security Tests**: Static security analysis using Checkov
+3. **Example Tests**: Automated validation of all example configurations
+4. **Integration Tests**: Go-based tests using Terratest for actual AWS resource testing
+
+### Running Tests Locally
+
+#### Prerequisites
+
+- Terraform >= 1.0.0
+- Go >= 1.21 (for integration tests)
+- Python 3.11+ (for security scanning)
+- AWS credentials configured (for integration tests)
+
+#### Quick Test Commands
+
+```bash
+# Install dependencies
+make install-deps
+
+# Run all validation and security tests (no AWS resources created)
+make test
+
+# Run format and validate
+make validate
+
+# Run security scanning
+make security
+
+# Validate all examples
+make validate-examples
+
+# Run integration tests (requires AWS credentials)
+make test-integration
+
+# Run all tests including integration
+make test-all
+```
+
+#### Manual Testing
+
+```bash
+# Basic validation
+terraform init
+terraform validate
+terraform fmt -check -recursive
+
+# Security scan
+checkov -d . --framework terraform --quiet
+
+# Test examples
+cd examples/simple_plan
+terraform init && terraform validate
+
+# Run Go tests
+cd test
+go test -v ./...
+```
+
+### CI/CD Pipeline
+
+The module uses GitHub Actions for automated testing:
+
+- **Matrix Testing**: Tests against multiple Terraform versions (1.0, 1.5, 1.6) and AWS provider versions (4.0, 5.0, 5.30)
+- **Example Validation**: All examples are automatically validated
+- **Security Scanning**: Checkov runs on every push and pull request
+- **Integration Tests**: Run on labeled PRs or pushes to main branches
+
+### Test Structure
 
 ```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+test/
+├── terraform_basic_test.go       # Basic validation tests
+├── terraform_aws_backup_test.go  # Comprehensive backup functionality tests
+└── ...                          # Additional test files
 ```
 
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+### Writing Tests
+
+When contributing new features:
+
+1. Add validation tests for new configurations
+2. Update integration tests for new AWS resources
+3. Add example configurations and ensure they pass validation
+4. Update documentation
+
 <!-- END_TF_DOCS -->

@@ -1,0 +1,182 @@
+name: Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        terraform: ['1.0.11', '1.5.7', '1.6.6']
+        aws-provider: ['4.67.0', '5.0.1', '5.30.0']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+
+      - name: Create provider version constraint
+        run: |
+          cat > versions_test.tf << EOF
+          terraform {
+            required_version = ">= 1.0.0"
+            required_providers {
+              aws = {
+                source  = "hashicorp/aws"
+                version = "~> ${{ matrix.aws-provider }}"
+              }
+            }
+          }
+          EOF
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: Init TFLint
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint
+
+  terraform-security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov
+        run: |
+          checkov -d . \
+            --framework terraform \
+            --output cli \
+            --output junitxml \
+            --output-file-path console,checkov-results.xml \
+            --skip-check CKV_AWS_1 \
+            --quiet
+
+      - name: Upload Checkov results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: checkov-results
+          path: checkov-results.xml
+
+  validate-examples:
+    name: Validate Examples
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example:
+          - aws_recommended_audit_framework
+          - complete_audit_framework
+          - complete_plan
+          - migration_guide
+          - multiple_plans
+          - notifications_only_on_failed_jobs
+          - organization_backup_policy
+          - selection_by_conditions
+          - selection_by_tags
+          - simple_audit_framework
+          - simple_plan
+          - simple_plan_using_lock_configuration
+          - simple_plan_using_variables
+          - simple_plan_windows_vss_backup
+          - simple_plan_with_report
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init - Example ${{ matrix.example }}
+        run: |
+          cd examples/${{ matrix.example }}
+          terraform init
+
+      - name: Terraform Validate - Example ${{ matrix.example }}
+        run: |
+          cd examples/${{ matrix.example }}
+          terraform validate
+
+      - name: Terraform Format Check - Example ${{ matrix.example }}
+        run: |
+          cd examples/${{ matrix.example }}
+          terraform fmt -check
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: Run TFLint - Example ${{ matrix.example }}
+        run: |
+          cd examples/${{ matrix.example }}
+          if [ -f .tflint.hcl ]; then
+            tflint --init
+            tflint
+          fi
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests'))
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
+      - name: Go Mod Download
+        run: |
+          if [ -f go.mod ]; then
+            go mod download
+          fi
+
+      - name: Run Integration Tests
+        run: |
+          if [ -d test ]; then
+            cd test
+            go test -v -timeout 30m ./...
+          fi
+        env:
+          AWS_DEFAULT_REGION: us-west-2
