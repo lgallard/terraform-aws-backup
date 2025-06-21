@@ -1,6 +1,6 @@
 # Makefile for terraform-aws-backup testing
 
-.PHONY: help test test-unit test-integration validate format lint security clean
+.PHONY: help test test-unit test-integration test-resource-creation validate format lint security clean
 
 # Variables
 TERRAFORM_VERSION ?= 1.6.6
@@ -65,14 +65,25 @@ test-unit: ## Run unit tests (validation only)
 test-integration: ## Run integration tests (requires AWS credentials)
 	@echo "Running integration tests..."
 	@if [ -d test ]; then \
-		cd test && go test -v -timeout 30m ./...; \
+		cd test && go test -v -timeout 30m -run "^Test.*(?<!ResourceCreation)$$" ./...; \
+	else \
+		echo "No test directory found"; \
+	fi
+
+test-resource-creation: ## Run resource creation integration tests (requires AWS credentials)
+	@echo "Running resource creation integration tests..."
+	@echo "WARNING: This will create and destroy real AWS resources and may incur costs!"
+	@if [ -d test ]; then \
+		cd test && go test -v -timeout 60m -run TestResourceCreation ./...; \
 	else \
 		echo "No test directory found"; \
 	fi
 
 test: validate lint security validate-examples test-unit ## Run all tests except integration tests
 
-test-all: test test-integration ## Run all tests including integration tests
+test-all: test test-integration ## Run all tests including integration tests (but not resource creation)
+
+test-full: test test-integration test-resource-creation ## Run all tests including resource creation tests
 
 clean: ## Clean up test artifacts
 	@echo "Cleaning up..."

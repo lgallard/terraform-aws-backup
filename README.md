@@ -729,7 +729,8 @@ This module includes comprehensive testing to ensure reliability and prevent reg
 1. **Validation Tests**: Terraform syntax, formatting, and configuration validation
 2. **Security Tests**: Static security analysis using Checkov
 3. **Example Tests**: Automated validation of all example configurations
-4. **Integration Tests**: Go-based tests using Terratest for actual AWS resource testing
+4. **Integration Tests**: Go-based tests using Terratest for AWS resource testing
+5. **Resource Creation Tests**: End-to-end tests that create actual AWS resources and validate backup functionality
 
 ### Running Tests Locally
 
@@ -761,8 +762,14 @@ make validate-examples
 # Run integration tests (requires AWS credentials)
 make test-integration
 
+# Run resource creation tests (requires AWS credentials, creates actual resources)
+make test-resource-creation
+
 # Run all tests including integration
 make test-all
+
+# Run all tests including resource creation (most comprehensive)
+make test-full
 ```
 
 #### Manual Testing
@@ -793,15 +800,66 @@ The module uses GitHub Actions for automated testing:
 - **Example Validation**: All examples are automatically validated
 - **Security Scanning**: Checkov runs on every push and pull request
 - **Integration Tests**: Run on labeled PRs or pushes to main branches
+- **Resource Creation Tests**: Run when specifically labeled with `run-resource-tests` (requires AWS credentials)
 
 ### Test Structure
 
 ```
 test/
-├── terraform_basic_test.go       # Basic validation tests
-├── terraform_aws_backup_test.go  # Comprehensive backup functionality tests
-└── ...                          # Additional test files
+├── terraform_basic_test.go              # Basic validation tests
+├── terraform_aws_backup_test.go         # Comprehensive backup functionality tests
+├── terraform_resource_creation_test.go  # End-to-end resource creation tests
+└── fixtures/                           # Test configuration files
+    ├── resource_creation/              # Resource creation test configurations
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   ├── outputs.tf
+    │   └── versions.tf
+    └── backup_job/                     # Backup job test configurations
+        ├── main.tf
+        ├── variables.tf
+        ├── outputs.tf
+        └── versions.tf
 ```
+
+### Resource Creation Testing
+
+The module includes comprehensive end-to-end tests that create actual AWS resources to validate backup functionality:
+
+#### TestResourceCreationIntegration
+- Creates a DynamoDB table
+- Applies the backup module to backup the table
+- Verifies backup vault, plan, and selection are created correctly
+- Validates the DynamoDB table is included in backup selections
+- Cleans up all resources after testing
+
+#### TestOnDemandBackupJob
+- Creates a DynamoDB table and backup infrastructure
+- Triggers an on-demand backup job
+- Monitors backup job progress
+- Validates backup job completion
+- Cleans up all resources
+
+#### Running Resource Creation Tests
+
+**⚠️ Warning**: These tests create real AWS resources and may incur costs!
+
+```bash
+# Run resource creation tests locally (requires AWS credentials)
+make test-resource-creation
+
+# Or with Go directly
+cd test
+go test -v -run TestResourceCreation ./...
+```
+
+#### CI/CD Integration
+
+Resource creation tests run in GitHub Actions when:
+- The PR is labeled with `run-resource-tests`
+- AWS credentials are provided via secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
+
+The tests automatically skip if AWS credentials are not available.
 
 ### Writing Tests
 

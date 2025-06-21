@@ -180,3 +180,45 @@ jobs:
           fi
         env:
           AWS_DEFAULT_REGION: us-west-2
+
+  resource-creation-tests:
+    name: Resource Creation Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-resource-tests'))
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Go Mod Download
+        run: |
+          if [ -f go.mod ]; then
+            go mod download
+          fi
+
+      - name: Run Resource Creation Tests
+        run: |
+          if [ -d test ]; then
+            cd test
+            go test -v -timeout 60m -run TestResourceCreation ./...
+          fi
+        env:
+          AWS_DEFAULT_REGION: us-west-2
+          TF_VAR_aws_region: us-west-2
