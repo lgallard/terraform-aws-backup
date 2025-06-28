@@ -46,7 +46,7 @@ You should see an error message:
 Error: Resource precondition failed
 
   on .terraform/modules/backup/main.tf line XX, in resource "aws_backup_plan" "ab_plan":
-   XX:     condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex(".*EC2.*", join(",", local.selection_resources))))
+   XX:     condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex("(?i).*ec2.*", join(",", local.selection_resources))))
      ├────────────────
      │ local.selection_resources doesn't contain EC2 instances
      │ var.windows_vss_backup is true
@@ -65,4 +65,4 @@ Error: Resource precondition failed
 
 - Windows VSS backup is only applicable to Windows EC2 instances
 - When enabled, at least one EC2 instance must be included in the backup selection
-- This can be done via direct ARN references or tag-based selection 
+- This can be done via direct ARN references or tag-based selection

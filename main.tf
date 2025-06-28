@@ -164,6 +164,13 @@ resource "aws_backup_plan" "ab_plans" {
 
   # First create the vault if needed
   depends_on = [aws_backup_vault.ab_vault]
+
+  lifecycle {
+    precondition {
+      condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex("(?i).*ec2.*", join(",", local.selection_resources))))
+      error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
+    }
+  }
 }
 
 locals {
