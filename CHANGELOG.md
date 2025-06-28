@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.24.1](https://github.com/lgallard/terraform-aws-backup/compare/0.24.0...v0.24.1) (2025-06-28)
+
+
+### Bug Fixes
+
+* Windows VSS backup validation to support all selection methods and case-insensitive EC2 detection ([#129](https://github.com/lgallard/terraform-aws-backup/issues/129)) ([bb682c3](https://github.com/lgallard/terraform-aws-backup/commit/bb682c3583931009a0dab5fc94d089b4ece2e21a))
+
 ## [0.24.0](https://github.com/lgallard/terraform-aws-backup/compare/0.23.8...v0.24.0) (2025-05-30)
 
 
