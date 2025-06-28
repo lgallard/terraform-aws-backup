@@ -200,7 +200,7 @@ locals {
     # New multiple selections (var.backup_selections)
     [for selection in var.backup_selections : try(selection.resources, [])],
     # Plan-based selections
-    [for plan in var.plans : [for selection in plan.selections : try(selection.resources, [])]]
+    [for plan in var.plans : flatten([for selection in try(plan.selections, []) : try(selection.resources, [])])]
   ])
 
   # Lifecycle validations
