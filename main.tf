@@ -91,7 +91,7 @@ resource "aws_backup_plan" "ab_plan" {
 
   lifecycle {
     precondition {
-      condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex(".*EC2.*", join(",", local.selection_resources))))
+      condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex("(?i).*ec2.*", join(",", local.selection_resources))))
       error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
     }
 
@@ -190,9 +190,17 @@ locals {
   # Plans map for multiple plans
   plans_map = var.plans
 
-  # Helper for VSS validation
+  # Helper for VSS validation - collect resources from all selection sources
   selection_resources = flatten([
-    for selection in var.backup_selections : try(selection.resources, [])
+    # Legacy single selection
+    var.selection_resources,
+    # Legacy multiple selections (var.selections)
+    [for selection in try(tolist(var.selections), []) : try(selection.resources, [])],
+    [for k, selection in try(tomap(var.selections), {}) : try(selection.resources, [])],
+    # New multiple selections (var.backup_selections)
+    [for selection in var.backup_selections : try(selection.resources, [])],
+    # Plan-based selections
+    [for plan in var.plans : [for selection in plan.selections : try(selection.resources, [])]]
   ])
 
   # Lifecycle validations
