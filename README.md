@@ -10,7 +10,6 @@ Terraform module to create AWS Backup plans. AWS Backup is a fully managed backu
 * Flexible backup plan customization
 * Comprehensive backup management:
   - Rules and selections
-  - Multiple plans per vault
   - Copy actions and lifecycle policies
   - Retention periods and windows
   - Resource tagging
@@ -267,6 +266,143 @@ module "aws_backup_example" {
 }
 ```
 
+### Multiple backup plans
+
+```hcl
+# AWS SNS Topic
+resource "aws_sns_topic" "backup_vault_notifications" {
+  name = "backup-vault-events"
+}
+
+# AWS Backup
+module "aws_backup_example" {
+  source = "../.."
+
+  # Vault
+  vault_name = "vault-1"
+
+  # Vault lock configuration
+  min_retention_days = 7
+  max_retention_days = 120
+
+  # Multiple plans
+  plans = {
+    # First plan for daily backups
+    daily = {
+      name = "daily-backup-plan"
+      rules = [
+        {
+          name              = "daily-rule"
+          schedule          = "cron(0 12 * * ? *)"
+          start_window      = 120
+          completion_window = 360
+          lifecycle = {
+            cold_storage_after = 0
+            delete_after       = 30
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "daily"
+          }
+        }
+      ]
+      selections = {
+        prod_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
+          ]
+          selection_tags = [
+            {
+              type  = "STRINGEQUALS"
+              key   = "Environment"
+              value = "prod"
+            }
+          ]
+        }
+      }
+    },
+    # Second plan for weekly backups
+    weekly = {
+      name = "weekly-backup-plan"
+      rules = [
+        {
+          name              = "weekly-rule"
+          schedule          = "cron(0 0 ? * 1 *)" # Run every Sunday at midnight
+          start_window      = 120
+          completion_window = 480
+          lifecycle = {
+            cold_storage_after = 30
+            delete_after       = 120
+          }
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "weekly"
+          }
+        }
+      ]
+      selections = {
+        all_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
+          ]
+        }
+      }
+    },
+    # Third plan for monthly backups with cross-region copy
+    monthly = {
+      name = "monthly-backup-plan"
+      rules = [
+        {
+          name              = "monthly-rule"
+          schedule          = "cron(0 0 1 * ? *)" # Run at midnight on the first day of every month
+          start_window      = 120
+          completion_window = 720
+          lifecycle = {
+            cold_storage_after = 90
+            delete_after       = 365
+          }
+          copy_actions = [
+            {
+              destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
+              lifecycle = {
+                cold_storage_after = 90
+                delete_after       = 365
+              }
+            }
+          ]
+          recovery_point_tags = {
+            Environment = "prod"
+            Frequency   = "monthly"
+          }
+        }
+      ]
+      selections = {
+        critical_databases = {
+          resources = [
+            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
+          ]
+          selection_tags = [
+            {
+              type  = "STRINGEQUALS"
+              key   = "Criticality"
+              value = "high"
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  # Tags
+  tags = {
+    Owner       = "backup team"
+    Environment = "prod"
+    Terraform   = true
+  }
+}
+```
+
 
 ### Simple plan using AWS Organizations backup policies
 
@@ -362,214 +498,6 @@ module "aws_backup_example" {
 }
 ```
 
-### Multiple backup plans
-
-```hcl
-module "aws_backup_example" {
-  source = "lgallard/backup/aws"
-
-  # Vault
-  vault_name = "vault-1"
-
-  # Multiple plans
-  plans = {
-    # First plan for daily backups
-    daily = {
-      name = "daily-backup-plan"
-      rules = [
-        {
-          name              = "daily-rule"
-          schedule          = "cron(0 12 * * ? *)"
-          start_window      = 120
-          completion_window = 360
-          lifecycle = {
-            cold_storage_after = 0
-            delete_after       = 30
-          }
-          recovery_point_tags = {
-            Environment = "prod"
-            Frequency   = "daily"
-          }
-        }
-      ]
-      selections = {
-        prod_databases = {
-          resources = [
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
-          ]
-          selection_tags = [
-            {
-              type  = "STRINGEQUALS"
-              key   = "Environment"
-              value = "prod"
-            }
-          ]
-        }
-      }
-    },
-    # Second plan for weekly backups
-    weekly = {
-      name = "weekly-backup-plan"
-      rules = [
-        {
-          name              = "weekly-rule"
-          schedule          = "cron(0 0 ? * 1 *)" # Run every Sunday at midnight
-          start_window      = 120
-          completion_window = 480
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = 120
-          }
-          recovery_point_tags = {
-            Environment = "prod"
-            Frequency   = "weekly"
-          }
-        }
-      ]
-      selections = {
-        all_databases = {
-          resources = [
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
-          ]
-        }
-      }
-    }
-  }
-
-  # Tags
-  tags = {
-    Owner       = "backup team"
-    Environment = "prod"
-    Terraform   = true
-  }
-}
-```
-
-### Migrating from Single Plan to Multiple Plans
-
-When upgrading from a previous version that used single plan configuration to the new multiple plans feature, you have two options:
-
-#### Option 1: Continue using single plan (recommended for simple cases)
-
-The module maintains full backward compatibility. Your existing configuration will continue to work without changes:
-
-```hcl
-# This will continue to work as before
-module "aws_backup_example" {
-  source = "lgallard/backup/aws"
-  
-  vault_name = "my-vault"
-  plan_name  = "my-plan"
-  
-  # Single rule using variables
-  rule_name     = "daily-rule"
-  rule_schedule = "cron(0 12 * * ? *)"
-  
-  # Or multiple rules using list
-  rules = [
-    {
-      name     = "rule-1"
-      schedule = "cron(0 12 * * ? *)"
-      lifecycle = {
-        delete_after = 30
-      }
-    }
-  ]
-  
-  # Single selection using variables
-  selection_name = "my-selection"
-  selection_resources = ["arn:aws:dynamodb:..."]
-  
-  # Or multiple selections using list
-  selections = [
-    {
-      name = "selection-1"
-      resources = ["arn:aws:dynamodb:..."]
-    }
-  ]
-}
-```
-
-#### Option 2: Migrate to multiple plans (recommended for complex scenarios)
-
-If you want to use the new multiple plans feature, follow these steps:
-
-1. **Update your configuration** to use the `plans` variable:
-
-```hcl
-# Before: Single plan configuration
-module "aws_backup_example" {
-  source = "lgallard/backup/aws"
-  
-  vault_name = "my-vault"
-  plan_name  = "my-plan"
-  
-  rules = [
-    {
-      name = "daily-rule"
-      schedule = "cron(0 12 * * ? *)"
-      lifecycle = { delete_after = 30 }
-    }
-  ]
-  
-  selections = [
-    {
-      name = "my-selection"
-      resources = ["arn:aws:dynamodb:..."]
-    }
-  ]
-}
-
-# After: Multiple plans configuration
-module "aws_backup_example" {
-  source = "lgallard/backup/aws"
-  
-  vault_name = "my-vault"
-  
-  plans = {
-    default = {  # Use "default" as the plan key for smooth migration
-      name = "my-plan"
-      rules = [
-        {
-          name = "daily-rule"
-          schedule = "cron(0 12 * * ? *)"
-          lifecycle = { delete_after = 30 }
-        }
-      ]
-      selections = {
-        my-selection = {
-          resources = ["arn:aws:dynamodb:..."]
-        }
-      }
-    }
-  }
-}
-```
-
-2. **Handle resource migration** using Terraform state commands:
-
-```bash
-# Move the backup plan
-terraform state mv 'module.aws_backup_example.aws_backup_plan.ab_plan[0]' 'module.aws_backup_example.aws_backup_plan.ab_plans["default"]'
-
-# Move the backup selection(s) - adjust the selection key as needed
-terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selection[0]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-my-selection"]'
-
-# If using multiple selections, move each one:
-terraform state mv 'module.aws_backup_example.aws_backup_selection.ab_selections["selection-name"]' 'module.aws_backup_example.aws_backup_selection.plan_selections["default-selection-name"]'
-```
-
-3. **Run terraform plan** to verify no resources will be recreated:
-
-```bash
-terraform plan
-# Should show "No changes" if migration was successful
-```
-
-> **Note**: The exact state move commands depend on your current configuration. Use `terraform state list` to see your current resource addresses, and `terraform plan` to see what changes would be made before running the state move commands.
-
-
 ### AWS Backup Audit Manager Framework
 
 ```hcl
@@ -624,9 +552,11 @@ No modules.
 |------|------|
 | [aws_backup_framework.ab_framework](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_framework) | resource |
 | [aws_backup_plan.ab_plan](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
+| [aws_backup_plan.ab_plans](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_report_plan.ab_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_report_plan) | resource |
 | [aws_backup_selection.ab_selection](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
 | [aws_backup_selection.ab_selections](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
+| [aws_backup_selection.plan_selections](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
 | [aws_backup_vault.ab_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault) | resource |
 | [aws_backup_vault_lock_configuration.ab_vault_lock_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_lock_configuration) | resource |
 | [aws_backup_vault_notifications.backup_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_notifications) | resource |
@@ -668,6 +598,7 @@ No modules.
 | <a name="input_org_policy_name"></a> [org\_policy\_name](#input\_org\_policy\_name) | Name of the AWS Organizations backup policy | `string` | `"backup-policy"` | no |
 | <a name="input_org_policy_target_id"></a> [org\_policy\_target\_id](#input\_org\_policy\_target\_id) | Target ID (Root/OU/Account) for the backup policy | `string` | `null` | no |
 | <a name="input_plan_name"></a> [plan\_name](#input\_plan\_name) | The display name of a backup plan | `string` | `null` | no |
+| <a name="input_plans"></a> [plans](#input\_plans) | A map of backup plans to create. Each key is the plan name and each value is a map of plan configuration. | <pre>map(object({<br/>    name = optional(string)<br/>    rules = list(object({<br/>      name                     = string<br/>      target_vault_name        = optional(string)<br/>      schedule                 = optional(string)<br/>      start_window             = optional(number)<br/>      completion_window        = optional(number)<br/>      enable_continuous_backup = optional(bool)<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>      recovery_point_tags = optional(map(string))<br/>      copy_actions = optional(list(object({<br/>        destination_vault_arn = string<br/>        lifecycle = optional(object({<br/>          cold_storage_after = optional(number)<br/>          delete_after       = number<br/>        }))<br/>      })), [])<br/>    }))<br/>    selections = optional(map(object({<br/>      resources     = optional(list(string))<br/>      not_resources = optional(list(string))<br/>      conditions    = optional(map(any))<br/>      selection_tags = optional(list(object({<br/>        type  = string<br/>        key   = string<br/>        value = string<br/>      })))<br/>    })), {})<br/>  }))</pre> | `{}` | no |
 | <a name="input_reports"></a> [reports](#input\_reports) | The default cache behavior for this distribution. | <pre>list(object({<br/>    name               = string<br/>    description        = optional(string, null)<br/>    formats            = optional(list(string), null)<br/>    s3_bucket_name     = string<br/>    s3_key_prefix      = optional(string, null)<br/>    report_template    = string<br/>    accounts           = optional(list(string), null)<br/>    organization_units = optional(list(string), null)<br/>    regions            = optional(list(string), null)<br/>    framework_arns     = optional(list(string), [])<br/>  }))</pre> | `[]` | no |
 | <a name="input_rule_completion_window"></a> [rule\_completion\_window](#input\_rule\_completion\_window) | The amount of time AWS Backup attempts a backup before canceling the job and returning an error | `number` | `null` | no |
 | <a name="input_rule_enable_continuous_backup"></a> [rule\_enable\_continuous\_backup](#input\_rule\_enable\_continuous\_backup) | Enable continuous backups for supported resources. | `bool` | `false` | no |
@@ -677,7 +608,7 @@ No modules.
 | <a name="input_rule_recovery_point_tags"></a> [rule\_recovery\_point\_tags](#input\_rule\_recovery\_point\_tags) | Metadata that you can assign to help organize the resources that you create | `map(string)` | `{}` | no |
 | <a name="input_rule_schedule"></a> [rule\_schedule](#input\_rule\_schedule) | A CRON expression specifying when AWS Backup initiates a backup job | `string` | `null` | no |
 | <a name="input_rule_start_window"></a> [rule\_start\_window](#input\_rule\_start\_window) | The amount of time in minutes before beginning a backup | `number` | `null` | no |
-| <a name="input_rules"></a> [rules](#input\_rules) | A list of rule maps | <pre>list(object({<br/>    name                     = string<br/>    target_vault_name        = optional(string)<br/>    schedule                 = optional(string)<br/>    start_window             = optional(number)<br/>    completion_window        = optional(number)<br/>    enable_continuous_backup = optional(bool)<br/>    lifecycle = optional(object({<br/>      cold_storage_after = optional(number)<br/>      delete_after       = number<br/>    }))<br/>    recovery_point_tags = optional(map(string))<br/>    copy_actions = optional(list(object({<br/>      destination_vault_arn = string<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>    })))<br/>  }))</pre> | `[]` | no |
+| <a name="input_rules"></a> [rules](#input\_rules) | A list of rule maps | <pre>list(object({<br/>    name                     = string<br/>    target_vault_name        = optional(string)<br/>    schedule                 = optional(string)<br/>    start_window             = optional(number)<br/>    completion_window        = optional(number)<br/>    enable_continuous_backup = optional(bool)<br/>    lifecycle = optional(object({<br/>      cold_storage_after = optional(number)<br/>      delete_after       = number<br/>    }))<br/>    recovery_point_tags = optional(map(string))<br/>    copy_actions = optional(list(object({<br/>      destination_vault_arn = string<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>    })), [])<br/>  }))</pre> | `[]` | no |
 | <a name="input_selection_conditions"></a> [selection\_conditions](#input\_selection\_conditions) | A map of conditions that you define to assign resources to your backup plans using tags. | `map(any)` | `{}` | no |
 | <a name="input_selection_name"></a> [selection\_name](#input\_selection\_name) | The display name of a resource selection document | `string` | `null` | no |
 | <a name="input_selection_not_resources"></a> [selection\_not\_resources](#input\_selection\_not\_resources) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to exclude from a backup plan. | `list(any)` | `[]` | no |
@@ -702,8 +633,39 @@ No modules.
 | <a name="output_plan_id"></a> [plan\_id](#output\_plan\_id) | The id of the backup plan |
 | <a name="output_plan_role"></a> [plan\_role](#output\_plan\_role) | The service role of the backup plan |
 | <a name="output_plan_version"></a> [plan\_version](#output\_plan\_version) | Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan |
+| <a name="output_plans"></a> [plans](#output\_plans) | Map of plans created and their attributes |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues

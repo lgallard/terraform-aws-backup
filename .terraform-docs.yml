@@ -36,7 +36,7 @@ content: |-
 
   ## Usage
 
-  You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once.
+  You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once. For multiple backup plans, you can use the `plans` variable to create several plans with their own rules and selections.
 
   Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
@@ -57,6 +57,12 @@ content: |-
 
   ```hcl
   {{ include "examples/complete_plan/main.tf" }}
+  ```
+
+  ### Multiple backup plans
+
+  ```hcl
+  {{ include "examples/multiple_plans/main.tf" }}
   ```
 
 
