@@ -162,7 +162,7 @@ variable "rule_start_window" {
   default     = null
 
   validation {
-    condition     = var.rule_start_window == null || (var.rule_start_window >= 60 && var.rule_start_window <= 43200)
+    condition     = var.rule_start_window == null || try(var.rule_start_window >= 60 && var.rule_start_window <= 43200, false)
     error_message = "The rule_start_window must be between 60 minutes (1 hour) and 43200 minutes (30 days)."
   }
 }
@@ -173,7 +173,7 @@ variable "rule_completion_window" {
   default     = null
 
   validation {
-    condition     = var.rule_completion_window == null || (var.rule_completion_window >= 120 && var.rule_completion_window <= 43200)
+    condition     = var.rule_completion_window == null || try(var.rule_completion_window >= 120 && var.rule_completion_window <= 43200, false)
     error_message = "The rule_completion_window must be between 120 minutes (2 hours) and 43200 minutes (30 days)."
   }
 }
@@ -191,8 +191,8 @@ variable "rule_lifecycle_cold_storage_after" {
   default     = null
 
   validation {
-    condition     = var.rule_lifecycle_cold_storage_after == null || var.rule_lifecycle_cold_storage_after >= 30
-    error_message = "The rule_lifecycle_cold_storage_after must be at least 30 days (AWS minimum requirement)."
+    condition     = var.rule_lifecycle_cold_storage_after == null || try(var.rule_lifecycle_cold_storage_after == 0 || var.rule_lifecycle_cold_storage_after >= 30, false)
+    error_message = "The rule_lifecycle_cold_storage_after must be 0 (disabled) or at least 30 days (AWS minimum requirement)."
   }
 }
 
@@ -202,7 +202,7 @@ variable "rule_lifecycle_delete_after" {
   default     = null
 
   validation {
-    condition     = var.rule_lifecycle_delete_after == null || var.rule_lifecycle_delete_after >= 1
+    condition     = var.rule_lifecycle_delete_after == null || try(var.rule_lifecycle_delete_after >= 1, false)
     error_message = "The rule_lifecycle_delete_after must be at least 1 day."
   }
 }
@@ -259,9 +259,9 @@ variable "rules" {
       for rule in var.rules :
       try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90) &&
       try(rule.lifecycle.delete_after, 90) >= 1 &&
-      (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after >= 30)
+      (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after == 0 || rule.lifecycle.cold_storage_after >= 30)
     ])
-    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day, cold_storage_after ≥ 30 days (if specified). AWS requires minimum 30 days before moving to cold storage."
+    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
   }
 }
 
@@ -485,9 +485,9 @@ variable "backup_policies" {
       for policy in var.backup_policies :
       try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90) &&
       try(policy.lifecycle.delete_after, 90) >= 1 &&
-      (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after >= 30)
+      (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after == 0 || policy.lifecycle.cold_storage_after >= 30)
     ])
-    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day, cold_storage_after ≥ 30 days (if specified). AWS requires minimum 30 days before moving to cold storage."
+    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
   }
 }
 
