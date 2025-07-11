@@ -91,8 +91,8 @@ output "cloudwatch_dashboard_url" {
 output "security_compliance_summary" {
   description = "Summary of security compliance features enabled"
   value = {
-    vault_lock_enabled           = var.enable_vault_lock
-    customer_managed_kms         = true
+    vault_lock_enabled          = var.enable_vault_lock
+    customer_managed_kms        = true
     encryption_at_rest          = true
     cross_region_backup_enabled = var.enable_cross_region_backup
     monitoring_enabled          = true

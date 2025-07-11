@@ -8,11 +8,11 @@ resource "aws_vpc" "test_vpc" {
   enable_dns_support   = true
 
   tags = {
-    Name            = "${var.resource_prefix}-test-vpc"
-    Environment     = "test"
-    BackupRequired  = "true"
-    SecurityLevel   = "high"
-    TestScenario    = "backup-restore"
+    Name           = "${var.resource_prefix}-test-vpc"
+    Environment    = "test"
+    BackupRequired = "true"
+    SecurityLevel  = "high"
+    TestScenario   = "backup-restore"
   }
 }
 
@@ -24,11 +24,11 @@ resource "aws_subnet" "test_subnet" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name            = "${var.resource_prefix}-test-subnet"
-    Environment     = "test"
-    BackupRequired  = "true"
-    SecurityLevel   = "high"
-    TestScenario    = "backup-restore"
+    Name           = "${var.resource_prefix}-test-subnet"
+    Environment    = "test"
+    BackupRequired = "true"
+    SecurityLevel  = "high"
+    TestScenario   = "backup-restore"
   }
 }
 
@@ -37,9 +37,9 @@ resource "aws_internet_gateway" "test_igw" {
   vpc_id = aws_vpc.test_vpc.id
 
   tags = {
-    Name            = "${var.resource_prefix}-test-igw"
-    Environment     = "test"
-    TestScenario    = "backup-restore"
+    Name         = "${var.resource_prefix}-test-igw"
+    Environment  = "test"
+    TestScenario = "backup-restore"
   }
 }
 
@@ -53,9 +53,9 @@ resource "aws_route_table" "test_rt" {
   }
 
   tags = {
-    Name            = "${var.resource_prefix}-test-rt"
-    Environment     = "test"
-    TestScenario    = "backup-restore"
+    Name         = "${var.resource_prefix}-test-rt"
+    Environment  = "test"
+    TestScenario = "backup-restore"
   }
 }
 
@@ -86,9 +86,9 @@ resource "aws_security_group" "test_sg" {
   }
 
   tags = {
-    Name            = "${var.resource_prefix}-test-sg"
-    Environment     = "test"
-    TestScenario    = "backup-restore"
+    Name         = "${var.resource_prefix}-test-sg"
+    Environment  = "test"
+    TestScenario = "backup-restore"
   }
 }
 
@@ -100,12 +100,12 @@ resource "aws_ebs_volume" "test_volume" {
   encrypted         = true
 
   tags = {
-    Name            = "${var.resource_prefix}-test-volume"
-    Environment     = "test"
-    BackupRequired  = "true"
-    SecurityLevel   = "high"
-    TestScenario    = "backup-restore"
-    DataIntegrity   = "test-data-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+    Name           = "${var.resource_prefix}-test-volume"
+    Environment    = "test"
+    BackupRequired = "true"
+    SecurityLevel  = "high"
+    TestScenario   = "backup-restore"
+    DataIntegrity  = "test-data-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
   }
 }
 
@@ -121,11 +121,11 @@ resource "aws_instance" "test_instance" {
   }))
 
   tags = {
-    Name            = "${var.resource_prefix}-test-instance"
-    Environment     = "test"
-    BackupRequired  = "true"
-    SecurityLevel   = "high"
-    TestScenario    = "backup-restore"
+    Name           = "${var.resource_prefix}-test-instance"
+    Environment    = "test"
+    BackupRequired = "true"
+    SecurityLevel  = "high"
+    TestScenario   = "backup-restore"
   }
 }
 
@@ -139,9 +139,9 @@ resource "aws_volume_attachment" "test_attachment" {
 # Create a DynamoDB table for testing
 #checkov:skip=CKV_AWS_119:Test fixture - encryption not required for temporary test resources
 resource "aws_dynamodb_table" "test_table" {
-  name           = "${var.resource_prefix}-test-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "id"
+  name         = "${var.resource_prefix}-test-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
 
   attribute {
     name = "id"
@@ -153,11 +153,11 @@ resource "aws_dynamodb_table" "test_table" {
   }
 
   tags = {
-    Name            = "${var.resource_prefix}-test-table"
-    Environment     = "test"
-    BackupRequired  = "true"
-    SecurityLevel   = "high"
-    TestScenario    = "backup-restore"
+    Name           = "${var.resource_prefix}-test-table"
+    Environment    = "test"
+    BackupRequired = "true"
+    SecurityLevel  = "high"
+    TestScenario   = "backup-restore"
   }
 }
 
@@ -189,15 +189,15 @@ module "backup" {
   rules = [
     {
       name                     = "immediate-backup"
-      schedule                 = null  # Manual backup for testing
+      schedule                 = null # Manual backup for testing
       start_window             = 60
       completion_window        = 120
       enable_continuous_backup = false
-      
+
       lifecycle = {
-        delete_after = 7  # Short retention for testing
+        delete_after = 7 # Short retention for testing
       }
-      
+
       recovery_point_tags = {
         TestScenario = "backup-restore"
         Environment  = "test"
@@ -212,7 +212,7 @@ module "backup" {
         aws_instance.test_instance.arn,
         aws_dynamodb_table.test_table.arn
       ]
-      
+
       selection_tags = [
         {
           type  = "STRINGEQUALS"
@@ -224,8 +224,8 @@ module "backup" {
   }
 
   tags = {
-    Environment     = "test"
-    TestScenario    = "backup-restore"
+    Environment  = "test"
+    TestScenario = "backup-restore"
   }
 }
 

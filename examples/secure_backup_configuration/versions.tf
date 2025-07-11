@@ -2,7 +2,7 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -15,7 +15,7 @@ terraform {
 provider "aws" {
   # Configure your AWS credentials and region
   # region = "us-east-1"
-  
+
   default_tags {
     tags = {
       ManagedBy = "Terraform"
@@ -29,7 +29,7 @@ provider "aws" {
 provider "aws" {
   alias  = "cross_region"
   region = var.cross_region
-  
+
   default_tags {
     tags = {
       ManagedBy = "Terraform"

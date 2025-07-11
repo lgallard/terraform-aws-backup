@@ -9,7 +9,7 @@ variable "vault_name" {
   validation {
     condition = var.vault_name == null ? true : (
       can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name)) &&
-      !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name))  # Prevent insecure naming patterns
+      !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name)) # Prevent insecure naming patterns
     )
     error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores. Avoid using 'test', 'temp', 'delete', 'remove', or 'default' in names for security reasons."
   }
@@ -23,7 +23,7 @@ variable "vault_kms_key_arn" {
   validation {
     condition = var.vault_kms_key_arn == null ? true : (
       can(regex("^arn:aws:kms:", var.vault_kms_key_arn)) &&
-      !can(regex("alias/aws/", var.vault_kms_key_arn))  # Prevent AWS managed keys
+      !can(regex("alias/aws/", var.vault_kms_key_arn)) # Prevent AWS managed keys
     )
     error_message = "The vault_kms_key_arn must be a valid customer-managed KMS key ARN. AWS managed keys (alias/aws/*) are not recommended for security reasons."
   }
@@ -290,7 +290,7 @@ variable "iam_role_arn" {
   validation {
     condition = var.iam_role_arn == null ? true : (
       can(regex("^arn:aws:iam::", var.iam_role_arn)) &&
-      !can(regex("Administrator|Admin|PowerUser|FullAccess", var.iam_role_arn))  # Prevent overly permissive roles
+      !can(regex("Administrator|Admin|PowerUser|FullAccess", var.iam_role_arn)) # Prevent overly permissive roles
     )
     error_message = "The iam_role_arn must be a valid IAM role ARN. Avoid using roles with Administrator, Admin, PowerUser, or FullAccess permissions for security reasons."
   }

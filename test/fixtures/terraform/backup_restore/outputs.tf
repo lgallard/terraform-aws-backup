@@ -66,7 +66,7 @@ output "backup_role_arn" {
 output "test_resources_for_backup" {
   description = "List of test resources that should be backed up"
   value = {
-    ec2_instance    = aws_instance.test_instance.arn
+    ec2_instance   = aws_instance.test_instance.arn
     ebs_volume     = aws_ebs_volume.test_volume.arn
     dynamodb_table = aws_dynamodb_table.test_table.arn
   }
