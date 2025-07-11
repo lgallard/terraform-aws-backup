@@ -720,6 +720,49 @@ When contributing to this module:
 3. Update examples if adding new features
 4. Add integration tests for new functionality
 
+## Troubleshooting
+
+### Common Issues
+
+If you encounter issues with the module, check these common problems:
+
+1. **AccessDeniedException**: Ensure your IAM user/role has the necessary permissions for AWS Backup operations
+2. **InvalidParameterValueException**: Check that schedule expressions, lifecycle values, and ARNs are properly formatted
+3. **Backup Job Failures**: Verify resource permissions and backup windows are sufficient
+4. **Cross-Region Issues**: Ensure both regions support cross-region backups and KMS key permissions are configured
+
+### Getting Help
+
+For detailed troubleshooting steps:
+
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Comprehensive troubleshooting guide with step-by-step solutions
+- **[KNOWN_ISSUES.md](KNOWN_ISSUES.md)** - Known issues and workarounds
+- **[BEST_PRACTICES.md](BEST_PRACTICES.md)** - Best practices and optimization tips
+- **[PERFORMANCE.md](PERFORMANCE.md)** - Performance tuning guide
+
+### Quick Debug Steps
+
+1. **Enable Debug Logging**:
+   ```bash
+   export TF_LOG=DEBUG
+   export TF_LOG_PATH=terraform.log
+   terraform plan
+   ```
+
+2. **Check AWS Service Health**: Verify AWS Backup is available in your region
+
+3. **Validate Configuration**:
+   ```bash
+   terraform validate
+   terraform plan
+   ```
+
+4. **Check Resource State**:
+   ```bash
+   aws backup list-backup-vaults
+   aws backup list-backup-plans
+   ```
+
 ## Known Issues
 
 During the development of the module, the following issues were found:

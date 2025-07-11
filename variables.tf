@@ -141,18 +141,41 @@ variable "rule_schedule" {
   description = "A CRON expression specifying when AWS Backup initiates a backup job"
   type        = string
   default     = null
+
+  validation {
+    condition     = var.rule_schedule == null ? true : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", var.rule_schedule))
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
+  }
+
+  validation {
+    condition = var.rule_schedule == null ? true : (
+      can(regex("^rate\\(", var.rule_schedule)) ?
+      !can(regex("rate\\([1-9] minute[^s]", var.rule_schedule)) : true
+    )
+    error_message = "Rate expressions should not be more frequent than every 15 minutes for backup operations. Use 'rate(15 minutes)' or higher intervals."
+  }
 }
 
 variable "rule_start_window" {
   description = "The amount of time in minutes before beginning a backup"
   type        = number
   default     = null
+
+  validation {
+    condition     = var.rule_start_window == null || try(var.rule_start_window >= 60 && var.rule_start_window <= 43200, false)
+    error_message = "The rule_start_window must be between 60 minutes (1 hour) and 43200 minutes (30 days)."
+  }
 }
 
 variable "rule_completion_window" {
   description = "The amount of time AWS Backup attempts a backup before canceling the job and returning an error"
   type        = number
   default     = null
+
+  validation {
+    condition     = var.rule_completion_window == null || try(var.rule_completion_window >= 120 && var.rule_completion_window <= 43200, false)
+    error_message = "The rule_completion_window must be between 120 minutes (2 hours) and 43200 minutes (30 days)."
+  }
 }
 
 variable "rule_recovery_point_tags" {
@@ -166,12 +189,22 @@ variable "rule_lifecycle_cold_storage_after" {
   description = "Specifies the number of days after creation that a recovery point is moved to cold storage"
   type        = number
   default     = null
+
+  validation {
+    condition     = var.rule_lifecycle_cold_storage_after == null || try(var.rule_lifecycle_cold_storage_after == 0 || var.rule_lifecycle_cold_storage_after >= 30, false)
+    error_message = "The rule_lifecycle_cold_storage_after must be 0 (disabled) or at least 30 days (AWS minimum requirement)."
+  }
 }
 
 variable "rule_lifecycle_delete_after" {
   description = "Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after`"
   type        = number
   default     = null
+
+  validation {
+    condition     = var.rule_lifecycle_delete_after == null || try(var.rule_lifecycle_delete_after >= 1, false)
+    error_message = "The rule_lifecycle_delete_after must be at least 1 day."
+  }
 }
 
 variable "rule_enable_continuous_backup" {
@@ -204,6 +237,32 @@ variable "rules" {
     })), [])
   }))
   default = []
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules : rule.schedule == null || can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", rule.schedule))
+    ])
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules :
+      rule.start_window == null || rule.completion_window == null ||
+      rule.completion_window >= rule.start_window + 60
+    ])
+    error_message = "The completion_window must be at least 60 minutes longer than start_window."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules :
+      try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90) &&
+      try(rule.lifecycle.delete_after, 90) >= 1 &&
+      (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after == 0 || rule.lifecycle.cold_storage_after >= 30)
+    ])
+    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
+  }
 }
 
 # Selection
@@ -391,9 +450,18 @@ variable "backup_policies" {
 
   validation {
     condition = alltrue([
-      for policy in var.backup_policies : can(regex("^cron\\([^)]+\\)|rate\\([^)]+\\)$", policy.schedule))
+      for policy in var.backup_policies : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", policy.schedule))
     ])
-    error_message = "The schedule must be a valid cron or rate expression."
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
+  }
+
+  validation {
+    condition = alltrue([
+      for policy in var.backup_policies :
+      can(regex("^rate\\(", policy.schedule)) ?
+      !can(regex("rate\\([1-9] minute[^s]", policy.schedule)) : true
+    ])
+    error_message = "Rate expressions should not be more frequent than every 15 minutes for backup operations. Use 'rate(15 minutes)' or higher intervals."
   }
 
   validation {
@@ -401,6 +469,25 @@ variable "backup_policies" {
       for policy in var.backup_policies : policy.start_window >= 60 && policy.start_window <= 43200
     ])
     error_message = "The start_window must be between 60 minutes (1 hour) and 43200 minutes (30 days)."
+  }
+
+  validation {
+    condition = alltrue([
+      for policy in var.backup_policies :
+      policy.completion_window >= policy.start_window + 60 &&
+      policy.completion_window <= 43200
+    ])
+    error_message = "The completion_window must be at least 60 minutes longer than start_window and no more than 43200 minutes (30 days)."
+  }
+
+  validation {
+    condition = alltrue([
+      for policy in var.backup_policies :
+      try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90) &&
+      try(policy.lifecycle.delete_after, 90) >= 1 &&
+      (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after == 0 || policy.lifecycle.cold_storage_after >= 30)
+    ])
+    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
   }
 }
 
@@ -417,10 +504,18 @@ variable "backup_selections" {
   validation {
     condition = alltrue([
       for selection in var.backup_selections : selection.resources == null || alltrue([
-        for resource in selection.resources : can(regex("^arn:aws:", resource))
+        for resource in selection.resources :
+        can(regex("^\\*$", resource)) ||
+        can(regex("^arn:aws:dynamodb:[a-z0-9-]+:[0-9]+:table/[a-zA-Z0-9._-]+$", resource)) ||
+        can(regex("^arn:aws:ec2:[a-z0-9-]+:[0-9]+:(volume|instance)/[a-zA-Z0-9-]+$", resource)) ||
+        can(regex("^arn:aws:rds:[a-z0-9-]+:[0-9]+:(db|cluster):[a-zA-Z0-9-]+$", resource)) ||
+        can(regex("^arn:aws:elasticfilesystem:[a-z0-9-]+:[0-9]+:file-system/fs-[a-zA-Z0-9]+$", resource)) ||
+        can(regex("^arn:aws:fsx:[a-z0-9-]+:[0-9]+:file-system/fs-[a-zA-Z0-9]+$", resource)) ||
+        can(regex("^arn:aws:s3:::[a-zA-Z0-9.-]+$", resource)) ||
+        can(regex("^arn:aws:storagegateway:[a-z0-9-]+:[0-9]+:gateway/[a-zA-Z0-9-]+$", resource))
       ])
     ])
-    error_message = "All resources must be valid AWS ARNs."
+    error_message = "Resources must be valid ARNs for supported services (DynamoDB, EC2, RDS, EFS, FSx, S3, Storage Gateway) or wildcards ('*'). Examples: 'arn:aws:dynamodb:us-east-1:123456789012:table/MyTable', 'arn:aws:ec2:us-east-1:123456789012:volume/vol-1234567890abcdef0'."
   }
 }
 
