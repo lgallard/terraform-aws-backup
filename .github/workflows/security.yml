@@ -42,14 +42,14 @@ jobs:
       continue-on-error: true
 
     - name: Upload checkov results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: checkov-results.sarif
         category: checkov
 
     - name: Upload tfsec results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: tfsec-results.sarif
