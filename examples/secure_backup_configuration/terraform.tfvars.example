@@ -1,0 +1,50 @@
+# Example terraform.tfvars file for secure backup configuration
+# Copy this file to terraform.tfvars and customize the values
+
+# Project configuration
+project_name = "myapp"
+environment  = "prod"
+owner        = "security-team"
+
+# Security configuration
+enable_vault_lock         = true
+vault_lock_changeable_days = 3
+min_retention_days        = 30
+max_retention_days        = 2555
+backup_retention_days     = 365
+weekly_backup_retention_days = 2555
+
+# Backup features
+enable_continuous_backup = true
+
+# Cross-region backup for disaster recovery
+enable_cross_region_backup = true
+cross_region              = "us-west-2"
+
+# Resource selection - replace with your actual ARNs
+database_resources = [
+  "arn:aws:rds:us-east-1:123456789012:db:myapp-prod-db",
+  "arn:aws:dynamodb:us-east-1:123456789012:table/myapp-prod-table"
+]
+
+volume_resources = [
+  "arn:aws:ec2:us-east-1:123456789012:volume/vol-1234567890abcdef0",
+  "arn:aws:ec2:us-east-1:123456789012:volume/vol-abcdef1234567890"
+]
+
+# Monitoring configuration
+notification_email  = "security-alerts@example.com"
+log_retention_days  = 90
+
+# Compliance framework
+compliance_framework = "SOC2"
+
+# Additional tags
+additional_tags = {
+  CostCenter   = "Security"
+  Department   = "Engineering"
+  Environment  = "Production"
+  Application  = "MyApp"
+  DataClass    = "Confidential"
+  Compliance   = "SOC2"
+}

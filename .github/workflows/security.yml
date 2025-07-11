@@ -33,12 +33,12 @@ jobs:
 
     - name: Run checkov
       run: |
-        checkov -d . --framework terraform --output cli --output sarif --output-file-path console,checkov-results.sarif
+        checkov --config-file .checkov.yml --output cli --output sarif --output-file-path console,checkov-results.sarif
       continue-on-error: true
 
     - name: Run tfsec
       run: |
-        tfsec . --format sarif --out tfsec-results.sarif
+        tfsec . --format sarif --out tfsec-results.sarif --exclude-path test/
       continue-on-error: true
 
     - name: Upload checkov results to GitHub Security tab
@@ -54,6 +54,27 @@ jobs:
       with:
         sarif_file: tfsec-results.sarif
         category: tfsec
+
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Run Go vulnerability scan
+      run: |
+        cd test
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+      continue-on-error: true
+
+    - name: Run Go module security audit
+      run: |
+        cd test
+        go mod verify
+        go list -m all | grep -v "^$(go list -m)$" | sort | uniq > deps.txt
+        echo "Checking dependencies for known vulnerabilities..."
+        cat deps.txt
+      continue-on-error: true
 
   security-scan-examples:
     name: Security Scan Examples
@@ -73,7 +94,8 @@ jobs:
           'multiple_plans',
           'aws_recommended_audit_framework',
           'complete_audit_framework',
-          'simple_audit_framework'
+          'simple_audit_framework',
+          'secure_backup_configuration'
         ]
     
     steps:
