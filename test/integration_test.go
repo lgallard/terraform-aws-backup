@@ -49,10 +49,10 @@ func TestBasicBackupPlan(t *testing.T) {
 	}
 
 	// Clean up resources after test
-	defer terraform.Destroy(t, terraformOptions)
+	defer RetryableDestroy(t, terraformOptions)
 
 	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
+	RetryableInitAndApply(t, terraformOptions)
 
 	// Validate that the backup plan was created
 	backupClient := backup.New(sess)
@@ -63,20 +63,28 @@ func TestBasicBackupPlan(t *testing.T) {
 
 	// Validate backup plan exists
 	planId := terraform.Output(t, terraformOptions, "backup_plan_id")
-	planOutput, err := backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
-		BackupPlanId: aws.String(planId),
+	var planOutput *backup.GetBackupPlanOutput
+	RetryableAWSOperation(t, "get backup plan", func() error {
+		var err error
+		planOutput, err = backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
+			BackupPlanId: aws.String(planId),
+		})
+		return err
 	})
-	require.NoError(t, err, "Should be able to get backup plan")
 	assert.Equal(t, planName, *planOutput.BackupPlan.BackupPlanName, "Plan name should match")
 
 	// Validate backup vault exists
 	vaultArn := terraform.Output(t, terraformOptions, "backup_vault_arn")
 	require.NotEmpty(t, vaultArn, "Backup vault ARN should not be empty")
 
-	vaultOutput, err := backupClient.DescribeBackupVault(&backup.DescribeBackupVaultInput{
-		BackupVaultName: aws.String(vaultName),
+	var vaultOutput *backup.DescribeBackupVaultOutput
+	RetryableAWSOperation(t, "describe backup vault", func() error {
+		var err error
+		vaultOutput, err = backupClient.DescribeBackupVault(&backup.DescribeBackupVaultInput{
+			BackupVaultName: aws.String(vaultName),
+		})
+		return err
 	})
-	require.NoError(t, err, "Should be able to describe backup vault")
 	assert.Equal(t, vaultName, *vaultOutput.BackupVaultName, "Vault name should match")
 
 	// Note: We can't easily validate backup selection without the selection ID output
@@ -107,10 +115,10 @@ func TestMultipleBackupPlans(t *testing.T) {
 	}
 
 	// Clean up resources after test
-	defer terraform.Destroy(t, terraformOptions)
+	defer RetryableDestroy(t, terraformOptions)
 
 	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
+	RetryableInitAndApply(t, terraformOptions)
 
 	// Set up AWS session
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -123,10 +131,14 @@ func TestMultipleBackupPlans(t *testing.T) {
 	require.Greater(t, len(planIds), 1, "Should create multiple backup plans")
 
 	for i, planId := range planIds {
-		planOutput, err := backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
-			BackupPlanId: aws.String(planId),
+		var planOutput *backup.GetBackupPlanOutput
+		RetryableAWSOperation(t, fmt.Sprintf("get backup plan %d", i), func() error {
+			var err error
+			planOutput, err = backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
+				BackupPlanId: aws.String(planId),
+			})
+			return err
 		})
-		require.NoError(t, err, fmt.Sprintf("Should be able to get backup plan %d", i))
 		assert.NotEmpty(t, *planOutput.BackupPlan.BackupPlanName, fmt.Sprintf("Plan %d should have a name", i))
 	}
 }
@@ -158,10 +170,10 @@ func TestBackupPlanWithNotifications(t *testing.T) {
 	}
 
 	// Clean up resources after test
-	defer terraform.Destroy(t, terraformOptions)
+	defer RetryableDestroy(t, terraformOptions)
 
 	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
+	RetryableInitAndApply(t, terraformOptions)
 
 	// Set up AWS session
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -171,10 +183,14 @@ func TestBackupPlanWithNotifications(t *testing.T) {
 
 	// Validate backup plan exists
 	planId := terraform.Output(t, terraformOptions, "backup_plan_id")
-	planOutput, err := backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
-		BackupPlanId: aws.String(planId),
+	var planOutput *backup.GetBackupPlanOutput
+	RetryableAWSOperation(t, "get backup plan with notifications", func() error {
+		var err error
+		planOutput, err = backupClient.GetBackupPlan(&backup.GetBackupPlanInput{
+			BackupPlanId: aws.String(planId),
+		})
+		return err
 	})
-	require.NoError(t, err, "Should be able to get backup plan")
 	assert.Equal(t, planName, *planOutput.BackupPlan.BackupPlanName, "Plan name should match")
 
 	// Validate SNS topic was created
@@ -207,10 +223,10 @@ func TestIAMRoleCreation(t *testing.T) {
 	}
 
 	// Clean up resources after test
-	defer terraform.Destroy(t, terraformOptions)
+	defer RetryableDestroy(t, terraformOptions)
 
 	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
+	RetryableInitAndApply(t, terraformOptions)
 
 	// Set up AWS session
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -229,10 +245,14 @@ func TestIAMRoleCreation(t *testing.T) {
 	require.NotEmpty(t, roleName, "Role name should not be empty")
 
 	// Get the role to verify it exists
-	roleOutput, err := iamClient.GetRole(&iam.GetRoleInput{
-		RoleName: aws.String(roleName),
+	var roleOutput *iam.GetRoleOutput
+	RetryableAWSOperation(t, "get IAM role", func() error {
+		var err error
+		roleOutput, err = iamClient.GetRole(&iam.GetRoleInput{
+			RoleName: aws.String(roleName),
+		})
+		return err
 	})
-	require.NoError(t, err, "Should be able to get IAM role")
 	assert.NotEmpty(t, *roleOutput.Role.AssumeRolePolicyDocument, "Role should have assume role policy")
 }
 
@@ -262,10 +282,10 @@ func TestCrossRegionBackup(t *testing.T) {
 	}
 
 	// Clean up resources after test
-	defer terraform.Destroy(t, terraformOptions)
+	defer RetryableDestroy(t, terraformOptions)
 
 	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
+	RetryableInitAndApply(t, terraformOptions)
 
 	// Test in both regions
 	regions := []string{"us-east-1", "us-west-2"}
@@ -280,17 +300,21 @@ func TestCrossRegionBackup(t *testing.T) {
 		time.Sleep(30 * time.Second)
 
 		// Validate backup vault exists in the region
-		_, err := backupClient.DescribeBackupVault(&backup.DescribeBackupVaultInput{
-			BackupVaultName: aws.String(vaultName),
+		var vaultErr error
+		RetryableAWSOperation(t, fmt.Sprintf("describe backup vault in %s", region), func() error {
+			_, vaultErr = backupClient.DescribeBackupVault(&backup.DescribeBackupVaultInput{
+				BackupVaultName: aws.String(vaultName),
+			})
+			return vaultErr
 		})
 		
 		if region == "us-east-1" {
 			// Source region should have the vault
-			require.NoError(t, err, fmt.Sprintf("Should be able to describe backup vault in %s", region))
+			require.NoError(t, vaultErr, fmt.Sprintf("Should be able to describe backup vault in %s", region))
 		} else {
 			// Destination region may or may not have the vault depending on setup
 			// This is more complex to test without actual backup jobs
-			if err == nil {
+			if vaultErr == nil {
 				t.Logf("Backup vault found in destination region %s", region)
 			}
 		}

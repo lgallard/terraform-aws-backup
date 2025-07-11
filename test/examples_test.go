@@ -55,10 +55,10 @@ func TestExamplesValidation(t *testing.T) {
 			}()
 
 			// Init and validate
-			terraform.Init(t, terraformOptions)
+			RetryableInit(t, terraformOptions)
 			
 			// Run terraform plan to validate configuration
-			terraform.Plan(t, terraformOptions)
+			RetryablePlan(t, terraformOptions)
 			
 			// Validate that plan was created successfully
 			planFile := filepath.Join(exampleDir, "tfplan")
@@ -138,10 +138,10 @@ func TestExamplesWithCustomVariables(t *testing.T) {
 			}()
 
 			// Init and validate
-			terraform.Init(t, terraformOptions)
+			RetryableInit(t, terraformOptions)
 			
 			// Run terraform plan with custom variables
-			terraform.Plan(t, terraformOptions)
+			RetryablePlan(t, terraformOptions)
 			
 			// Validate that plan was created successfully
 			planFile := filepath.Join(exampleDir, fmt.Sprintf("tfplan-%s", tc.name))
