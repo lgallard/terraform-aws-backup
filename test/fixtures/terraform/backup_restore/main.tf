@@ -137,6 +137,7 @@ resource "aws_volume_attachment" "test_attachment" {
 }
 
 # Create a DynamoDB table for testing
+#checkov:skip=CKV_AWS_119:Test fixture - encryption not required for temporary test resources
 resource "aws_dynamodb_table" "test_table" {
   name           = "${var.resource_prefix}-test-table"
   billing_mode   = "PAY_PER_REQUEST"

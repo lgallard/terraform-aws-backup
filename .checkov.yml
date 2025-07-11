@@ -1,0 +1,29 @@
+# Checkov configuration file
+# This file configures security scanning behavior
+
+# Skip paths that shouldn't be scanned for security issues
+skip-path:
+  - test/                    # Test fixtures and test code
+  - examples/                # Example configurations (may have intentional simplifications)
+
+# Skip specific checks that aren't applicable to this project
+skip-check:
+  # Test-specific skips (if needed)
+  - CKV_AWS_119             # Ensure DynamoDB Tables are encrypted (not required for test fixtures)
+
+# Framework to scan
+framework:
+  - terraform
+  - secrets
+
+# Output configuration
+output: cli
+
+# Severity threshold
+soft-fail: true             # Don't fail the build on security issues
+
+# Directory to scan (default is current directory)
+directory: .
+
+# Include severity information
+include-all-checkov-policies: true

@@ -33,12 +33,12 @@ jobs:
 
     - name: Run checkov
       run: |
-        checkov -d . --framework terraform --output cli --output sarif --output-file-path console,checkov-results.sarif
+        checkov --config-file .checkov.yml --output cli --output sarif --output-file-path console,checkov-results.sarif
       continue-on-error: true
 
     - name: Run tfsec
       run: |
-        tfsec . --format sarif --out tfsec-results.sarif
+        tfsec . --format sarif --out tfsec-results.sarif --exclude-path test/
       continue-on-error: true
 
     - name: Upload checkov results to GitHub Security tab
