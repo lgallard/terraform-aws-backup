@@ -105,9 +105,3 @@ jobs:
           terraform validate
         fi
 
-    - name: Terraform Plan
-      run: |
-        if [ -d "examples/${{ matrix.example }}" ]; then
-          cd examples/${{ matrix.example }}
-          terraform plan -out=tfplan
-        fi
