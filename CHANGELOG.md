@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.25.0](https://github.com/lgallard/terraform-aws-backup/compare/0.24.1...v0.25.0) (2025-07-11)
+
+
+### Features
+
+* Implement comprehensive testing and CI/CD pipeline ([#131](https://github.com/lgallard/terraform-aws-backup/issues/131)) ([4047912](https://github.com/lgallard/terraform-aws-backup/commit/40479124432ea4506e1add512c3284b0a12492b4))
+
 ## [0.24.1](https://github.com/lgallard/terraform-aws-backup/compare/0.24.0...v0.24.1) (2025-06-28)
 
 
