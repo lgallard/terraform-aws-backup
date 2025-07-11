@@ -1,0 +1,109 @@
+name: Validate
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        terraform_version: ['1.0.0', '1.5.0', '1.9.0']
+        aws_provider_version: ['4.0.0', '5.0.0', '5.70.0']
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ matrix.terraform_version }}
+
+    - name: Create test versions.tf
+      run: |
+        cat > test_versions.tf << EOF
+        terraform {
+          required_version = ">= 1.0.0"
+          required_providers {
+            aws = {
+              source  = "hashicorp/aws"
+              version = "~> ${{ matrix.aws_provider_version }}"
+            }
+          }
+        }
+        EOF
+
+    - name: Terraform Format Check
+      run: terraform fmt -check=true -recursive
+
+    - name: Terraform Init
+      run: terraform init -backend=false
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    - name: Cleanup
+      run: rm -f test_versions.tf
+
+  validate-examples:
+    name: Validate Examples
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example: [
+          'simple_plan',
+          'complete_plan',
+          'selection_by_tags',
+          'selection_by_conditions',
+          'simple_plan_with_report',
+          'simple_plan_using_variables',
+          'simple_plan_using_lock_configuration',
+          'simple_plan_windows_vss_backup',
+          'organization_backup_policy',
+          'multiple_plans',
+          'aws_recommended_audit_framework',
+          'complete_audit_framework',
+          'simple_audit_framework'
+        ]
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.0
+
+    - name: Terraform Format Check
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          cd examples/${{ matrix.example }}
+          terraform fmt -check=true
+        fi
+
+    - name: Terraform Init
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          cd examples/${{ matrix.example }}
+          terraform init -backend=false
+        fi
+
+    - name: Terraform Validate
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          cd examples/${{ matrix.example }}
+          terraform validate
+        fi
+
+    - name: Terraform Plan
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          cd examples/${{ matrix.example }}
+          terraform plan -out=tfplan
+        fi

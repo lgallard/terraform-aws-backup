@@ -1,0 +1,109 @@
+name: Security
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Mondays
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install checkov
+      run: pip install checkov
+
+    - name: Install tfsec
+      run: |
+        curl -L https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+        chmod +x tfsec
+        sudo mv tfsec /usr/local/bin/
+
+    - name: Run checkov
+      run: |
+        checkov -d . --framework terraform --output cli --output sarif --output-file-path console,checkov-results.sarif
+      continue-on-error: true
+
+    - name: Run tfsec
+      run: |
+        tfsec . --format sarif --out tfsec-results.sarif
+      continue-on-error: true
+
+    - name: Upload checkov results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: checkov-results.sarif
+        category: checkov
+
+    - name: Upload tfsec results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: tfsec-results.sarif
+        category: tfsec
+
+  security-scan-examples:
+    name: Security Scan Examples
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example: [
+          'simple_plan',
+          'complete_plan',
+          'selection_by_tags',
+          'selection_by_conditions',
+          'simple_plan_with_report',
+          'simple_plan_using_variables',
+          'simple_plan_using_lock_configuration',
+          'simple_plan_windows_vss_backup',
+          'organization_backup_policy',
+          'multiple_plans',
+          'aws_recommended_audit_framework',
+          'complete_audit_framework',
+          'simple_audit_framework'
+        ]
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install checkov
+      run: pip install checkov
+
+    - name: Install tfsec
+      run: |
+        curl -L https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+        chmod +x tfsec
+        sudo mv tfsec /usr/local/bin/
+
+    - name: Run checkov on example
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          checkov -d examples/${{ matrix.example }} --framework terraform --output cli
+        fi
+      continue-on-error: true
+
+    - name: Run tfsec on example
+      run: |
+        if [ -d "examples/${{ matrix.example }}" ]; then
+          tfsec examples/${{ matrix.example }} --format default
+        fi
+      continue-on-error: true
