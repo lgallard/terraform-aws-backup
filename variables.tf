@@ -143,8 +143,8 @@ variable "rule_schedule" {
   default     = null
 
   validation {
-    condition = var.rule_schedule == null ? true : can(regex("^(cron\\([0-5]?[0-9] ([0-1]?[0-9]|2[0-3]) [0-3]?[0-9] [0-1]?[0-9] \\? [0-9]{4}\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", var.rule_schedule))
-    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). Cron format: 'cron(Minutes Hours Day-of-month Month Day-of-week Year)'."
+    condition = var.rule_schedule == null ? true : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", var.rule_schedule))
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
   }
   
   validation {
@@ -160,12 +160,22 @@ variable "rule_start_window" {
   description = "The amount of time in minutes before beginning a backup"
   type        = number
   default     = null
+
+  validation {
+    condition = var.rule_start_window == null || (var.rule_start_window >= 60 && var.rule_start_window <= 43200)
+    error_message = "The rule_start_window must be between 60 minutes (1 hour) and 43200 minutes (30 days)."
+  }
 }
 
 variable "rule_completion_window" {
   description = "The amount of time AWS Backup attempts a backup before canceling the job and returning an error"
   type        = number
   default     = null
+
+  validation {
+    condition = var.rule_completion_window == null || (var.rule_completion_window >= 120 && var.rule_completion_window <= 43200)
+    error_message = "The rule_completion_window must be between 120 minutes (2 hours) and 43200 minutes (30 days)."
+  }
 }
 
 variable "rule_recovery_point_tags" {
@@ -179,12 +189,22 @@ variable "rule_lifecycle_cold_storage_after" {
   description = "Specifies the number of days after creation that a recovery point is moved to cold storage"
   type        = number
   default     = null
+
+  validation {
+    condition = var.rule_lifecycle_cold_storage_after == null || var.rule_lifecycle_cold_storage_after >= 30
+    error_message = "The rule_lifecycle_cold_storage_after must be at least 30 days (AWS minimum requirement)."
+  }
 }
 
 variable "rule_lifecycle_delete_after" {
   description = "Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after`"
   type        = number
   default     = null
+
+  validation {
+    condition = var.rule_lifecycle_delete_after == null || var.rule_lifecycle_delete_after >= 1
+    error_message = "The rule_lifecycle_delete_after must be at least 1 day."
+  }
 }
 
 variable "rule_enable_continuous_backup" {
@@ -220,9 +240,9 @@ variable "rules" {
 
   validation {
     condition = alltrue([
-      for rule in var.rules : rule.schedule == null || can(regex("^(cron\\([0-5]?[0-9] ([0-1]?[0-9]|2[0-3]) [0-3]?[0-9] [0-1]?[0-9] \\? [0-9]{4}\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", rule.schedule))
+      for rule in var.rules : rule.schedule == null || can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", rule.schedule))
     ])
-    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). Cron format: 'cron(Minutes Hours Day-of-month Month Day-of-week Year)'."
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
   }
 
   validation {
@@ -430,9 +450,9 @@ variable "backup_policies" {
 
   validation {
     condition = alltrue([
-      for policy in var.backup_policies : can(regex("^(cron\\([0-5]?[0-9] ([0-1]?[0-9]|2[0-3]) [0-3]?[0-9] [0-1]?[0-9] \\? [0-9]{4}\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", policy.schedule))
+      for policy in var.backup_policies : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", policy.schedule))
     ])
-    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). Cron format: 'cron(Minutes Hours Day-of-month Month Day-of-week Year)'."
+    error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
   }
 
   validation {
