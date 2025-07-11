@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.26.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.0...v0.26.1) (2025-07-11)
+
+
+### Bug Fixes
+
+* Update Go dependencies to address security vulnerabilities ([#145](https://github.com/lgallard/terraform-aws-backup/issues/145)) ([cae39f8](https://github.com/lgallard/terraform-aws-backup/commit/cae39f84682a26d8bef078814bbba36686bd8964))
+
 ## [0.26.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.25.0...v0.26.0) (2025-07-11)
 
 
