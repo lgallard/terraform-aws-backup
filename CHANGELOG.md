@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.26.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.25.0...v0.26.0) (2025-07-11)
+
+
+### Features
+
+* Add retry logic for transient AWS API failures in tests ([#141](https://github.com/lgallard/terraform-aws-backup/issues/141)) ([4aff8eb](https://github.com/lgallard/terraform-aws-backup/commit/4aff8eb34ba46fdde96a70df03ce825b91537b95)), closes [#132](https://github.com/lgallard/terraform-aws-backup/issues/132)
+
 ## [0.25.0](https://github.com/lgallard/terraform-aws-backup/compare/0.24.1...v0.25.0) (2025-07-11)
 
 
