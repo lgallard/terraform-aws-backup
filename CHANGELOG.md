@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.27.0...v0.28.0) (2025-07-11)
+
+
+### Features
+
+* Complete comprehensive documentation and enhanced input validation ([#119](https://github.com/lgallard/terraform-aws-backup/issues/119) [#120](https://github.com/lgallard/terraform-aws-backup/issues/120)) ([#153](https://github.com/lgallard/terraform-aws-backup/issues/153)) ([8d7d735](https://github.com/lgallard/terraform-aws-backup/commit/8d7d7358809cf9ba9369276f159a6978c4abad7a))
+
 ## [0.27.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.2...v0.27.0) (2025-07-11)
 
 
