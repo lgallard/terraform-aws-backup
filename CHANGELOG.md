@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.27.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.2...v0.27.0) (2025-07-11)
+
+
+### Features
+
+* Comprehensive security enhancements and testing improvements ([#148](https://github.com/lgallard/terraform-aws-backup/issues/148)) ([3da8bd4](https://github.com/lgallard/terraform-aws-backup/commit/3da8bd4aedaf7c4d16bf4455c61394ae76597c33))
+
+## [0.26.2](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.1...v0.26.2) (2025-07-11)
+
+
+### Bug Fixes
+
+* standardize AWS provider configurations across examples ([c23586f](https://github.com/lgallard/terraform-aws-backup/commit/c23586fe2ad4aaafc6e22b5d612edbf1c6c54da9))
+
 ## [0.26.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.0...v0.26.1) (2025-07-11)
 
 
