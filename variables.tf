@@ -143,13 +143,13 @@ variable "rule_schedule" {
   default     = null
 
   validation {
-    condition = var.rule_schedule == null ? true : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", var.rule_schedule))
+    condition     = var.rule_schedule == null ? true : can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", var.rule_schedule))
     error_message = "Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
   }
-  
+
   validation {
     condition = var.rule_schedule == null ? true : (
-      can(regex("^rate\\(", var.rule_schedule)) ? 
+      can(regex("^rate\\(", var.rule_schedule)) ?
       !can(regex("rate\\([1-9] minute[^s]", var.rule_schedule)) : true
     )
     error_message = "Rate expressions should not be more frequent than every 15 minutes for backup operations. Use 'rate(15 minutes)' or higher intervals."
@@ -162,7 +162,7 @@ variable "rule_start_window" {
   default     = null
 
   validation {
-    condition = var.rule_start_window == null || (var.rule_start_window >= 60 && var.rule_start_window <= 43200)
+    condition     = var.rule_start_window == null || (var.rule_start_window >= 60 && var.rule_start_window <= 43200)
     error_message = "The rule_start_window must be between 60 minutes (1 hour) and 43200 minutes (30 days)."
   }
 }
@@ -173,7 +173,7 @@ variable "rule_completion_window" {
   default     = null
 
   validation {
-    condition = var.rule_completion_window == null || (var.rule_completion_window >= 120 && var.rule_completion_window <= 43200)
+    condition     = var.rule_completion_window == null || (var.rule_completion_window >= 120 && var.rule_completion_window <= 43200)
     error_message = "The rule_completion_window must be between 120 minutes (2 hours) and 43200 minutes (30 days)."
   }
 }
@@ -191,7 +191,7 @@ variable "rule_lifecycle_cold_storage_after" {
   default     = null
 
   validation {
-    condition = var.rule_lifecycle_cold_storage_after == null || var.rule_lifecycle_cold_storage_after >= 30
+    condition     = var.rule_lifecycle_cold_storage_after == null || var.rule_lifecycle_cold_storage_after >= 30
     error_message = "The rule_lifecycle_cold_storage_after must be at least 30 days (AWS minimum requirement)."
   }
 }
@@ -202,7 +202,7 @@ variable "rule_lifecycle_delete_after" {
   default     = null
 
   validation {
-    condition = var.rule_lifecycle_delete_after == null || var.rule_lifecycle_delete_after >= 1
+    condition     = var.rule_lifecycle_delete_after == null || var.rule_lifecycle_delete_after >= 1
     error_message = "The rule_lifecycle_delete_after must be at least 1 day."
   }
 }
@@ -247,8 +247,8 @@ variable "rules" {
 
   validation {
     condition = alltrue([
-      for rule in var.rules : 
-      rule.start_window == null || rule.completion_window == null || 
+      for rule in var.rules :
+      rule.start_window == null || rule.completion_window == null ||
       rule.completion_window >= rule.start_window + 60
     ])
     error_message = "The completion_window must be at least 60 minutes longer than start_window."
@@ -256,7 +256,7 @@ variable "rules" {
 
   validation {
     condition = alltrue([
-      for rule in var.rules : 
+      for rule in var.rules :
       try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90) &&
       try(rule.lifecycle.delete_after, 90) >= 1 &&
       (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after >= 30)
@@ -457,8 +457,8 @@ variable "backup_policies" {
 
   validation {
     condition = alltrue([
-      for policy in var.backup_policies : 
-      can(regex("^rate\\(", policy.schedule)) ? 
+      for policy in var.backup_policies :
+      can(regex("^rate\\(", policy.schedule)) ?
       !can(regex("rate\\([1-9] minute[^s]", policy.schedule)) : true
     ])
     error_message = "Rate expressions should not be more frequent than every 15 minutes for backup operations. Use 'rate(15 minutes)' or higher intervals."
@@ -473,8 +473,8 @@ variable "backup_policies" {
 
   validation {
     condition = alltrue([
-      for policy in var.backup_policies : 
-      policy.completion_window >= policy.start_window + 60 && 
+      for policy in var.backup_policies :
+      policy.completion_window >= policy.start_window + 60 &&
       policy.completion_window <= 43200
     ])
     error_message = "The completion_window must be at least 60 minutes longer than start_window and no more than 43200 minutes (30 days)."
@@ -482,7 +482,7 @@ variable "backup_policies" {
 
   validation {
     condition = alltrue([
-      for policy in var.backup_policies : 
+      for policy in var.backup_policies :
       try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90) &&
       try(policy.lifecycle.delete_after, 90) >= 1 &&
       (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after >= 30)
@@ -504,7 +504,7 @@ variable "backup_selections" {
   validation {
     condition = alltrue([
       for selection in var.backup_selections : selection.resources == null || alltrue([
-        for resource in selection.resources : 
+        for resource in selection.resources :
         can(regex("^\\*$", resource)) ||
         can(regex("^arn:aws:dynamodb:[a-z0-9-]+:[0-9]+:table/[a-zA-Z0-9._-]+$", resource)) ||
         can(regex("^arn:aws:ec2:[a-z0-9-]+:[0-9]+:(volume|instance)/[a-zA-Z0-9-]+$", resource)) ||
