@@ -7,8 +7,11 @@ variable "vault_name" {
   default     = null
 
   validation {
-    condition     = var.vault_name == null ? true : can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name))
-    error_message = "The vault_name must be between 2 and 50 characters, and can only contain alphanumeric characters, hyphens, and underscores."
+    condition = var.vault_name == null ? true : (
+      can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name)) &&
+      !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name))  # Prevent insecure naming patterns
+    )
+    error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores. Avoid using 'test', 'temp', 'delete', 'remove', or 'default' in names for security reasons."
   }
 }
 
@@ -18,8 +21,11 @@ variable "vault_kms_key_arn" {
   default     = null
 
   validation {
-    condition     = var.vault_kms_key_arn == null ? true : can(regex("^arn:aws:kms:", var.vault_kms_key_arn))
-    error_message = "The vault_kms_key_arn must be a valid KMS key ARN."
+    condition = var.vault_kms_key_arn == null ? true : (
+      can(regex("^arn:aws:kms:", var.vault_kms_key_arn)) &&
+      !can(regex("alias/aws/", var.vault_kms_key_arn))  # Prevent AWS managed keys
+    )
+    error_message = "The vault_kms_key_arn must be a valid customer-managed KMS key ARN. AWS managed keys (alias/aws/*) are not recommended for security reasons."
   }
 }
 
@@ -61,8 +67,8 @@ variable "max_retention_days" {
   default     = null
 
   validation {
-    condition     = var.max_retention_days == null ? true : var.max_retention_days >= 1
-    error_message = "The max_retention_days must be greater than or equal to 1."
+    condition     = var.max_retention_days == null ? true : (var.max_retention_days >= 1 && var.max_retention_days <= 2555)
+    error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
   }
 }
 
@@ -72,8 +78,8 @@ variable "min_retention_days" {
   default     = null
 
   validation {
-    condition     = var.min_retention_days == null ? true : var.min_retention_days >= 1
-    error_message = "The min_retention_days must be greater than or equal to 1."
+    condition     = var.min_retention_days == null ? true : (var.min_retention_days >= 7 && var.min_retention_days <= 2555)
+    error_message = "The min_retention_days must be between 7 and 2555 days (minimum 7 days for compliance requirements)."
   }
 }
 
@@ -280,6 +286,14 @@ variable "iam_role_arn" {
   description = "If configured, the module will attach this role to selections, instead of creating IAM resources by itself"
   type        = string
   default     = null
+
+  validation {
+    condition = var.iam_role_arn == null ? true : (
+      can(regex("^arn:aws:iam::", var.iam_role_arn)) &&
+      !can(regex("Administrator|Admin|PowerUser|FullAccess", var.iam_role_arn))  # Prevent overly permissive roles
+    )
+    error_message = "The iam_role_arn must be a valid IAM role ARN. Avoid using roles with Administrator, Admin, PowerUser, or FullAccess permissions for security reasons."
+  }
 }
 
 variable "iam_role_name" {

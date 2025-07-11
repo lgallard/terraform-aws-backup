@@ -45,6 +45,13 @@ jobs:
     name: Terratest Integration
     runs-on: ubuntu-latest
     if: github.event.inputs.run_integration_tests == 'true' || github.event_name == 'schedule'
+    strategy:
+      matrix:
+        test: [
+          'TestBasicBackupPlan',
+          'TestIAMRoleCreation'
+        ]
+      fail-fast: false
     
     steps:
     - name: Checkout
@@ -67,19 +74,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Run Integration Tests
+    - name: Run Integration Test - ${{ matrix.test }}
       run: |
         cd test
-        go test -v -timeout 30m -run TestBasicBackupPlan
-        go test -v -timeout 30m -run TestIAMRoleCreation
+        go test -v -timeout 30m -run ${{ matrix.test }}
       env:
         TF_IN_AUTOMATION: true
         AWS_DEFAULT_REGION: us-east-1
+        TEST_UNIQUE_SUFFIX: ${{ github.run_id }}-${{ matrix.test }}
 
   terratest-integration-advanced:
     name: Terratest Integration Advanced
     runs-on: ubuntu-latest
     if: github.event.inputs.run_integration_tests == 'true' && github.event_name == 'schedule'
+    strategy:
+      matrix:
+        test: [
+          'TestMultipleBackupPlans',
+          'TestBackupPlanWithNotifications',
+          'TestCrossRegionBackup',
+          'TestBackupRestore'
+        ]
+      fail-fast: false
     
     steps:
     - name: Checkout
@@ -102,15 +118,21 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Run Advanced Integration Tests
+    - name: Run Advanced Integration Test - ${{ matrix.test }}
       run: |
         cd test
-        go test -v -timeout 45m -run TestMultipleBackupPlans
-        go test -v -timeout 45m -run TestBackupPlanWithNotifications
-        go test -v -timeout 60m -run TestCrossRegionBackup
+        # Set appropriate timeout based on test type
+        TIMEOUT="45m"
+        if [[ "${{ matrix.test }}" == "TestCrossRegionBackup" ]]; then
+          TIMEOUT="60m"
+        elif [[ "${{ matrix.test }}" == "TestBackupRestore" ]]; then
+          TIMEOUT="120m"  # 2 hours for backup/restore cycle
+        fi
+        go test -v -timeout $TIMEOUT -run ${{ matrix.test }}
       env:
         TF_IN_AUTOMATION: true
         AWS_DEFAULT_REGION: us-east-1
+        TEST_UNIQUE_SUFFIX: ${{ github.run_id }}-${{ matrix.test }}
 
   test-summary:
     name: Test Summary
