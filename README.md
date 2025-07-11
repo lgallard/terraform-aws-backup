@@ -3,6 +3,10 @@
 
 # terraform-aws-backup
 
+[![Validate](https://github.com/lgallard/terraform-aws-backup/actions/workflows/validate.yml/badge.svg)](https://github.com/lgallard/terraform-aws-backup/actions/workflows/validate.yml)
+[![Security](https://github.com/lgallard/terraform-aws-backup/actions/workflows/security.yml/badge.svg)](https://github.com/lgallard/terraform-aws-backup/actions/workflows/security.yml)
+[![Test](https://github.com/lgallard/terraform-aws-backup/actions/workflows/test.yml/badge.svg)](https://github.com/lgallard/terraform-aws-backup/actions/workflows/test.yml)
+
 Terraform module to create AWS Backup plans. AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services (EBS volumes, RDS databases, DynamoDB tables, EFS file systems, and Storage Gateway volumes).
 
 ## Features
@@ -638,6 +642,84 @@ No modules.
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 <!-- END_TF_DOCS -->
 
+## Testing
+
+This module includes comprehensive testing to ensure reliability and prevent regressions.
+
+### Test Structure
+
+- **Validation Tests**: Terraform format, syntax, and basic validation across multiple Terraform and AWS provider versions
+- **Security Scanning**: Static analysis using `checkov` and `tfsec` to identify security issues
+- **Example Tests**: Automated validation of all example configurations
+- **Integration Tests**: Real AWS resource creation/destruction testing using Terratest
+
+### Running Tests Locally
+
+#### Prerequisites
+
+1. Install Go 1.21+
+2. Install Terraform 1.0+
+3. Configure AWS credentials
+
+#### Example Validation Tests
+
+```bash
+cd test
+go test -v -timeout 10m -run TestExamples
+```
+
+#### Integration Tests (requires AWS credentials)
+
+```bash
+cd test
+go test -v -timeout 30m -run TestBasicBackupPlan
+go test -v -timeout 30m -run TestIAMRoleCreation
+```
+
+#### Security Scanning
+
+```bash
+# Install tools
+pip install checkov
+curl -L https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+chmod +x tfsec && sudo mv tfsec /usr/local/bin/
+
+# Run scans
+checkov -d . --framework terraform
+tfsec .
+```
+
+### CI/CD Workflows
+
+The module includes automated testing through GitHub Actions:
+
+- **Validate Workflow**: Runs on every push/PR - Terraform validation and format checking
+- **Security Workflow**: Runs on every push/PR and weekly - Security scanning with checkov/tfsec
+- **Test Workflow**: Manual trigger and weekly schedule - Comprehensive integration testing
+
+### Test Coverage
+
+The test suite covers:
+
+- ✅ Basic backup plan creation
+- ✅ Multiple backup plans
+- ✅ Cross-region backup scenarios
+- ✅ IAM role and policy validation
+- ✅ Backup vault configuration
+- ✅ Notification integration
+- ✅ All example configurations
+- ✅ Security best practices
+- ✅ Multi-version compatibility (Terraform 1.0+, AWS Provider 4.0+)
+
+### Contributing
+
+When contributing to this module:
+
+1. Ensure all tests pass: `cd test && go test -v ./...`
+2. Run security scans: `checkov -d . && tfsec .`
+3. Update examples if adding new features
+4. Add integration tests for new functionality
+
 ## Known Issues
 
 During the development of the module, the following issues were found:
@@ -651,49 +733,3 @@ error creating Backup Vault (): AccessDeniedException: status code: 403, request
 ```
 
 Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
