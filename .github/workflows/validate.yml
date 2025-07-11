@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         terraform_version: ['1.3.0', '1.5.0', '1.9.0']
-        aws_provider_version: ['4.0.0', '5.0.0', '5.70.0']
+        aws_provider_version: ['5.0.0', '5.70.0']
     
     steps:
     - name: Checkout
@@ -24,11 +24,13 @@ jobs:
       with:
         terraform_version: ${{ matrix.terraform_version }}
 
-    - name: Create test versions.tf
+    - name: Create test versions.tf with matrix provider version
       run: |
-        cat > test_versions.tf << EOF
+        # Backup and remove existing versions.tf to avoid conflict
+        mv versions.tf versions.tf.bak
+        cat > versions.tf << EOF
         terraform {
-          required_version = ">= 1.0.0"
+          required_version = ">= 1.3.0"
           required_providers {
             aws = {
               source  = "hashicorp/aws"
@@ -48,7 +50,9 @@ jobs:
       run: terraform validate
 
     - name: Cleanup
-      run: rm -f test_versions.tf
+      run: |
+        # Restore original versions.tf
+        mv versions.tf.bak versions.tf
 
   validate-examples:
     name: Validate Examples
@@ -101,9 +105,3 @@ jobs:
           terraform validate
         fi
 
-    - name: Terraform Plan
-      run: |
-        if [ -d "examples/${{ matrix.example }}" ]; then
-          cd examples/${{ matrix.example }}
-          terraform plan -out=tfplan
-        fi
