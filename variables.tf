@@ -257,11 +257,9 @@ variable "rules" {
   validation {
     condition = alltrue([
       for rule in var.rules :
-      try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90) &&
-      try(rule.lifecycle.delete_after, 90) >= 1 &&
-      (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after >= 1)
+      try(rule.lifecycle.delete_after, 90) >= 1
     ])
-    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified, it must be ≥ 1 day (AWS requirement). To disable cold storage, omit the cold_storage_after parameter entirely."
+    error_message = "Lifecycle validation failed: delete_after must be ≥ 1 day."
   }
 }
 
@@ -551,7 +549,7 @@ variable "default_lifecycle_cold_storage_after_days" {
   default     = null
 
   validation {
-    condition     = var.default_lifecycle_cold_storage_after_days == null || var.default_lifecycle_cold_storage_after_days >= 1
+    condition     = var.default_lifecycle_cold_storage_after_days == null || try(var.default_lifecycle_cold_storage_after_days >= 1, false)
     error_message = "The default_lifecycle_cold_storage_after_days must be at least 1 day (AWS minimum requirement). To disable cold storage by default, set to null."
   }
 }
