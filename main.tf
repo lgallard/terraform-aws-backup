@@ -1,17 +1,17 @@
 
-# Organized locals for better maintainability and code clarity
+# Optimized locals for better maintainability and performance
 locals {
-  # Resource creation conditions
+  # Resource creation conditions (pre-computed for efficiency)
   should_create_vault       = var.enabled && var.vault_name != null
   should_create_lock        = local.should_create_vault && var.locked
-  should_create_legacy_plan = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
+  should_create_legacy_plan = var.enabled && length(var.plans) == 0 && length(local.processed_rules) > 0
 
   # Validation helpers for vault lock configuration
   vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
   retention_days_valid        = local.vault_lock_requirements_met ? var.min_retention_days <= var.max_retention_days : true
   check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
 
-  # Rule processing (matching existing logic for compatibility)
+  # Optimized rule processing with pre-validation and normalization
   rule = var.rule_name == null ? [] : [{
     name              = var.rule_name
     target_vault_name = var.vault_name != null ? var.vault_name : "Default"
@@ -26,7 +26,31 @@ locals {
     recovery_point_tags      = var.rule_recovery_point_tags
   }]
 
-  rules = concat(local.rule, var.rules)
+  raw_rules = concat(local.rule, var.rules)
+  
+  # Pre-process rules with validation and normalization (cache expensive computations)
+  processed_rules = [
+    for rule in local.raw_rules : merge(rule, {
+      # Normalize lifecycle configuration
+      normalized_lifecycle = try(rule.lifecycle, null) != null ? {
+        cold_storage_after = max(0, try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days))
+        delete_after       = max(1, try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days))
+      } : null
+      
+      # Pre-validate and normalize copy actions
+      validated_copy_actions = [
+        for copy_action in try(rule.copy_actions, []) : merge(copy_action, {
+          normalized_lifecycle = try(copy_action.lifecycle, null) != null ? {
+            cold_storage_after = max(0, try(copy_action.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days))
+            delete_after       = max(1, try(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days))
+          } : null
+        })
+      ]
+    })
+  ]
+  
+  # Maintain backwards compatibility
+  rules = local.processed_rules
 
   # Selection processing (comprehensive logic for VSS validation)
   selection_resources = flatten([
@@ -44,22 +68,22 @@ locals {
   # Plans processing
   plans_map = var.plans
 
-  # Lifecycle validations
+  # Optimized lifecycle validations (single pass with pre-processed rules)
   lifecycle_validations = alltrue([
-    for rule in local.rules : (
-      length(try(rule.lifecycle, {})) == 0 ? true :
-      try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+    for rule in local.processed_rules : (
+      rule.normalized_lifecycle == null || 
+      rule.normalized_lifecycle.cold_storage_after <= rule.normalized_lifecycle.delete_after
     ) &&
     alltrue([
-      for copy_action in try(rule.copy_actions, []) : (
-        length(try(copy_action.lifecycle, {})) == 0 ? true :
-        try(copy_action.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      for copy_action in rule.validated_copy_actions : (
+        copy_action.normalized_lifecycle == null ||
+        copy_action.normalized_lifecycle.cold_storage_after <= copy_action.normalized_lifecycle.delete_after
       )
     ])
   ])
 }
 
-# AWS Backup vault
+# AWS Backup vault with optimized timeouts
 resource "aws_backup_vault" "ab_vault" {
   count = local.should_create_vault ? 1 : 0
 
@@ -67,6 +91,11 @@ resource "aws_backup_vault" "ab_vault" {
   kms_key_arn   = var.vault_kms_key_arn
   force_destroy = var.vault_force_destroy
   tags          = var.tags
+  
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
 }
 
 # AWS Backup vault lock configuration
@@ -86,10 +115,16 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
   }
 }
 
-# Legacy AWS Backup plan (for backward compatibility)
+# Legacy AWS Backup plan (for backward compatibility) with optimized timeouts
 resource "aws_backup_plan" "ab_plan" {
   count = local.should_create_legacy_plan ? 1 : 0
   name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
+  
+  timeouts {
+    create = "5m"
+    update = "5m"
+    delete = "5m"
+  }
 
   # Rules
   dynamic "rule" {
@@ -162,10 +197,16 @@ resource "aws_backup_plan" "ab_plan" {
   }
 }
 
-# Multiple AWS Backup plans
+# Multiple AWS Backup plans with optimized timeouts
 resource "aws_backup_plan" "ab_plans" {
   for_each = var.enabled ? local.plans_map : {}
   name     = coalesce(each.value.name, each.key)
+  
+  timeouts {
+    create = "5m"
+    update = "5m"
+    delete = "5m"
+  }
 
   # Rules
   dynamic "rule" {

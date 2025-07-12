@@ -1,0 +1,133 @@
+# Cross-Region Backup Example
+# This example demonstrates how to create backups with cross-region replication
+# for disaster recovery and compliance requirements.
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  required_version = ">= 1.0"
+}
+
+# Configure the primary AWS Provider
+provider "aws" {
+  region = var.primary_region
+}
+
+# Configure the secondary AWS Provider for cross-region replication
+provider "aws" {
+  alias  = "secondary"
+  region = var.secondary_region
+}
+
+# Data sources
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+# Create destination vault in secondary region
+resource "aws_backup_vault" "secondary_vault" {
+  provider = aws.secondary
+  
+  name        = "${var.vault_name}-secondary"
+  kms_key_arn = var.secondary_vault_kms_key_arn
+  
+  tags = merge(var.tags, {
+    Purpose = "Cross-region disaster recovery"
+    Region  = var.secondary_region
+  })
+}
+
+# Primary backup configuration with cross-region replication
+module "cross_region_backup" {
+  source = "../.."
+
+  # Vault configuration
+  vault_name        = var.vault_name
+  vault_kms_key_arn = var.primary_vault_kms_key_arn
+
+  # Backup plan with cross-region copy actions
+  plan_name = "cross-region-backup-plan"
+
+  rules = [
+    {
+      name              = "cross-region-daily-backup"
+      schedule          = "cron(0 2 * * ? *)" # Daily at 2 AM
+      start_window      = 60                  # 1 hour window to start
+      completion_window = 480                 # 8 hours to complete
+      lifecycle = {
+        cold_storage_after = 30  # Move to cold storage after 30 days
+        delete_after       = 365 # Keep for 1 year
+      }
+      copy_actions = [
+        {
+          destination_vault_arn = aws_backup_vault.secondary_vault.arn
+          lifecycle = {
+            cold_storage_after = 30  # Same lifecycle in secondary region
+            delete_after       = 365
+          }
+        }
+      ]
+      recovery_point_tags = merge(var.tags, {
+        BackupType = "CrossRegion"
+        Frequency  = "Daily"
+      })
+    }
+  ]
+
+  # Selection configuration
+  selection_name = "cross-region-resources"
+  selection_resources = var.backup_resources
+  
+  selection_tags = [
+    {
+      type  = "STRINGEQUALS"
+      key   = "BackupRequired"
+      value = "true"
+    },
+    {
+      type  = "STRINGEQUALS"
+      key   = "Environment"
+      value = var.environment
+    }
+  ]
+
+  # Enable notifications for backup events
+  notifications = {
+    backup_vault_events = [
+      "BACKUP_JOB_STARTED",
+      "BACKUP_JOB_COMPLETED",
+      "BACKUP_JOB_FAILED",
+      "COPY_JOB_STARTED",
+      "COPY_JOB_SUCCESSFUL",
+      "COPY_JOB_FAILED"
+    ]
+    sns_topic_arn = var.sns_topic_arn
+  }
+
+  tags = var.tags
+}
+
+# Optional: Create a report to monitor cross-region backup status
+module "backup_reports" {
+  count  = var.create_reports ? 1 : 0
+  source = "../.."
+
+  # Only create reports, not backup resources
+  enabled = false
+
+  reports = [
+    {
+      name            = "cross-region-backup-report"
+      description     = "Cross-region backup job status and compliance report"
+      formats         = ["CSV", "JSON"]
+      s3_bucket_name  = var.reports_s3_bucket
+      s3_key_prefix   = "backup-reports/cross-region/"
+      report_template = "BACKUP_JOB_REPORT"
+      accounts        = [data.aws_caller_identity.current.account_id]
+      regions         = [var.primary_region, var.secondary_region]
+    }
+  ]
+}

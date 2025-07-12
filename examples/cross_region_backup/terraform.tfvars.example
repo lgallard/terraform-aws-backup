@@ -1,0 +1,38 @@
+# Cross-Region Backup Configuration Example
+# Copy this file to terraform.tfvars and customize the values
+
+# Regional Configuration
+primary_region   = "us-east-1"
+secondary_region = "us-west-2"
+
+# Vault Configuration
+vault_name                    = "my-cross-region-vault"
+primary_vault_kms_key_arn     = "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+secondary_vault_kms_key_arn   = "arn:aws:kms:us-west-2:123456789012:key/87654321-4321-4321-4321-210987654321"
+
+# Environment
+environment = "prod"
+
+# Resources to backup (customize based on your infrastructure)
+backup_resources = [
+  "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+  "arn:aws:rds:us-east-1:123456789012:db:my-database",
+  "arn:aws:dynamodb:us-east-1:123456789012:table/my-table",
+  "arn:aws:elasticfilesystem:us-east-1:123456789012:file-system/fs-12345678"
+]
+
+# Optional: SNS topic for notifications
+sns_topic_arn = "arn:aws:sns:us-east-1:123456789012:backup-notifications"
+
+# Optional: Enable reports
+create_reports     = true
+reports_s3_bucket  = "my-backup-reports-bucket"
+
+# Tags
+tags = {
+  Environment   = "production"
+  Project       = "disaster-recovery"
+  Owner         = "platform-team"
+  CostCenter    = "infrastructure"
+  Terraform     = "true"
+}
