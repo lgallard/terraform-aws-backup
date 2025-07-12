@@ -12,6 +12,11 @@ repos:
         args: ['--allow-missing-credentials']  # Avoid false positives
       - id: check-yaml  # Added YAML validation
       - id: check-merge-conflict  # Added merge conflict detection
+      - id: check-json  # Added JSON validation
+      - id: check-toml  # Added TOML validation
+      - id: detect-private-key  # Added private key detection
+      - id: mixed-line-ending
+        args: ['--fix=lf']  # Ensure consistent line endings
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.83.5  # Updated to latest stable version
     hooks:
@@ -25,7 +30,21 @@ repos:
       - id: terraform_tflint  # Added terraform linter
         args:
           - --args=--config=.tflint.hcl
-#      - id: terraform_checkov  # Added security scanner
-#        args:
-#          - --args=--quiet
-#          - --args=--skip-check CKV_AWS_1  # Skip specific rules if needed
+      - id: terraform_checkov  # Added security scanner
+        args:
+          - --args=--quiet
+          - --args=--framework terraform
+          - --args=--skip-check CKV_AWS_18  # Skip EBS encryption check for flexibility
+          - --args=--skip-check CKV_AWS_144 # Skip backup encryption check for flexibility
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '.*/tests/.*'
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.16.23
+    hooks:
+      - id: typos
+        types: [markdown]
+        args: ['--format', 'brief']

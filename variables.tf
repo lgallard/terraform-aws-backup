@@ -57,7 +57,7 @@ variable "changeable_for_days" {
 
   validation {
     condition     = var.changeable_for_days == null ? true : var.changeable_for_days >= 3 && var.changeable_for_days <= 365
-    error_message = "The changeable_for_days must be between 3 and 365 days."
+    error_message = "changeable_for_days must be between 3 and 365 days. This parameter controls the vault lock compliance period - the number of days before the lock becomes immutable."
   }
 }
 
@@ -529,4 +529,29 @@ variable "backup_regions" {
   description = "List of regions where backups should be created"
   type        = list(string)
   default     = []
+}
+
+#
+# Default lifecycle configuration constants
+#
+variable "default_lifecycle_delete_after_days" {
+  description = "Default number of days after creation that a recovery point is deleted. Used when delete_after is not specified in lifecycle configuration."
+  type        = number
+  default     = 90
+
+  validation {
+    condition     = var.default_lifecycle_delete_after_days >= 1
+    error_message = "The default_lifecycle_delete_after_days must be at least 1 day."
+  }
+}
+
+variable "default_lifecycle_cold_storage_after_days" {
+  description = "Default number of days after creation that a recovery point is moved to cold storage. Used when cold_storage_after is not specified in lifecycle configuration."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.default_lifecycle_cold_storage_after_days == 0 || var.default_lifecycle_cold_storage_after_days >= 30
+    error_message = "The default_lifecycle_cold_storage_after_days must be 0 (disabled) or at least 30 days (AWS minimum requirement)."
+  }
 }
