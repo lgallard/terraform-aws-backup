@@ -257,8 +257,8 @@ variable "rules" {
   validation {
     condition = alltrue([
       for rule in var.rules :
-      try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days) &&
-      try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days) >= 1 &&
+      try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90) &&
+      try(rule.lifecycle.delete_after, 90) >= 1 &&
       (try(rule.lifecycle.cold_storage_after, null) == null || rule.lifecycle.cold_storage_after == 0 || rule.lifecycle.cold_storage_after >= 30)
     ])
     error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
@@ -483,8 +483,8 @@ variable "backup_policies" {
   validation {
     condition = alltrue([
       for policy in var.backup_policies :
-      try(policy.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(policy.lifecycle.delete_after, var.default_lifecycle_delete_after_days) &&
-      try(policy.lifecycle.delete_after, var.default_lifecycle_delete_after_days) >= 1 &&
+      try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90) &&
+      try(policy.lifecycle.delete_after, 90) >= 1 &&
       (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after == 0 || policy.lifecycle.cold_storage_after >= 30)
     ])
     error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified and > 0, it must be ≥ 30 days (AWS requirement). Use 0 to disable cold storage."
