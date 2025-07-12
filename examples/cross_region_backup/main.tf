@@ -30,10 +30,10 @@ data "aws_region" "current" {}
 # Create destination vault in secondary region
 resource "aws_backup_vault" "secondary_vault" {
   provider = aws.secondary
-  
+
   name        = "${var.vault_name}-secondary"
   kms_key_arn = var.secondary_vault_kms_key_arn
-  
+
   tags = merge(var.tags, {
     Purpose = "Cross-region disaster recovery"
     Region  = var.secondary_region
@@ -65,7 +65,7 @@ module "cross_region_backup" {
         {
           destination_vault_arn = aws_backup_vault.secondary_vault.arn
           lifecycle = {
-            cold_storage_after = 30  # Same lifecycle in secondary region
+            cold_storage_after = 30 # Same lifecycle in secondary region
             delete_after       = 365
           }
         }
@@ -78,9 +78,9 @@ module "cross_region_backup" {
   ]
 
   # Selection configuration
-  selection_name = "cross-region-resources"
+  selection_name      = "cross-region-resources"
   selection_resources = var.backup_resources
-  
+
   selection_tags = [
     {
       type  = "STRINGEQUALS"

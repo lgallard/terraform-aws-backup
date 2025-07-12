@@ -3,7 +3,7 @@ data "aws_partition" "current" {}
 # Optimized locals for IAM resource management
 locals {
   create_iam_resources = var.enabled && var.iam_role_arn == null
-  
+
   # Pre-compute managed policy ARNs for batch processing
   backup_managed_policy_arns = local.create_iam_resources ? toset([
     "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
@@ -37,7 +37,7 @@ resource "aws_iam_role" "ab_role" {
 # Optimized: Batch managed policy attachments using for_each
 resource "aws_iam_role_policy_attachment" "ab_managed_policies" {
   for_each = local.backup_managed_policy_arns
-  
+
   policy_arn = each.value
   role       = aws_iam_role.ab_role[0].name
 }

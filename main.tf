@@ -67,11 +67,7 @@ resource "aws_backup_vault" "ab_vault" {
   kms_key_arn   = var.vault_kms_key_arn
   force_destroy = var.vault_force_destroy
   tags          = var.tags
-  
-  timeouts {
-    create = "10m"
-    delete = "10m"
-  }
+
 }
 
 # AWS Backup vault lock configuration
@@ -95,12 +91,6 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
 resource "aws_backup_plan" "ab_plan" {
   count = local.should_create_legacy_plan ? 1 : 0
   name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
-  
-  timeouts {
-    create = "5m"
-    update = "5m"
-    delete = "5m"
-  }
 
   # Rules
   dynamic "rule" {
@@ -177,12 +167,6 @@ resource "aws_backup_plan" "ab_plan" {
 resource "aws_backup_plan" "ab_plans" {
   for_each = var.enabled ? local.plans_map : {}
   name     = coalesce(each.value.name, each.key)
-  
-  timeouts {
-    create = "5m"
-    update = "5m"
-    delete = "5m"
-  }
 
   # Rules
   dynamic "rule" {

@@ -37,8 +37,8 @@ module "cost_optimized_backup" {
           start_window      = 60
           completion_window = 180
           lifecycle = {
-            cold_storage_after = 1   # Quick transition to save costs
-            delete_after       = 30  # Short retention for cost
+            cold_storage_after = 1  # Quick transition to save costs
+            delete_after       = 30 # Short retention for cost
           }
           recovery_point_tags = {
             CostTier      = "Critical"
@@ -71,8 +71,8 @@ module "cost_optimized_backup" {
           start_window      = 120
           completion_window = 240
           lifecycle = {
-            cold_storage_after = 30  # Move to cold storage after 30 days
-            delete_after       = 90  # 90 days retention
+            cold_storage_after = 30 # Move to cold storage after 30 days
+            delete_after       = 90 # 90 days retention
           }
           recovery_point_tags = {
             CostTier      = "Standard"
@@ -105,8 +105,8 @@ module "cost_optimized_backup" {
           start_window      = 240
           completion_window = 480
           lifecycle = {
-            cold_storage_after = 0  # No cold storage for dev
-            delete_after       = 7  # Short retention
+            cold_storage_after = 0 # No cold storage for dev
+            delete_after       = 7 # Short retention
           }
           recovery_point_tags = {
             CostTier      = "Development"

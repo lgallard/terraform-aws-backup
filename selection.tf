@@ -145,11 +145,8 @@ resource "aws_backup_selection" "ab_selections" {
 
   depends_on = [
     aws_iam_role.ab_role,
-    aws_iam_role_policy_attachment.ab_policy_attach,
-    aws_iam_role_policy_attachment.ab_backup_s3_policy_attach,
-    aws_iam_role_policy_attachment.ab_tag_policy_attach,
-    aws_iam_role_policy_attachment.ab_restores_policy_attach,
-    aws_iam_role_policy_attachment.ab_restores_s3_policy_attach
+    aws_iam_role_policy_attachment.ab_managed_policies,
+    aws_iam_role_policy_attachment.ab_tag_policy_attach
   ]
 }
 
@@ -209,10 +206,7 @@ resource "aws_backup_selection" "plan_selections" {
 
   depends_on = [
     aws_iam_role.ab_role,
-    aws_iam_role_policy_attachment.ab_policy_attach,
-    aws_iam_role_policy_attachment.ab_backup_s3_policy_attach,
-    aws_iam_role_policy_attachment.ab_tag_policy_attach,
-    aws_iam_role_policy_attachment.ab_restores_policy_attach,
-    aws_iam_role_policy_attachment.ab_restores_s3_policy_attach
+    aws_iam_role_policy_attachment.ab_managed_policies,
+    aws_iam_role_policy_attachment.ab_tag_policy_attach
   ]
 }
