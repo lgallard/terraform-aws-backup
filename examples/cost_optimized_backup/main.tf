@@ -37,8 +37,8 @@ module "cost_optimized_backup" {
           start_window      = 60
           completion_window = 180
           lifecycle = {
-            cold_storage_after = 1  # Quick transition to save costs
-            delete_after       = 30 # Short retention for cost
+            cold_storage_after = 30 # Move to cold storage after 30 days (AWS minimum)
+            delete_after       = 90 # Retention period
           }
           recovery_point_tags = {
             CostTier      = "Critical"

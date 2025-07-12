@@ -47,13 +47,19 @@ locals {
   # Lifecycle validations
   lifecycle_validations = alltrue([
     for rule in local.rules : (
-      length(try(rule.lifecycle, {})) == 0 ? true :
-      try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      length(try(rule.lifecycle, {})) == 0 ? true : (
+        # Only validate the comparison if both values are non-null
+        (try(rule.lifecycle.cold_storage_after, null) == null || try(rule.lifecycle.delete_after, null) == null) ? true :
+        coalesce(rule.lifecycle.cold_storage_after, 0) <= coalesce(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      )
     ) &&
     alltrue([
       for copy_action in try(rule.copy_actions, []) : (
-        length(try(copy_action.lifecycle, {})) == 0 ? true :
-        try(copy_action.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+        length(try(copy_action.lifecycle, {})) == 0 ? true : (
+          # Only validate the comparison if both values are non-null
+          (try(copy_action.lifecycle.cold_storage_after, null) == null || try(copy_action.lifecycle.delete_after, null) == null) ? true :
+          coalesce(copy_action.lifecycle.cold_storage_after, 0) <= coalesce(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+        )
       )
     ])
   ])
