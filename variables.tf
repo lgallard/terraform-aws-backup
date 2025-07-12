@@ -523,12 +523,12 @@ variable "backup_policies" {
       for policy in var.backup_policies :
       # Only validate cold_storage_after <= delete_after when both are non-null
       (try(policy.lifecycle.cold_storage_after, null) == null ||
-       try(policy.lifecycle.delete_after, null) == null ||
-       try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90)) &&
+        try(policy.lifecycle.delete_after, null) == null ||
+      try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90)) &&
       try(policy.lifecycle.delete_after, 90) >= 1 &&
-      (try(policy.lifecycle.cold_storage_after, null) == null || 
-       try(policy.lifecycle.cold_storage_after, 0) == 0 || 
-       try(policy.lifecycle.cold_storage_after, 0) >= 30)
+      (try(policy.lifecycle.cold_storage_after, null) == null ||
+        try(policy.lifecycle.cold_storage_after, 0) == 0 ||
+      try(policy.lifecycle.cold_storage_after, 0) >= 30)
     ])
     error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified, it must be 0 (disabled) or ≥ 30 days (AWS requirement). To disable cold storage, omit the cold_storage_after parameter entirely or set to 0."
   }
