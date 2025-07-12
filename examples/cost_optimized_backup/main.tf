@@ -105,8 +105,7 @@ module "cost_optimized_backup" {
           start_window      = 240
           completion_window = 480
           lifecycle = {
-            cold_storage_after = 0 # No cold storage for dev
-            delete_after       = 7 # Short retention
+            delete_after = 7 # Short retention
           }
           recovery_point_tags = {
             CostTier      = "Development"

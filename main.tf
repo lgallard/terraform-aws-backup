@@ -68,6 +68,10 @@ resource "aws_backup_vault" "ab_vault" {
   force_destroy = var.vault_force_destroy
   tags          = var.tags
 
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
 }
 
 # AWS Backup vault lock configuration
@@ -149,6 +153,12 @@ resource "aws_backup_plan" "ab_plan" {
   # First create the vault if needed
   depends_on = [aws_backup_vault.ab_vault]
 
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
+
   lifecycle {
     precondition {
       condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex("(?i).*ec2.*", join(",", local.selection_resources))))
@@ -224,6 +234,12 @@ resource "aws_backup_plan" "ab_plans" {
 
   # First create the vault if needed
   depends_on = [aws_backup_vault.ab_vault]
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 
   lifecycle {
     precondition {

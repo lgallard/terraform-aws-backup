@@ -110,8 +110,13 @@ schedule = "cron(0 1 ? * MON *)"  # Weekly on Monday
 ### Modifying Lifecycle Policies
 ```hcl
 lifecycle = {
-  cold_storage_after = 7   # Keep in warm storage longer
+  cold_storage_after = 7   # Keep in warm storage longer (minimum 1 day)
   delete_after       = 180 # Extended retention period
+}
+
+# To disable cold storage completely, omit cold_storage_after:
+lifecycle = {
+  delete_after = 30 # Only specify retention period
 }
 ```
 

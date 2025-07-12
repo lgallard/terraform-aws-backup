@@ -53,17 +53,6 @@ variable "backup_resources" {
   ]
 }
 
-variable "enable_notifications" {
-  description = "Enable SNS notifications for backup events"
-  type        = bool
-  default     = false
-}
-
-variable "sns_topic_arn" {
-  description = "SNS topic ARN for backup notifications"
-  type        = string
-  default     = null
-}
 
 variable "tags" {
   description = "A map of tags to assign to resources"

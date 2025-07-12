@@ -94,18 +94,6 @@ module "cross_region_backup" {
     }
   ]
 
-  # Enable notifications for backup events
-  notifications = var.enable_notifications ? {
-    backup_vault_events = [
-      "BACKUP_JOB_STARTED",
-      "BACKUP_JOB_COMPLETED",
-      "BACKUP_JOB_FAILED",
-      "COPY_JOB_STARTED",
-      "COPY_JOB_SUCCESSFUL",
-      "COPY_JOB_FAILED"
-    ]
-    sns_topic_arn = var.sns_topic_arn
-  } : {}
 
   tags = var.tags
 }
