@@ -36,8 +36,8 @@ module "aws_backup_example" {
   ]
 
   # Selection configuration using conditions
-  selections = [
-    {
+  selections = {
+    selection_by_conditions = {
       name = "selection_by_conditions"
       selection_tags = [
         {
@@ -52,7 +52,7 @@ module "aws_backup_example" {
         }
       ]
     }
-  ]
+  }
 
   tags = {
     Environment = "prod"
