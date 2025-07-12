@@ -22,7 +22,7 @@ variable "environment" {
   description = "Environment name (prod, staging, dev)"
   type        = string
   default     = "prod"
-  
+
   validation {
     condition     = contains(["prod", "staging", "dev"], var.environment)
     error_message = "Environment must be one of: prod, staging, dev."
@@ -62,9 +62,9 @@ variable "tags" {
   description = "A map of tags to assign to resources"
   type        = map(string)
   default = {
-    Terraform     = "true"
-    Environment   = "example"
-    Purpose       = "CostOptimizedBackup"
-    CostStrategy  = "MultiTier"
+    Terraform    = "true"
+    Environment  = "example"
+    Purpose      = "CostOptimizedBackup"
+    CostStrategy = "MultiTier"
   }
 }
