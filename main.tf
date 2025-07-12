@@ -1,8 +1,67 @@
 
+# Organized locals for better maintainability and code clarity
+locals {
+  # Resource creation conditions
+  should_create_vault       = var.enabled && var.vault_name != null
+  should_create_lock        = local.should_create_vault && var.locked
+  should_create_legacy_plan = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
+
+  # Validation helpers for vault lock configuration
+  vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
+  retention_days_valid        = local.vault_lock_requirements_met ? var.min_retention_days <= var.max_retention_days : true
+  check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
+
+  # Rule processing (matching existing logic for compatibility)
+  rule = var.rule_name == null ? [] : [{
+    name              = var.rule_name
+    target_vault_name = var.vault_name != null ? var.vault_name : "Default"
+    schedule          = var.rule_schedule
+    start_window      = var.rule_start_window
+    completion_window = var.rule_completion_window
+    lifecycle = var.rule_lifecycle_cold_storage_after == null ? {} : {
+      cold_storage_after = var.rule_lifecycle_cold_storage_after
+      delete_after       = var.rule_lifecycle_delete_after
+    }
+    enable_continuous_backup = var.rule_enable_continuous_backup
+    recovery_point_tags      = var.rule_recovery_point_tags
+  }]
+
+  rules = concat(local.rule, var.rules)
+
+  # Selection processing (comprehensive logic for VSS validation)
+  selection_resources = flatten([
+    # Legacy single selection
+    var.selection_resources,
+    # Legacy multiple selections (var.selections)
+    [for selection in try(tolist(var.selections), []) : try(selection.resources, [])],
+    [for k, selection in try(tomap(var.selections), {}) : try(selection.resources, [])],
+    # New multiple selections (var.backup_selections)
+    [for selection in var.backup_selections : try(selection.resources, [])],
+    # Plan-based selections
+    [for plan in var.plans : flatten([for selection in try(plan.selections, []) : try(selection.resources, [])])]
+  ])
+
+  # Plans processing
+  plans_map = var.plans
+
+  # Lifecycle validations
+  lifecycle_validations = alltrue([
+    for rule in local.rules : (
+      length(try(rule.lifecycle, {})) == 0 ? true :
+      try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+    ) &&
+    alltrue([
+      for copy_action in try(rule.copy_actions, []) : (
+        length(try(copy_action.lifecycle, {})) == 0 ? true :
+        try(copy_action.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      )
+    ])
+  ])
+}
 
 # AWS Backup vault
 resource "aws_backup_vault" "ab_vault" {
-  count = var.enabled && var.vault_name != null ? 1 : 0
+  count = local.should_create_vault ? 1 : 0
 
   name          = var.vault_name
   kms_key_arn   = var.vault_kms_key_arn
@@ -12,7 +71,7 @@ resource "aws_backup_vault" "ab_vault" {
 
 # AWS Backup vault lock configuration
 resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
-  count = var.enabled && var.vault_name != null && var.locked ? 1 : 0
+  count = local.should_create_lock ? 1 : 0
 
   backup_vault_name   = aws_backup_vault.ab_vault[0].name
   min_retention_days  = var.min_retention_days
@@ -29,7 +88,7 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
 
 # Legacy AWS Backup plan (for backward compatibility)
 resource "aws_backup_plan" "ab_plan" {
-  count = var.enabled && length(var.plans) == 0 && length(local.rules) > 0 ? 1 : 0
+  count = local.should_create_legacy_plan ? 1 : 0
   name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
 
   # Rules
@@ -48,8 +107,8 @@ resource "aws_backup_plan" "ab_plan" {
       dynamic "lifecycle" {
         for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
         content {
-          cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
-          delete_after       = try(lifecycle.value.delete_after, 90)
+          cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+          delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
         }
       }
 
@@ -63,8 +122,8 @@ resource "aws_backup_plan" "ab_plan" {
           dynamic "lifecycle" {
             for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
             content {
-              cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
-              delete_after       = try(lifecycle.value.delete_after, 90)
+              cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+              delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
             }
           }
         }
@@ -124,8 +183,8 @@ resource "aws_backup_plan" "ab_plans" {
       dynamic "lifecycle" {
         for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
         content {
-          cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
-          delete_after       = try(lifecycle.value.delete_after, 90)
+          cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+          delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
         }
       }
 
@@ -139,8 +198,8 @@ resource "aws_backup_plan" "ab_plans" {
           dynamic "lifecycle" {
             for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
             content {
-              cold_storage_after = try(lifecycle.value.cold_storage_after, 0)
-              delete_after       = try(lifecycle.value.delete_after, 90)
+              cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+              delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
             }
           }
         }
@@ -173,63 +232,3 @@ resource "aws_backup_plan" "ab_plans" {
   }
 }
 
-locals {
-  # Rule
-  rule = var.rule_name == null ? [] : [
-    {
-      name              = var.rule_name
-      target_vault_name = var.vault_name != null ? var.vault_name : "Default"
-      schedule          = var.rule_schedule
-      start_window      = var.rule_start_window
-      completion_window = var.rule_completion_window
-      lifecycle = var.rule_lifecycle_cold_storage_after == null ? {} : {
-        cold_storage_after = var.rule_lifecycle_cold_storage_after
-        delete_after       = var.rule_lifecycle_delete_after
-      }
-      enable_continuous_backup = var.rule_enable_continuous_backup
-      recovery_point_tags      = var.rule_recovery_point_tags
-    }
-  ]
-
-  # Rules
-  rules = concat(local.rule, var.rules)
-
-  # Plans map for multiple plans
-  plans_map = var.plans
-
-  # Helper for VSS validation - collect resources from all selection sources
-  selection_resources = flatten([
-    # Legacy single selection
-    var.selection_resources,
-    # Legacy multiple selections (var.selections)
-    [for selection in try(tolist(var.selections), []) : try(selection.resources, [])],
-    [for k, selection in try(tomap(var.selections), {}) : try(selection.resources, [])],
-    # New multiple selections (var.backup_selections)
-    [for selection in var.backup_selections : try(selection.resources, [])],
-    # Plan-based selections
-    [for plan in var.plans : flatten([for selection in try(plan.selections, []) : try(selection.resources, [])])]
-  ])
-
-  # Lifecycle validations
-  lifecycle_validations = alltrue([
-    for rule in local.rules : (
-      length(try(rule.lifecycle, {})) == 0 ? true :
-      try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)
-    ) &&
-    alltrue([
-      for copy_action in try(rule.copy_actions, []) : (
-        length(try(copy_action.lifecycle, {})) == 0 ? true :
-        try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90)
-      )
-    ])
-  ])
-
-  # Check retention days - handling null values properly
-  check_retention_days = var.locked ? (
-    var.min_retention_days == null ? false : (
-      var.max_retention_days == null ? false : (
-        var.min_retention_days <= var.max_retention_days
-      )
-    )
-  ) : true
-}
