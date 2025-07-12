@@ -43,8 +43,7 @@ module "aws_backup_example" {
       completion_window        = 561
       enable_continuous_backup = false
       lifecycle = {
-        cold_storage_after = 0
-        delete_after       = 90
+        delete_after = 90
       }
       recovery_point_tags = {
         Environment = "prod"
@@ -54,8 +53,7 @@ module "aws_backup_example" {
         {
           destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
           lifecycle = {
-            cold_storage_after = 0
-            delete_after       = 90
+            delete_after = 90
           }
         }
       ]

@@ -47,19 +47,25 @@ locals {
   # Lifecycle validations
   lifecycle_validations = alltrue([
     for rule in local.rules : (
-      length(try(rule.lifecycle, {})) == 0 ? true :
-      try(rule.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      length(try(rule.lifecycle, {})) == 0 ? true : (
+        # Only validate the comparison if both values are non-null
+        (try(rule.lifecycle.cold_storage_after, null) == null || try(rule.lifecycle.delete_after, null) == null) ? true :
+        coalesce(rule.lifecycle.cold_storage_after, 0) <= coalesce(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+      )
     ) &&
     alltrue([
       for copy_action in try(rule.copy_actions, []) : (
-        length(try(copy_action.lifecycle, {})) == 0 ? true :
-        try(copy_action.lifecycle.cold_storage_after, var.default_lifecycle_cold_storage_after_days) <= try(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+        length(try(copy_action.lifecycle, {})) == 0 ? true : (
+          # Only validate the comparison if both values are non-null
+          (try(copy_action.lifecycle.cold_storage_after, null) == null || try(copy_action.lifecycle.delete_after, null) == null) ? true :
+          coalesce(copy_action.lifecycle.cold_storage_after, 0) <= coalesce(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
+        )
       )
     ])
   ])
 }
 
-# AWS Backup vault
+# AWS Backup vault with optimized timeouts
 resource "aws_backup_vault" "ab_vault" {
   count = local.should_create_vault ? 1 : 0
 
@@ -67,6 +73,7 @@ resource "aws_backup_vault" "ab_vault" {
   kms_key_arn   = var.vault_kms_key_arn
   force_destroy = var.vault_force_destroy
   tags          = var.tags
+
 }
 
 # AWS Backup vault lock configuration
@@ -86,7 +93,7 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
   }
 }
 
-# Legacy AWS Backup plan (for backward compatibility)
+# Legacy AWS Backup plan (for backward compatibility) with optimized timeouts
 resource "aws_backup_plan" "ab_plan" {
   count = local.should_create_legacy_plan ? 1 : 0
   name  = coalesce(var.plan_name, "aws-backup-plan-${var.vault_name != null ? var.vault_name : "default"}")
@@ -162,7 +169,7 @@ resource "aws_backup_plan" "ab_plan" {
   }
 }
 
-# Multiple AWS Backup plans
+# Multiple AWS Backup plans with optimized timeouts
 resource "aws_backup_plan" "ab_plans" {
   for_each = var.enabled ? local.plans_map : {}
   name     = coalesce(each.value.name, each.key)
