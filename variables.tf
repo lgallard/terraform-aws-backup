@@ -128,6 +128,64 @@ variable "plans" {
     })), {})
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules : alltrue([
+          # Validate main rule lifecycle cold_storage_after
+          try(rule.lifecycle.cold_storage_after, null) == null ||
+          rule.lifecycle.cold_storage_after == 0 ||
+          rule.lifecycle.cold_storage_after >= 30,
+          # Validate copy actions lifecycle cold_storage_after
+          alltrue([
+            for copy_action in rule.copy_actions :
+            try(copy_action.lifecycle.cold_storage_after, null) == null ||
+            copy_action.lifecycle.cold_storage_after == 0 ||
+            copy_action.lifecycle.cold_storage_after >= 30
+          ])
+        ])
+      ])
+    ])
+    error_message = "Plans validation failed: cold_storage_after must be 0 (disabled) or ≥ 30 days (AWS minimum requirement). This applies to both main rule lifecycle and copy action lifecycle. To disable cold storage, omit the cold_storage_after parameter entirely or set to 0."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules : alltrue([
+          # Validate main rule lifecycle delete_after
+          try(rule.lifecycle.delete_after, 90) >= 1,
+          # Validate copy actions lifecycle delete_after
+          alltrue([
+            for copy_action in rule.copy_actions :
+            try(copy_action.lifecycle.delete_after, 90) >= 1
+          ])
+        ])
+      ])
+    ])
+    error_message = "Plans validation failed: delete_after must be ≥ 1 day. This applies to both main rule lifecycle and copy action lifecycle."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules : rule.schedule == null || can(regex("^(cron\\([^)]+\\)|rate\\([1-9][0-9]* (minute|hour|day)s?\\))$", rule.schedule))
+      ])
+    ])
+    error_message = "Plans validation failed: Schedule must be a valid cron expression (e.g., 'cron(0 12 * * ? *)') or rate expression (e.g., 'rate(1 day)'). AWS Backup uses 6-field cron format."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules :
+        try(rule.start_window, null) != null && try(rule.completion_window, null) != null ?
+        rule.completion_window >= rule.start_window + 60 : true
+      ])
+    ])
+    error_message = "Plans validation failed: completion_window must be at least 60 minutes longer than start_window."
+  }
 }
 
 # Default rule
@@ -191,8 +249,8 @@ variable "rule_lifecycle_cold_storage_after" {
   default     = null
 
   validation {
-    condition     = var.rule_lifecycle_cold_storage_after == null || try(var.rule_lifecycle_cold_storage_after >= 1, false)
-    error_message = "The rule_lifecycle_cold_storage_after must be at least 1 day (AWS minimum requirement). To disable cold storage, set to null."
+    condition     = var.rule_lifecycle_cold_storage_after == null || try(var.rule_lifecycle_cold_storage_after == 0 || var.rule_lifecycle_cold_storage_after >= 30, false)
+    error_message = "The rule_lifecycle_cold_storage_after must be 0 (disabled) or at least 30 days (AWS minimum requirement). To disable cold storage, set to null or 0."
   }
 }
 
@@ -260,6 +318,16 @@ variable "rules" {
       try(rule.lifecycle.delete_after, 90) >= 1
     ])
     error_message = "Lifecycle validation failed: delete_after must be ≥ 1 day."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules :
+      try(rule.lifecycle.cold_storage_after, null) == null ||
+      rule.lifecycle.cold_storage_after == 0 ||
+      rule.lifecycle.cold_storage_after >= 30
+    ])
+    error_message = "Lifecycle validation failed: cold_storage_after must be 0 (disabled) or ≥ 30 days (AWS minimum requirement). To disable cold storage, omit the cold_storage_after parameter entirely or set to 0."
   }
 }
 
@@ -483,9 +551,9 @@ variable "backup_policies" {
       for policy in var.backup_policies :
       try(policy.lifecycle.cold_storage_after, 0) <= try(policy.lifecycle.delete_after, 90) &&
       try(policy.lifecycle.delete_after, 90) >= 1 &&
-      (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after >= 1)
+      (try(policy.lifecycle.cold_storage_after, null) == null || policy.lifecycle.cold_storage_after == 0 || policy.lifecycle.cold_storage_after >= 30)
     ])
-    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified, it must be ≥ 1 day (AWS requirement). To disable cold storage, omit the cold_storage_after parameter entirely."
+    error_message = "Lifecycle validation failed: cold_storage_after must be ≤ delete_after, delete_after ≥ 1 day. If cold_storage_after is specified, it must be 0 (disabled) or ≥ 30 days (AWS requirement). To disable cold storage, omit the cold_storage_after parameter entirely or set to 0."
   }
 }
 
@@ -549,7 +617,7 @@ variable "default_lifecycle_cold_storage_after_days" {
   default     = null
 
   validation {
-    condition     = var.default_lifecycle_cold_storage_after_days == null || try(var.default_lifecycle_cold_storage_after_days >= 1, false)
-    error_message = "The default_lifecycle_cold_storage_after_days must be at least 1 day (AWS minimum requirement). To disable cold storage by default, set to null."
+    condition     = var.default_lifecycle_cold_storage_after_days == null || try(var.default_lifecycle_cold_storage_after_days == 0 || var.default_lifecycle_cold_storage_after_days >= 30, false)
+    error_message = "The default_lifecycle_cold_storage_after_days must be 0 (disabled) or at least 30 days (AWS minimum requirement). To disable cold storage by default, set to null or 0."
   }
 }
