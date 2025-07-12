@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.29.0...v0.30.0) (2025-07-12)
+
+
+### Features
+
+* Implement performance optimizations and comprehensive examples (Issues [#122](https://github.com/lgallard/terraform-aws-backup/issues/122) & [#123](https://github.com/lgallard/terraform-aws-backup/issues/123)) ([#158](https://github.com/lgallard/terraform-aws-backup/issues/158)) ([18a163f](https://github.com/lgallard/terraform-aws-backup/commit/18a163fde2162db1b53fabfb873bf24c492a9a08))
+
 ## [0.29.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.28.0...v0.29.0) (2025-07-12)
 
 
