@@ -199,13 +199,17 @@ variable "plans" {
           # Validate main rule lifecycle cold_storage_after <= delete_after relationship
           (try(rule.lifecycle.cold_storage_after, null) == null ||
             try(rule.lifecycle.delete_after, null) == null ||
-          try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)),
+            (try(rule.lifecycle.cold_storage_after, null) != null &&
+              try(rule.lifecycle.delete_after, null) != null &&
+          try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90))),
           # Validate copy actions lifecycle cold_storage_after <= delete_after relationship
           alltrue([
             for copy_action in try(rule.copy_actions, []) :
             (try(copy_action.lifecycle.cold_storage_after, null) == null ||
               try(copy_action.lifecycle.delete_after, null) == null ||
-            try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90))
+              (try(copy_action.lifecycle.cold_storage_after, null) != null &&
+                try(copy_action.lifecycle.delete_after, null) != null &&
+            try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90)))
           ])
         ])
       ])
@@ -376,13 +380,17 @@ variable "rules" {
         # Validate main rule lifecycle cold_storage_after <= delete_after relationship
         (try(rule.lifecycle.cold_storage_after, null) == null ||
           try(rule.lifecycle.delete_after, null) == null ||
-        try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)),
+          (try(rule.lifecycle.cold_storage_after, null) != null &&
+            try(rule.lifecycle.delete_after, null) != null &&
+        try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90))),
         # Validate copy actions lifecycle cold_storage_after <= delete_after relationship
         alltrue([
           for copy_action in try(rule.copy_actions, []) :
           (try(copy_action.lifecycle.cold_storage_after, null) == null ||
             try(copy_action.lifecycle.delete_after, null) == null ||
-          try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90))
+            (try(copy_action.lifecycle.cold_storage_after, null) != null &&
+              try(copy_action.lifecycle.delete_after, null) != null &&
+          try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90)))
         ])
       ])
     ])
