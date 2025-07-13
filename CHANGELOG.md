@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.2](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.1...v0.30.2) (2025-07-13)
+
+
+### Bug Fixes
+
+* Correct output references in cost_optimized_backup example ([#166](https://github.com/lgallard/terraform-aws-backup/issues/166)) ([28e24cb](https://github.com/lgallard/terraform-aws-backup/commit/28e24cb81fe6fa3f5e99a9ae19f0d566689400f8))
+
 ## [0.30.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.0...v0.30.1) (2025-07-13)
 
 
