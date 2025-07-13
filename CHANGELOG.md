@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.0...v0.30.1) (2025-07-13)
+
+
+### Bug Fixes
+
+* Add missing cold_storage_after validations for plans and rules variables ([#164](https://github.com/lgallard/terraform-aws-backup/issues/164)) ([7b99f8b](https://github.com/lgallard/terraform-aws-backup/commit/7b99f8b1842a842b424de910d0c18ab4ba60c694))
+
 ## [0.30.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.29.0...v0.30.0) (2025-07-12)
 
 
