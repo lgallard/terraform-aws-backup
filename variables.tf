@@ -167,6 +167,48 @@ variable "plans" {
     error_message = "Plans validation failed: completion_window must be at least 60 minutes longer than start_window."
   }
 
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules : alltrue([
+          # Validate main rule lifecycle cold_storage_after
+          (try(rule.lifecycle.cold_storage_after, null) == null ||
+            try(rule.lifecycle.cold_storage_after, 0) == 0 ||
+            try(rule.lifecycle.cold_storage_after, 0) >= 30),
+          # Validate copy actions lifecycle cold_storage_after
+          alltrue([
+            for copy_action in try(rule.copy_actions, []) :
+            (try(copy_action.lifecycle.cold_storage_after, null) == null ||
+              try(copy_action.lifecycle.cold_storage_after, 0) == 0 ||
+              try(copy_action.lifecycle.cold_storage_after, 0) >= 30)
+          ])
+        ])
+      ])
+    ])
+    error_message = "Plans validation failed: cold_storage_after must be 0 (disabled) or at least 30 days (AWS minimum requirement). To disable cold storage, omit the cold_storage_after parameter entirely or set to 0. This applies to both main rule lifecycle and copy action lifecycle."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_name, plan in var.plans : alltrue([
+        for rule in plan.rules : alltrue([
+          # Validate main rule lifecycle cold_storage_after <= delete_after relationship
+          (try(rule.lifecycle.cold_storage_after, null) == null ||
+            try(rule.lifecycle.delete_after, null) == null ||
+            try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)),
+          # Validate copy actions lifecycle cold_storage_after <= delete_after relationship
+          alltrue([
+            for copy_action in try(rule.copy_actions, []) :
+            (try(copy_action.lifecycle.cold_storage_after, null) == null ||
+              try(copy_action.lifecycle.delete_after, null) == null ||
+              try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90))
+          ])
+        ])
+      ])
+    ])
+    error_message = "Plans validation failed: cold_storage_after must be ≤ delete_after. This applies to both main rule lifecycle and copy action lifecycle."
+  }
+
 }
 
 # Default rule
@@ -299,6 +341,44 @@ variable "rules" {
       try(rule.lifecycle.delete_after, 90) >= 1
     ])
     error_message = "Lifecycle validation failed: delete_after must be ≥ 1 day."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules : alltrue([
+        # Validate main rule lifecycle cold_storage_after
+        (try(rule.lifecycle.cold_storage_after, null) == null ||
+          try(rule.lifecycle.cold_storage_after, 0) == 0 ||
+          try(rule.lifecycle.cold_storage_after, 0) >= 30),
+        # Validate copy actions lifecycle cold_storage_after
+        alltrue([
+          for copy_action in try(rule.copy_actions, []) :
+          (try(copy_action.lifecycle.cold_storage_after, null) == null ||
+            try(copy_action.lifecycle.cold_storage_after, 0) == 0 ||
+            try(copy_action.lifecycle.cold_storage_after, 0) >= 30)
+        ])
+      ])
+    ])
+    error_message = "Rules validation failed: cold_storage_after must be 0 (disabled) or at least 30 days (AWS minimum requirement). To disable cold storage, omit the cold_storage_after parameter entirely or set to 0. This applies to both main rule lifecycle and copy action lifecycle."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in var.rules : alltrue([
+        # Validate main rule lifecycle cold_storage_after <= delete_after relationship
+        (try(rule.lifecycle.cold_storage_after, null) == null ||
+          try(rule.lifecycle.delete_after, null) == null ||
+          try(rule.lifecycle.cold_storage_after, 0) <= try(rule.lifecycle.delete_after, 90)),
+        # Validate copy actions lifecycle cold_storage_after <= delete_after relationship
+        alltrue([
+          for copy_action in try(rule.copy_actions, []) :
+          (try(copy_action.lifecycle.cold_storage_after, null) == null ||
+            try(copy_action.lifecycle.delete_after, null) == null ||
+            try(copy_action.lifecycle.cold_storage_after, 0) <= try(copy_action.lifecycle.delete_after, 90))
+        ])
+      ])
+    ])
+    error_message = "Rules validation failed: cold_storage_after must be ≤ delete_after. This applies to both main rule lifecycle and copy action lifecycle."
   }
 
 }
