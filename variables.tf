@@ -167,6 +167,8 @@ variable "plans" {
     error_message = "Plans validation failed: completion_window must be at least 60 minutes longer than start_window."
   }
 
+
+
 }
 
 # Default rule
@@ -300,6 +302,8 @@ variable "rules" {
     ])
     error_message = "Lifecycle validation failed: delete_after must be ≥ 1 day."
   }
+
+
 
 }
 
