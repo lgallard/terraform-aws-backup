@@ -23,7 +23,7 @@ module "aws_backup_conditions" {
     conditions_test = {
       conditions = {
         string_equals = {
-          "aws:ResourceTag/Environment" = "dev"
+          "aws:ResourceTag/Environment"   = "dev"
           "aws:ResourceTag/BackupEnabled" = "true"
         }
         string_not_equals = {
