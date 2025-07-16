@@ -5,12 +5,12 @@ locals {
   create_iam_resources = var.enabled && var.iam_role_arn == null
 
   # Pre-compute managed policy ARNs for batch processing
-  backup_managed_policy_arns = local.create_iam_resources ? toset([
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup",
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
-  ]) : toset([])
+  backup_managed_policy_arns = local.create_iam_resources ? {
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"  = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+    "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"            = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores" = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+    "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"           = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
+  } : {}
 }
 
 data "aws_iam_policy_document" "ab_role_assume_role_policy" {
