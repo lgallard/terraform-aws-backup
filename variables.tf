@@ -119,7 +119,12 @@ variable "plans" {
     selections = optional(map(object({
       resources     = optional(list(string))
       not_resources = optional(list(string))
-      conditions    = optional(map(any))
+      conditions = optional(object({
+        string_equals     = optional(map(string))
+        string_not_equals = optional(map(string))
+        string_like       = optional(map(string))
+        string_not_like   = optional(map(string))
+      }))
       selection_tags = optional(list(object({
         type  = string
         key   = string

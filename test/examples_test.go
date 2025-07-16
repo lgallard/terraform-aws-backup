@@ -150,6 +150,35 @@ func TestExamplesWithCustomVariables(t *testing.T) {
 	}
 }
 
+func TestConditionsVariableTypes(t *testing.T) {
+	t.Parallel()
+
+	// Test that the conditions variable accepts the proper structure
+	terraformOptions := &terraform.Options{
+		TerraformDir: "./fixtures/terraform/conditions",
+		NoColor:      true,
+		PlanFilePath: "tfplan-conditions",
+	}
+
+	// Clean up plan file after test
+	defer func() {
+		planFile := filepath.Join("./fixtures/terraform/conditions", "tfplan-conditions")
+		if _, err := os.Stat(planFile); err == nil {
+			os.Remove(planFile)
+		}
+	}()
+
+	// Init and validate
+	RetryableInit(t, terraformOptions)
+	
+	// Run terraform plan to validate the conditions structure works
+	RetryablePlan(t, terraformOptions)
+	
+	// Validate that plan was created successfully
+	planFile := filepath.Join("./fixtures/terraform/conditions", "tfplan-conditions")
+	assert.FileExists(t, planFile, "Plan file should be created for conditions test")
+}
+
 func TestExampleTerraformFiles(t *testing.T) {
 	t.Parallel()
 
