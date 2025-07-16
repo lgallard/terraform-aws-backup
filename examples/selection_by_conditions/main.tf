@@ -38,19 +38,12 @@ module "aws_backup_example" {
   # Selection configuration using conditions
   selections = {
     selection_by_conditions = {
-      name = "selection_by_conditions"
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "prod"
-        },
-        {
-          type  = "STRINGEQUALS"
-          key   = "Service"
-          value = "web"
+      conditions = {
+        string_equals = {
+          "aws:ResourceTag/Environment" = "prod"
+          "aws:ResourceTag/Service"     = "web"
         }
-      ]
+      }
     }
   }
 

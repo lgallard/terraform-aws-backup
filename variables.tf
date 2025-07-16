@@ -119,7 +119,12 @@ variable "plans" {
     selections = optional(map(object({
       resources     = optional(list(string))
       not_resources = optional(list(string))
-      conditions    = optional(map(any))
+      conditions = optional(object({
+        string_equals     = optional(map(string))
+        string_not_equals = optional(map(string))
+        string_like       = optional(map(string))
+        string_not_like   = optional(map(string))
+      }))
       selection_tags = optional(list(object({
         type  = string
         key   = string
@@ -328,8 +333,13 @@ variable "selection_not_resources" {
 
 variable "selection_conditions" {
   description = "A map of conditions that you define to assign resources to your backup plans using tags."
-  type        = map(any)
-  default     = {}
+  type = object({
+    string_equals     = optional(map(string))
+    string_not_equals = optional(map(string))
+    string_like       = optional(map(string))
+    string_not_like   = optional(map(string))
+  })
+  default = {}
 }
 
 variable "selection_tags" {
@@ -543,8 +553,13 @@ variable "backup_selections" {
   type = map(object({
     resources     = optional(list(string))
     not_resources = optional(list(string))
-    conditions    = optional(map(any))
-    tags          = optional(map(string))
+    conditions = optional(object({
+      string_equals     = optional(map(string))
+      string_not_equals = optional(map(string))
+      string_like       = optional(map(string))
+      string_not_like   = optional(map(string))
+    }))
+    tags = optional(map(string))
   }))
   default = {}
 
