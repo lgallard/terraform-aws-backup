@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.4](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.3...v0.30.4) (2025-07-16)
+
+
+### Bug Fixes
+
+* Resolve IAM for_each invalid argument error ([#168](https://github.com/lgallard/terraform-aws-backup/issues/168)) ([49a5434](https://github.com/lgallard/terraform-aws-backup/commit/49a543404a73e81ecb9a655116aa9e38c304c139))
+
 ## [0.30.3](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.2...v0.30.3) (2025-07-16)
 
 
