@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.3](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.2...v0.30.3) (2025-07-16)
+
+
+### Bug Fixes
+
+* Resolve conditions variable type error in backup selections ([#170](https://github.com/lgallard/terraform-aws-backup/issues/170)) ([d83a5cf](https://github.com/lgallard/terraform-aws-backup/commit/d83a5cf9ed34c52e972fb49d45c6308b5fb3c580))
+
 ## [0.30.2](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.1...v0.30.2) (2025-07-13)
 
 
