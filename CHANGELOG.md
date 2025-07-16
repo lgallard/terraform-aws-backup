@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.4...v0.30.5) (2025-07-16)
+
+
+### Bug Fixes
+
+* Correct terraform formatting in iam.tf ([0342cd5](https://github.com/lgallard/terraform-aws-backup/commit/0342cd5a9caa1cf6415be27bde70dd280d2a94a5))
+
 ## [0.30.4](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.3...v0.30.4) (2025-07-16)
 
 
