@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.6](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.5...v0.30.6) (2025-07-17)
+
+
+### Bug Fixes
+
+* Handle null values in dynamic for_each blocks in selection.tf ([#175](https://github.com/lgallard/terraform-aws-backup/issues/175)) ([54484af](https://github.com/lgallard/terraform-aws-backup/commit/54484afd3078c29ac4558512f1bf339f1441ef5a))
+
 ## [0.30.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.4...v0.30.5) (2025-07-16)
 
 
