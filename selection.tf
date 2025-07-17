@@ -12,28 +12,28 @@ resource "aws_backup_selection" "ab_selection" {
     for_each = length(try(var.selection_conditions, {})) > 0 ? { "conditions" : var.selection_conditions } : {}
     content {
       dynamic "string_equals" {
-        for_each = try(condition.value["string_equals"], {})
+        for_each = coalesce(try(condition.value["string_equals"], null), {})
         content {
           key   = string_equals.key
           value = string_equals.value
         }
       }
       dynamic "string_like" {
-        for_each = try(condition.value["string_like"], {})
+        for_each = coalesce(try(condition.value["string_like"], null), {})
         content {
           key   = string_like.key
           value = string_like.value
         }
       }
       dynamic "string_not_equals" {
-        for_each = try(condition.value["string_not_equals"], {})
+        for_each = coalesce(try(condition.value["string_not_equals"], null), {})
         content {
           key   = string_not_equals.key
           value = string_not_equals.value
         }
       }
       dynamic "string_not_like" {
-        for_each = try(condition.value["string_not_like"], {})
+        for_each = coalesce(try(condition.value["string_not_like"], null), {})
         content {
           key   = string_not_like.key
           value = string_not_like.value
@@ -104,28 +104,28 @@ resource "aws_backup_selection" "ab_selections" {
     for_each = length(coalesce(try(each.value["conditions"], null), {})) > 0 ? { "conditions" : coalesce(try(each.value["conditions"], null), {}) } : {}
     content {
       dynamic "string_equals" {
-        for_each = try(condition.value["string_equals"], {})
+        for_each = coalesce(try(condition.value["string_equals"], null), {})
         content {
           key   = string_equals.key
           value = string_equals.value
         }
       }
       dynamic "string_like" {
-        for_each = try(condition.value["string_like"], {})
+        for_each = coalesce(try(condition.value["string_like"], null), {})
         content {
           key   = string_like.key
           value = string_like.value
         }
       }
       dynamic "string_not_equals" {
-        for_each = try(condition.value["string_not_equals"], {})
+        for_each = coalesce(try(condition.value["string_not_equals"], null), {})
         content {
           key   = string_not_equals.key
           value = string_not_equals.value
         }
       }
       dynamic "string_not_like" {
-        for_each = try(condition.value["string_not_like"], {})
+        for_each = coalesce(try(condition.value["string_not_like"], null), {})
         content {
           key   = string_not_like.key
           value = string_not_like.value
@@ -165,28 +165,28 @@ resource "aws_backup_selection" "plan_selections" {
     for_each = length(coalesce(try(each.value.selection["conditions"], null), {})) > 0 ? { "conditions" : coalesce(try(each.value.selection["conditions"], null), {}) } : {}
     content {
       dynamic "string_equals" {
-        for_each = try(condition.value["string_equals"], {})
+        for_each = coalesce(try(condition.value["string_equals"], null), {})
         content {
           key   = string_equals.key
           value = string_equals.value
         }
       }
       dynamic "string_like" {
-        for_each = try(condition.value["string_like"], {})
+        for_each = coalesce(try(condition.value["string_like"], null), {})
         content {
           key   = string_like.key
           value = string_like.value
         }
       }
       dynamic "string_not_equals" {
-        for_each = try(condition.value["string_not_equals"], {})
+        for_each = coalesce(try(condition.value["string_not_equals"], null), {})
         content {
           key   = string_not_equals.key
           value = string_not_equals.value
         }
       }
       dynamic "string_not_like" {
-        for_each = try(condition.value["string_not_like"], {})
+        for_each = coalesce(try(condition.value["string_not_like"], null), {})
         content {
           key   = string_not_like.key
           value = string_not_like.value
