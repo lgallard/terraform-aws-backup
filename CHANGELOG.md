@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.6...v0.31.0) (2025-07-23)
+
+
+### Features
+
+* add claude code review workflow ([#179](https://github.com/lgallard/terraform-aws-backup/issues/179)) ([a3b25eb](https://github.com/lgallard/terraform-aws-backup/commit/a3b25eb204d119286f0ed2c112bbf3acc723f5ae))
+
 ## [0.30.6](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.5...v0.30.6) (2025-07-17)
 
 
