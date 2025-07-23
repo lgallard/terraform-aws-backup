@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.32.0](https://github.com/lgallard/terraform-aws-backup/compare/0.31.0...0.32.0) (2025-07-23)
+
+
+### Features
+
+* add release-please configuration ([#181](https://github.com/lgallard/terraform-aws-backup/issues/181)) ([d9492f8](https://github.com/lgallard/terraform-aws-backup/commit/d9492f8c1a34322f46ed61fb13896d8dc41fc5de))
+
 ## [0.31.0](https://github.com/lgallard/terraform-aws-backup/compare/0.30.6...0.31.0) (2025-07-23)
 
 
