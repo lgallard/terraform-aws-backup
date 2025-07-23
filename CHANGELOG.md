@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.33.0](https://github.com/lgallard/terraform-aws-backup/compare/0.32.0...0.33.0) (2025-07-23)
+
+
+### Features
+
+* add automatic v-prefix removal from release titles ([#183](https://github.com/lgallard/terraform-aws-backup/issues/183)) ([8e6e93e](https://github.com/lgallard/terraform-aws-backup/commit/8e6e93e755201b76e9382f21fb1437fe073367bc))
+
 ## [0.32.0](https://github.com/lgallard/terraform-aws-backup/compare/0.31.0...0.32.0) (2025-07-23)
 
 
