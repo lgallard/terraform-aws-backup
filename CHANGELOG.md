@@ -2,126 +2,126 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.31.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.6...v0.31.0) (2025-07-23)
+## [0.31.0](https://github.com/lgallard/terraform-aws-backup/compare/0.30.6...0.31.0) (2025-07-23)
 
 
 ### Features
 
 * add claude code review workflow ([#179](https://github.com/lgallard/terraform-aws-backup/issues/179)) ([a3b25eb](https://github.com/lgallard/terraform-aws-backup/commit/a3b25eb204d119286f0ed2c112bbf3acc723f5ae))
 
-## [0.30.6](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.5...v0.30.6) (2025-07-17)
+## [0.30.6](https://github.com/lgallard/terraform-aws-backup/compare/0.30.5...0.30.6) (2025-07-17)
 
 
 ### Bug Fixes
 
 * Handle null values in dynamic for_each blocks in selection.tf ([#175](https://github.com/lgallard/terraform-aws-backup/issues/175)) ([54484af](https://github.com/lgallard/terraform-aws-backup/commit/54484afd3078c29ac4558512f1bf339f1441ef5a))
 
-## [0.30.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.4...v0.30.5) (2025-07-16)
+## [0.30.5](https://github.com/lgallard/terraform-aws-backup/compare/0.30.4...0.30.5) (2025-07-16)
 
 
 ### Bug Fixes
 
 * Correct terraform formatting in iam.tf ([0342cd5](https://github.com/lgallard/terraform-aws-backup/commit/0342cd5a9caa1cf6415be27bde70dd280d2a94a5))
 
-## [0.30.4](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.3...v0.30.4) (2025-07-16)
+## [0.30.4](https://github.com/lgallard/terraform-aws-backup/compare/0.30.3...0.30.4) (2025-07-16)
 
 
 ### Bug Fixes
 
 * Resolve IAM for_each invalid argument error ([#168](https://github.com/lgallard/terraform-aws-backup/issues/168)) ([49a5434](https://github.com/lgallard/terraform-aws-backup/commit/49a543404a73e81ecb9a655116aa9e38c304c139))
 
-## [0.30.3](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.2...v0.30.3) (2025-07-16)
+## [0.30.3](https://github.com/lgallard/terraform-aws-backup/compare/0.30.2...0.30.3) (2025-07-16)
 
 
 ### Bug Fixes
 
 * Resolve conditions variable type error in backup selections ([#170](https://github.com/lgallard/terraform-aws-backup/issues/170)) ([d83a5cf](https://github.com/lgallard/terraform-aws-backup/commit/d83a5cf9ed34c52e972fb49d45c6308b5fb3c580))
 
-## [0.30.2](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.1...v0.30.2) (2025-07-13)
+## [0.30.2](https://github.com/lgallard/terraform-aws-backup/compare/0.30.1...0.30.2) (2025-07-13)
 
 
 ### Bug Fixes
 
 * Correct output references in cost_optimized_backup example ([#166](https://github.com/lgallard/terraform-aws-backup/issues/166)) ([28e24cb](https://github.com/lgallard/terraform-aws-backup/commit/28e24cb81fe6fa3f5e99a9ae19f0d566689400f8))
 
-## [0.30.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.30.0...v0.30.1) (2025-07-13)
+## [0.30.1](https://github.com/lgallard/terraform-aws-backup/compare/0.30.0...0.30.1) (2025-07-13)
 
 
 ### Bug Fixes
 
 * Add missing cold_storage_after validations for plans and rules variables ([#164](https://github.com/lgallard/terraform-aws-backup/issues/164)) ([7b99f8b](https://github.com/lgallard/terraform-aws-backup/commit/7b99f8b1842a842b424de910d0c18ab4ba60c694))
 
-## [0.30.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.29.0...v0.30.0) (2025-07-12)
+## [0.30.0](https://github.com/lgallard/terraform-aws-backup/compare/0.29.0...0.30.0) (2025-07-12)
 
 
 ### Features
 
 * Implement performance optimizations and comprehensive examples (Issues [#122](https://github.com/lgallard/terraform-aws-backup/issues/122) & [#123](https://github.com/lgallard/terraform-aws-backup/issues/123)) ([#158](https://github.com/lgallard/terraform-aws-backup/issues/158)) ([18a163f](https://github.com/lgallard/terraform-aws-backup/commit/18a163fde2162db1b53fabfb873bf24c492a9a08))
 
-## [0.29.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.28.0...v0.29.0) (2025-07-12)
+## [0.29.0](https://github.com/lgallard/terraform-aws-backup/compare/0.28.0...0.29.0) (2025-07-12)
 
 
 ### Features
 
 * Comprehensive Code Quality & Structure Improvements (Issues [#121](https://github.com/lgallard/terraform-aws-backup/issues/121) & [#125](https://github.com/lgallard/terraform-aws-backup/issues/125)) ([#155](https://github.com/lgallard/terraform-aws-backup/issues/155)) ([22cc323](https://github.com/lgallard/terraform-aws-backup/commit/22cc323a04c6c06a2149bea29944540a38ab8724))
 
-## [0.28.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.27.0...v0.28.0) (2025-07-11)
+## [0.28.0](https://github.com/lgallard/terraform-aws-backup/compare/0.27.0...0.28.0) (2025-07-11)
 
 
 ### Features
 
 * Complete comprehensive documentation and enhanced input validation ([#119](https://github.com/lgallard/terraform-aws-backup/issues/119) [#120](https://github.com/lgallard/terraform-aws-backup/issues/120)) ([#153](https://github.com/lgallard/terraform-aws-backup/issues/153)) ([8d7d735](https://github.com/lgallard/terraform-aws-backup/commit/8d7d7358809cf9ba9369276f159a6978c4abad7a))
 
-## [0.27.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.2...v0.27.0) (2025-07-11)
+## [0.27.0](https://github.com/lgallard/terraform-aws-backup/compare/0.26.2...0.27.0) (2025-07-11)
 
 
 ### Features
 
 * Comprehensive security enhancements and testing improvements ([#148](https://github.com/lgallard/terraform-aws-backup/issues/148)) ([3da8bd4](https://github.com/lgallard/terraform-aws-backup/commit/3da8bd4aedaf7c4d16bf4455c61394ae76597c33))
 
-## [0.26.2](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.1...v0.26.2) (2025-07-11)
+## [0.26.2](https://github.com/lgallard/terraform-aws-backup/compare/0.26.1...0.26.2) (2025-07-11)
 
 
 ### Bug Fixes
 
 * standardize AWS provider configurations across examples ([c23586f](https://github.com/lgallard/terraform-aws-backup/commit/c23586fe2ad4aaafc6e22b5d612edbf1c6c54da9))
 
-## [0.26.1](https://github.com/lgallard/terraform-aws-backup/compare/v0.26.0...v0.26.1) (2025-07-11)
+## [0.26.1](https://github.com/lgallard/terraform-aws-backup/compare/0.26.0...0.26.1) (2025-07-11)
 
 
 ### Bug Fixes
 
 * Update Go dependencies to address security vulnerabilities ([#145](https://github.com/lgallard/terraform-aws-backup/issues/145)) ([cae39f8](https://github.com/lgallard/terraform-aws-backup/commit/cae39f84682a26d8bef078814bbba36686bd8964))
 
-## [0.26.0](https://github.com/lgallard/terraform-aws-backup/compare/v0.25.0...v0.26.0) (2025-07-11)
+## [0.26.0](https://github.com/lgallard/terraform-aws-backup/compare/0.25.0...0.26.0) (2025-07-11)
 
 
 ### Features
 
 * Add retry logic for transient AWS API failures in tests ([#141](https://github.com/lgallard/terraform-aws-backup/issues/141)) ([4aff8eb](https://github.com/lgallard/terraform-aws-backup/commit/4aff8eb34ba46fdde96a70df03ce825b91537b95)), closes [#132](https://github.com/lgallard/terraform-aws-backup/issues/132)
 
-## [0.25.0](https://github.com/lgallard/terraform-aws-backup/compare/0.24.1...v0.25.0) (2025-07-11)
+## [0.25.0](https://github.com/lgallard/terraform-aws-backup/compare/0.24.1...0.25.0) (2025-07-11)
 
 
 ### Features
 
 * Implement comprehensive testing and CI/CD pipeline ([#131](https://github.com/lgallard/terraform-aws-backup/issues/131)) ([4047912](https://github.com/lgallard/terraform-aws-backup/commit/40479124432ea4506e1add512c3284b0a12492b4))
 
-## [0.24.1](https://github.com/lgallard/terraform-aws-backup/compare/0.24.0...v0.24.1) (2025-06-28)
+## [0.24.1](https://github.com/lgallard/terraform-aws-backup/compare/0.24.0...0.24.1) (2025-06-28)
 
 
 ### Bug Fixes
 
 * Windows VSS backup validation to support all selection methods and case-insensitive EC2 detection ([#129](https://github.com/lgallard/terraform-aws-backup/issues/129)) ([bb682c3](https://github.com/lgallard/terraform-aws-backup/commit/bb682c3583931009a0dab5fc94d089b4ece2e21a))
 
-## [0.24.0](https://github.com/lgallard/terraform-aws-backup/compare/0.23.8...v0.24.0) (2025-05-30)
+## [0.24.0](https://github.com/lgallard/terraform-aws-backup/compare/0.23.8...0.24.0) (2025-05-30)
 
 
 ### Features
 
 * Add support for multiple backup plans ([#115](https://github.com/lgallard/terraform-aws-backup/issues/115)) ([a97e915](https://github.com/lgallard/terraform-aws-backup/commit/a97e9159ea3e02df6088e2ed132f8e1521a4fb21))
 
-## [0.23.8](https://github.com/lgallard/terraform-aws-backup/compare/0.23.7...v0.23.8) (2025-03-20)
+## [0.23.8](https://github.com/lgallard/terraform-aws-backup/compare/0.23.7...0.23.8) (2025-03-20)
 
 
 ### Bug Fixes
@@ -129,7 +129,7 @@ All notable changes to this project will be documented in this file.
 * simplify recovery point tags assignment ([c64d98f](https://github.com/lgallard/terraform-aws-backup/commit/c64d98fcc8813814521acc0225a899ccd5852810))
 * simplify recovery point tags assignment in AWS Backup plan (thanks @Edward-Ireson) ([94f4581](https://github.com/lgallard/terraform-aws-backup/commit/94f458103d504f9f67c89ae35f920da9e1b16a87))
 
-## [0.23.7](https://github.com/lgallard/terraform-aws-backup/compare/0.23.6...v0.23.7) (2025-03-19)
+## [0.23.7](https://github.com/lgallard/terraform-aws-backup/compare/0.23.6...0.23.7) (2025-03-19)
 
 
 ### Bug Fixes
@@ -137,7 +137,7 @@ All notable changes to this project will be documented in this file.
 * Enhance Windows VSS backup validation and add example configuration ([f2afcfd](https://github.com/lgallard/terraform-aws-backup/commit/f2afcfd559da235b1c726ae0394f6f4398e9abdb))
 * Enhance Windows VSS backup validation and add example configuration ([5ff6228](https://github.com/lgallard/terraform-aws-backup/commit/5ff6228addc28b2b9227cd9dbdb6c6ad806ef969))
 
-## [0.23.6](https://github.com/lgallard/terraform-aws-backup/compare/0.23.5...v0.23.6) (2025-03-19)
+## [0.23.6](https://github.com/lgallard/terraform-aws-backup/compare/0.23.5...0.23.6) (2025-03-19)
 
 
 ### Bug Fixes
@@ -145,14 +145,14 @@ All notable changes to this project will be documented in this file.
 * Improve validation and configuration for AWS Backup vault ([81d9bd2](https://github.com/lgallard/terraform-aws-backup/commit/81d9bd20fe963531d0492e47651cc926cfd25daa))
 * Improve validation and configuration for AWS Backup vault ([28ac0fa](https://github.com/lgallard/terraform-aws-backup/commit/28ac0faf5c873a4648b8f98927a905acd128007a))
 
-## [0.23.5](https://github.com/lgallard/terraform-aws-backup/compare/v0.23.4...v0.23.5) (2025-03-18)
+## [0.23.5](https://github.com/lgallard/terraform-aws-backup/compare/0.23.4...0.23.5) (2025-03-18)
 
 
 ### Bug Fixes
 
 * retention days validations ([4a21a68](https://github.com/lgallard/terraform-aws-backup/commit/4a21a681f2eeae92f1318b59f0739c2ae61fdf36))
 
-## [0.23.4](https://github.com/lgallard/terraform-aws-backup/compare/0.23.3...v0.23.4) (2025-03-18)
+## [0.23.4](https://github.com/lgallard/terraform-aws-backup/compare/0.23.3...0.23.4) (2025-03-18)
 
 
 ### Bug Fixes

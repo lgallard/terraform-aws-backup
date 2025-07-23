@@ -7,11 +7,11 @@ on:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       release_created: ${{ steps.release_please.outputs.release_created }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445 # v4.2.0
         id: release_please
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
