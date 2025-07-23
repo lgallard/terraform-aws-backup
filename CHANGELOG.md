@@ -2,6 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
+
 ## [0.32.0](https://github.com/lgallard/terraform-aws-backup/compare/0.31.0...0.32.0) (2025-07-23)
 
 
