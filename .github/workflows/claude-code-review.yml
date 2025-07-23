@@ -1,78 +1,239 @@
 name: Claude Code Review
 
 on:
+  # Comment-based triggers (like Cursor's Bugbot)
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
   pull_request:
     types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+
+  # Manual triggers via GitHub CLI
+  workflow_dispatch:
+    inputs:
+      review_mode:
+        description: 'Review mode to use'
+        required: false
+        default: 'hunt'
+        type: choice
+        options:
+          - hunt
+          - analyze
+          - security
+          - performance
+          - review
+      focus:
+        description: 'Focus areas (comma-separated)'
+        required: false
+        default: 'bugs,security,performance'
+        type: string
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-  claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-    
+  # Handle workflow_dispatch by creating a comment to trigger Claude
+  dispatch-trigger:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Find open PR
+        id: find-pr
+        run: |
+          # Find the most recent open PR for this branch
+          PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --state open --head ${{ github.ref_name }} --json number --jq '.[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for branch ${{ github.ref_name }}"
+            exit 1
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create trigger comment
+        run: |
+          COMMENT_BODY="codebot ${{ github.event.inputs.review_mode || 'hunt' }}"
+          if [ "${{ github.event.inputs.verbose }}" = "true" ]; then
+            COMMENT_BODY="$COMMENT_BODY verbose"
+          fi
+
+          gh pr comment ${{ steps.find-pr.outputs.pr_number }} --repo ${{ github.repository }} --body "$COMMENT_BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  claude:
+    # Only run on comment triggers or specific PR conditions
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'codebot')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, 'codebot')) ||
+      (github.event_name == 'pull_request' && (
+        github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
+        contains(github.event.pull_request.title, '[auto-review]')
+      ))
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
       issues: read
       id-token: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
+      - name: Parse comment command
+        id: parse-command
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          # Default values
+          echo "mode=review" >> $GITHUB_OUTPUT
+          echo "focus=code-quality,security,performance" >> $GITHUB_OUTPUT
+          echo "verbose=false" >> $GITHUB_OUTPUT
+          echo "include_tests=true" >> $GITHUB_OUTPUT
+
+          # Parse comment content for commands
+          if [ "${{ github.event_name }}" == "issue_comment" ] || [ "${{ github.event_name }}" == "pull_request_review_comment" ]; then
+            COMMENT="$COMMENT_BODY"
+
+            # Extract command and parameters
+            if echo "$COMMENT" | grep -qi "codebot hunt"; then
+              echo "mode=hunt" >> $GITHUB_OUTPUT
+              echo "focus=bugs,security,performance" >> $GITHUB_OUTPUT
+              echo "verbose=false" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "codebot analyze"; then
+              echo "mode=analyze" >> $GITHUB_OUTPUT
+              echo "focus=architecture,patterns,complexity" >> $GITHUB_OUTPUT
+              echo "verbose=true" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "codebot security"; then
+              echo "mode=security" >> $GITHUB_OUTPUT
+              echo "focus=security,vulnerabilities,compliance" >> $GITHUB_OUTPUT
+              echo "verbose=true" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "codebot performance"; then
+              echo "mode=performance" >> $GITHUB_OUTPUT
+              echo "focus=performance,optimization,bottlenecks" >> $GITHUB_OUTPUT
+              echo "verbose=true" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "codebot review"; then
+              echo "mode=review" >> $GITHUB_OUTPUT
+              echo "focus=code-quality,security,performance" >> $GITHUB_OUTPUT
+              echo "verbose=true" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "codebot"; then
+              # Default to hunt mode for simple "codebot" command
+              echo "mode=hunt" >> $GITHUB_OUTPUT
+              echo "focus=bugs,security,performance" >> $GITHUB_OUTPUT
+              echo "verbose=false" >> $GITHUB_OUTPUT
+            fi
+
+            # Check for verbose flag
+            if echo "$COMMENT" | grep -qi "verbose\|detailed"; then
+              echo "verbose=true" >> $GITHUB_OUTPUT
+            fi
+
+            # Check for specific focus areas
+            if echo "$COMMENT" | grep -qi "security"; then
+              echo "focus=security,vulnerabilities,compliance" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "performance"; then
+              echo "focus=performance,optimization,bottlenecks" >> $GITHUB_OUTPUT
+            elif echo "$COMMENT" | grep -qi "tests"; then
+              echo "focus=test-coverage,test-quality" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+
+
       - name: Run Claude Code Review
-        id: claude-review
+        id: claude
         uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
-          
-          # Direct prompt for automated review (no @claude mention needed)
+          # Optional: Add specific tools for running tests or linting
+          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+
+          # Dynamic prompt based on review mode
           direct_prompt: |
-            Please review this pull request and provide feedback on:
+            ${{ steps.parse-command.outputs.mode == 'hunt' && format('
+            🕵️ BUG HUNT MODE - Find potential issues quickly:
+            - Focus on critical bugs, security vulnerabilities, and performance issues
+            - Prioritize high-impact problems over style suggestions
+            - Be concise and actionable
+            - Provide clear, actionable feedback
+            ') || '' }}
+
+            ${{ steps.parse-command.outputs.mode == 'analyze' && format('
+            📊 ANALYSIS MODE - Deep technical analysis:
+            - Analyze architecture, patterns, and design decisions
+            - Evaluate code complexity and maintainability
+            - Assess test coverage and quality
+            - Provide strategic recommendations
+            - Consider long-term implications and scalability
+            ') || '' }}
+
+            ${{ steps.parse-command.outputs.mode == 'security' && format('
+            🔒 SECURITY MODE - Security-focused review:
+            - Identify security vulnerabilities and compliance issues
+            - Check for proper authentication and authorization
+            - Validate input sanitization and output encoding
+            - Review encryption and key management
+            - Assess data protection and privacy concerns
+            ') || '' }}
+
+            ${{ steps.parse-command.outputs.mode == 'performance' && format('
+            ⚡ PERFORMANCE MODE - Performance optimization review:
+            - Identify performance bottlenecks and optimization opportunities
+            - Analyze resource usage and efficiency
+            - Check for memory leaks and scalability issues
+            - Review caching strategies and database queries
+            - Consider load testing and monitoring needs
+            ') || '' }}
+
+            ${{ steps.parse-command.outputs.mode == 'review' && format('
+            📝 STANDARD REVIEW MODE - Comprehensive code review:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
-            - Test coverage
-            
-            Be constructive and helpful in your feedback.
+            - Test coverage and quality
 
-          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
-          # use_sticky_comment: true
-          
-          # Optional: Customize review based on file types
-          # direct_prompt: |
-          #   Review this PR focusing on:
-          #   - For TypeScript files: Type safety and proper interface usage
-          #   - For API endpoints: Security, input validation, and error handling
-          #   - For React components: Performance, accessibility, and best practices
-          #   - For tests: Coverage, edge cases, and test quality
-          
-          # Optional: Different prompts for different authors
-          # direct_prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
-          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
-          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
-          # Optional: Add specific tools for running tests or linting
-          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
-          
-          # Optional: Skip review for certain conditions
-          # if: |
-          #   !contains(github.event.pull_request.title, '[skip-review]') &&
-          #   !contains(github.event.pull_request.title, '[WIP]')
+            Focus areas: {0}
+            Verbose output: {1}
 
+            Be constructive and helpful.
+            ', steps.parse-command.outputs.focus, steps.parse-command.outputs.verbose) || '' }}
+
+          # Use sticky comments for better UX
+          use_sticky_comment: true
+
+      - name: Workflow Summary
+        if: always()
+        run: |
+          echo "## 🤖 Claude Code Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Review Mode:** \`${{ steps.parse-command.outputs.mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Focus Areas:** \`${{ steps.parse-command.outputs.focus }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Verbose Output:** \`${{ steps.parse-command.outputs.verbose }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Available Commands" >> $GITHUB_STEP_SUMMARY
+          echo "Comment any of these in PRs to trigger specific review types:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot hunt\` - Quick bug detection (like Bugbot)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot analyze\` - Deep technical analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot security\` - Security-focused review" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot performance\` - Performance optimization review" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot review\` - Comprehensive review" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot\` - Defaults to hunt mode" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Manual Triggers" >> $GITHUB_STEP_SUMMARY
+          echo "Run via GitHub CLI:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run claude-code-review.yml -f review_mode=hunt" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run claude-code-review.yml -f review_mode=security -f verbose=true" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
