@@ -10,6 +10,12 @@
       "enabled": false
     },
     {
+      "datasources": ["terraform-provider"],
+      "matchFileNames": ["examples/**"],
+      "enabled": true,
+      "schedule": ["before 9am on monday"]
+    },
+    {
       "datasources": ["go"],
       "enabled": true,
       "schedule": ["before 9am on monday"]
