@@ -1,0 +1,13 @@
+{
+  "extends": ["config:base"],
+  "terraform": {
+    "ignoreDeps": ["hashicorp/terraform"]
+  },
+  "packageRules": [
+    {
+      "datasources": ["terraform-provider"],
+      "updateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}
