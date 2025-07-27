@@ -8,6 +8,16 @@
       "datasources": ["terraform-provider"],
       "updateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "datasources": ["go"],
+      "enabled": true,
+      "schedule": ["before 9am on monday"]
+    },
+    {
+      "datasources": ["github-actions"],
+      "enabled": true,
+      "schedule": ["before 9am on monday"]
     }
   ]
 }
