@@ -7,9 +7,23 @@
     {
       "datasources": ["terraform-provider"],
       "updateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "datasources": ["terraform-provider"],
+      "matchFileNames": ["examples/**"],
       "enabled": true,
-      "dependencyDashboardApproval": true,
-      "prCreation": "approval"
+      "schedule": ["before 9am on monday"]
+    },
+    {
+      "datasources": ["go"],
+      "enabled": true,
+      "schedule": ["before 9am on monday"]
+    },
+    {
+      "datasources": ["github-actions"],
+      "enabled": true,
+      "schedule": ["before 9am on monday"]
     }
   ]
 }
