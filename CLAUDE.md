@@ -653,6 +653,9 @@ Handle different input formats gracefully:
 
 ```hcl
 # Support both legacy and new selection formats
+# PERFORMANCE NOTE: Nested flatten() operations can be expensive for large datasets.
+# Consider splitting complex selections into separate resources for better performance
+# when dealing with hundreds of backup selections or plans.
 selection_resources = flatten([
   var.selection_resources,
   [for selection in try(tolist(var.selections), []) : try(selection.resources, [])],
@@ -661,6 +664,11 @@ selection_resources = flatten([
   [for plan in var.plans : flatten([for selection in try(plan.selections, []) : try(selection.resources, [])])]
 ])
 ```
+
+**Performance Considerations:**
+- For large deployments (>100 backup selections), consider using dedicated `aws_backup_selection` resources instead
+- Nested `flatten()` and `for` expressions can increase plan/apply time with large variable sets
+- Monitor Terraform performance and consider breaking complex selections into multiple resources if needed
 
 ### Using for_each for Complex Resources
 ```hcl
@@ -744,10 +752,11 @@ module "backup" {
     }
   }
 
-  # Resource selection by tags
+  # Resource selection by tags - RECOMMENDED approach for security
+  # This uses wildcard (*) with tag conditions to target specific resources
   backup_selections = [{
     name      = "production-resources"
-    resources = ["*"]
+    resources = ["*"]  # Wildcard with tag-based filtering (secure approach)
     conditions = [{
       string_equals = {
         key   = "aws:tag/Environment"
@@ -762,6 +771,27 @@ module "backup" {
   }
 }
 ```
+
+### Resource Selection Methods
+
+**There are three main approaches for selecting backup resources:**
+
+1. **Tag-Based Selection (RECOMMENDED)**: Use `resources = ["*"]` with tag conditions
+   - **Pros**: Secure, flexible, easy to manage at scale
+   - **Cons**: Requires consistent tagging strategy
+   - **Use When**: You have a good tagging strategy and want secure, scalable selection
+
+2. **Specific ARN Selection**: Use exact ARN patterns like `["arn:aws:rds:*:*:db:production-*"]`
+   - **Pros**: Precise control, explicit targeting
+   - **Cons**: Harder to maintain, can become overly broad with wildcards
+   - **Use When**: You need to target specific, known resources
+
+3. **Mixed Selection**: Combine specific ARNs with tag conditions
+   - **Pros**: Flexible for complex scenarios
+   - **Cons**: Can become complex to maintain
+   - **Use When**: You have both tagged and specifically named resources
+
+**Security Best Practice**: Always prefer tag-based selection with wildcards over wildcard ARN patterns for better security and maintainability.
 
 ### Enterprise Backup with Audit Framework
 ```hcl
@@ -952,10 +982,11 @@ module "windows_backup" {
     }
   }
 
-  # Target Windows instances specifically
+  # Target Windows instances specifically using tag-based selection for security
   backup_selections = [{
     name = "windows-instances"
-    resources = ["arn:aws:ec2:*:*:instance/*"]
+    # Use wildcard with tag conditions for secure resource targeting
+    resources = ["*"]
     conditions = [
       {
         string_equals = {
