@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.34.0](https://github.com/lgallard/terraform-aws-backup/compare/0.33.0...0.34.0) (2025-07-28)
+
+
+### Features
+
+* migrate from Dependabot to Renovate for better Terraform support ([#185](https://github.com/lgallard/terraform-aws-backup/issues/185)) ([e9ed95b](https://github.com/lgallard/terraform-aws-backup/commit/e9ed95b41c00e9d6040f1ada441e3d96f0a649f9))
+
 ## [0.33.0](https://github.com/lgallard/terraform-aws-backup/compare/0.32.0...0.33.0) (2025-07-23)
 
 
