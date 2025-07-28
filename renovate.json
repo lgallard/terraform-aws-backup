@@ -7,7 +7,9 @@
     {
       "datasources": ["terraform-provider"],
       "updateTypes": ["major"],
-      "enabled": false
+      "enabled": true,
+      "dependencyDashboardApproval": true,
+      "prCreation": "approval"
     },
     {
       "datasources": ["terraform-provider"],
