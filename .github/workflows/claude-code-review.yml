@@ -294,7 +294,7 @@ jobs:
           fi
 
           # Sanitize branch name for security (strict - no path traversal)
-          if ! [[ "$BASE_REF" =~ ^[a-zA-Z0-9-]+$ ]]; then
+          if ! [[ "$BASE_REF" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
             echo "Error: Invalid base ref format: $BASE_REF"
             exit 1
           fi
