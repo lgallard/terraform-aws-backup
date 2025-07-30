@@ -52,8 +52,8 @@ jobs:
 
           BRANCH_NAME="${{ github.ref_name }}"
 
-          # Validate branch name for security (strict - no path traversal)
-          if ! [[ "$BRANCH_NAME" =~ ^[a-zA-Z0-9-]+$ ]]; then
+          # Validate branch name for security (allow underscores, dots, and forward slashes)
+          if ! [[ "$BRANCH_NAME" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
             echo "Error: Invalid branch name format: $BRANCH_NAME"
             exit 1
           fi
@@ -309,8 +309,11 @@ jobs:
         timeout-minutes: 5
         run: |
           set -euo pipefail  # Enhanced error handling
-          CURRENT_HEAD=$(git rev-parse HEAD)
+
           BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
+
+          # Capture HEAD at start of step for race condition protection
+          CURRENT_HEAD=$(git rev-parse HEAD)
 
           # Validate base ref
           if [ -z "$BASE_REF" ]; then
@@ -345,14 +348,14 @@ jobs:
             exit 1
           fi
 
+          # Get list of changed files with error handling
+          echo "Getting changed files between origin/$BASE_REF and $CURRENT_HEAD"
+
           # Verify HEAD hasn't changed (race condition protection)
           NEW_HEAD=$(git rev-parse HEAD)
           if [ "$CURRENT_HEAD" != "$NEW_HEAD" ]; then
             echo "Warning: HEAD changed during execution ($CURRENT_HEAD -> $NEW_HEAD)"
           fi
-
-          # Get list of changed files with error handling
-          echo "Getting changed files between origin/$BASE_REF and $CURRENT_HEAD"
 
           if ! CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF...$CURRENT_HEAD" 2>/dev/null); then
             echo "Error: Failed to get diff between origin/$BASE_REF and $CURRENT_HEAD"
