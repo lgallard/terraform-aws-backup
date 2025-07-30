@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.36.0](https://github.com/lgallard/terraform-aws-backup/compare/0.35.0...0.36.0) (2025-07-30)
+
+
+### Features
+
+* replicate security-hardened Claude Code Review workflow with PR focus ([#196](https://github.com/lgallard/terraform-aws-backup/issues/196)) ([82c5878](https://github.com/lgallard/terraform-aws-backup/commit/82c587889995c16a13ff9dfc911dec4578ab771e))
+
 ## [0.35.0](https://github.com/lgallard/terraform-aws-backup/compare/0.34.0...0.35.0) (2025-07-30)
 
 
