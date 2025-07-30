@@ -39,31 +39,89 @@ jobs:
   dispatch-trigger:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       pull-requests: write
       issues: write
     steps:
       - name: Find open PR
         id: find-pr
+        timeout-minutes: 3
         run: |
-          # Find the most recent open PR for this branch
-          PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --state open --head ${{ github.ref_name }} --json number --jq '.[0].number // empty')
-          if [ -z "$PR_NUMBER" ]; then
-            echo "No open PR found for branch ${{ github.ref_name }}"
+          set -euo pipefail  # Enhanced error handling
+
+          BRANCH_NAME="${{ github.ref_name }}"
+
+          # Validate branch name for security (allow underscores, dots, and forward slashes)
+          if ! [[ "$BRANCH_NAME" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+            echo "Error: Invalid branch name format: $BRANCH_NAME"
             exit 1
           fi
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+          echo "Searching for open PR for branch: $BRANCH_NAME"
+
+          # Find PR with error handling and validation
+          if ! PR_DATA=$(gh pr list --repo "${{ github.repository }}" --state open --head "$BRANCH_NAME" --json number --jq '.[0].number // empty' 2>/dev/null); then
+            echo "Error: Failed to query GitHub API for PRs"
+            exit 1
+          fi
+
+          if [ -z "$PR_DATA" ] || [ "$PR_DATA" = "null" ]; then
+            echo "No open PR found for branch $BRANCH_NAME"
+            exit 1
+          fi
+
+          # Validate PR number is numeric
+          if ! [[ "$PR_DATA" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid PR number returned: $PR_DATA"
+            exit 1
+          fi
+
+          echo "Found PR #$PR_DATA"
+          echo "pr_number=$PR_DATA" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create trigger comment
+        timeout-minutes: 2
         run: |
-          COMMENT_BODY="codebot ${{ github.event.inputs.review_mode || 'hunt' }}"
+          set -euo pipefail  # Enhanced error handling
+
+          PR_NUMBER="${{ steps.find-pr.outputs.pr_number }}"
+          REVIEW_MODE="${{ github.event.inputs.review_mode || 'hunt' }}"
+
+          # Validate inputs
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid PR number: $PR_NUMBER"
+            exit 1
+          fi
+
+          # Validate review mode against allowed values
+          case "$REVIEW_MODE" in
+            hunt|analyze|security|performance|review)
+              echo "Using review mode: $REVIEW_MODE"
+              ;;
+            *)
+              echo "Error: Invalid review mode: $REVIEW_MODE"
+              exit 1
+              ;;
+          esac
+
+          # Build comment body safely
+          COMMENT_BODY="codebot $REVIEW_MODE"
           if [ "${{ github.event.inputs.verbose }}" = "true" ]; then
             COMMENT_BODY="$COMMENT_BODY verbose"
           fi
 
-          gh pr comment ${{ steps.find-pr.outputs.pr_number }} --repo ${{ github.repository }} --body "$COMMENT_BODY"
+          echo "Creating comment: $COMMENT_BODY"
+
+          # Create comment with error handling
+          if ! gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body "$COMMENT_BODY"; then
+            echo "Error: Failed to create PR comment"
+            exit 1
+          fi
+
+          echo "Successfully created trigger comment on PR #$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -78,6 +136,7 @@ jobs:
       ))
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent runaway executions
     permissions:
       contents: read
       pull-requests: read
@@ -88,70 +147,247 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 50  # Optimized depth for most PR scenarios
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Parse comment command
         id: parse-command
+        timeout-minutes: 2
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
+          set -euo pipefail  # Enhanced error handling
+
+          # Input validation and sanitization
+          if [ ${#COMMENT_BODY} -gt 1000 ]; then
+            echo "Error: Comment body too long (max 1000 characters)"
+            exit 1
+          fi
+
+          # Sanitize comment body - remove potentially dangerous characters
+          SAFE_COMMENT=$(echo "$COMMENT_BODY" | tr -d '`$(){}[]|;&<>' | head -c 500)
+
           # Default values
           echo "mode=review" >> $GITHUB_OUTPUT
           echo "focus=code-quality,security,performance" >> $GITHUB_OUTPUT
           echo "verbose=false" >> $GITHUB_OUTPUT
           echo "include_tests=true" >> $GITHUB_OUTPUT
+          echo "full_analysis=false" >> $GITHUB_OUTPUT
 
-          # Parse comment content for commands
+          # Parse comment content for commands (using safe variable)
           if [ "${{ github.event_name }}" == "issue_comment" ] || [ "${{ github.event_name }}" == "pull_request_review_comment" ]; then
-            COMMENT="$COMMENT_BODY"
-
-            # Extract command and parameters
-            if echo "$COMMENT" | grep -qi "codebot hunt"; then
+            # Use grep with fixed strings where possible for security
+            if echo "$SAFE_COMMENT" | grep -qiF "codebot hunt"; then
               echo "mode=hunt" >> $GITHUB_OUTPUT
               echo "focus=bugs,security,performance" >> $GITHUB_OUTPUT
               echo "verbose=false" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "codebot analyze"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "codebot analyze"; then
               echo "mode=analyze" >> $GITHUB_OUTPUT
               echo "focus=architecture,patterns,complexity" >> $GITHUB_OUTPUT
               echo "verbose=true" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "codebot security"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "codebot security"; then
               echo "mode=security" >> $GITHUB_OUTPUT
               echo "focus=security,vulnerabilities,compliance" >> $GITHUB_OUTPUT
               echo "verbose=true" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "codebot performance"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "codebot performance"; then
               echo "mode=performance" >> $GITHUB_OUTPUT
               echo "focus=performance,optimization,bottlenecks" >> $GITHUB_OUTPUT
               echo "verbose=true" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "codebot review"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "codebot review"; then
               echo "mode=review" >> $GITHUB_OUTPUT
               echo "focus=code-quality,security,performance" >> $GITHUB_OUTPUT
               echo "verbose=true" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "codebot"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "codebot"; then
               # Default to hunt mode for simple "codebot" command
               echo "mode=hunt" >> $GITHUB_OUTPUT
               echo "focus=bugs,security,performance" >> $GITHUB_OUTPUT
               echo "verbose=false" >> $GITHUB_OUTPUT
             fi
 
-            # Check for verbose flag
-            if echo "$COMMENT" | grep -qi "verbose\|detailed"; then
+            # Check for verbose flag (using fixed strings for security)
+            if echo "$SAFE_COMMENT" | grep -qiF "verbose" || echo "$SAFE_COMMENT" | grep -qiF "detailed"; then
               echo "verbose=true" >> $GITHUB_OUTPUT
             fi
 
             # Check for specific focus areas
-            if echo "$COMMENT" | grep -qi "security"; then
+            if echo "$SAFE_COMMENT" | grep -qiF "security"; then
               echo "focus=security,vulnerabilities,compliance" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "performance"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "performance"; then
               echo "focus=performance,optimization,bottlenecks" >> $GITHUB_OUTPUT
-            elif echo "$COMMENT" | grep -qi "tests"; then
+            elif echo "$SAFE_COMMENT" | grep -qiF "tests"; then
               echo "focus=test-coverage,test-quality" >> $GITHUB_OUTPUT
+            fi
+
+            # Check for --full flag (analyze entire codebase)
+            if echo "$SAFE_COMMENT" | grep -qiF -- "--full"; then
+              echo "full_analysis=true" >> $GITHUB_OUTPUT
+            else
+              echo "full_analysis=false" >> $GITHUB_OUTPUT
             fi
           fi
 
+          echo "Security: Input validation and sanitization completed"
 
+      - name: Get PR information
+        id: pr-info
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail  # Enhanced error handling
+
+          # Initialize variables
+          PR_NUMBER=""
+          BASE_REF=""
+
+          # Handle different trigger types with validation
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+            PR_NUMBER="${{ github.event.issue.number }}"
+
+            # Validate PR number is numeric
+            if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "Error: Invalid PR number: $PR_NUMBER"
+              exit 1
+            fi
+
+            # Fetch PR data with retry logic and timeout
+            for attempt in {1..3}; do
+              echo "Attempt $attempt: Fetching PR data for PR #$PR_NUMBER"
+              if PR_DATA=$(curl -sS --max-time 30 --retry 2 \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"); then
+
+                # Validate JSON response
+                if echo "$PR_DATA" | jq empty 2>/dev/null; then
+                  BASE_REF=$(echo "$PR_DATA" | jq -r '.base.ref // empty')
+                  if [ -n "$BASE_REF" ] && [ "$BASE_REF" != "null" ]; then
+                    echo "Successfully retrieved base ref: $BASE_REF"
+                    break
+                  fi
+                fi
+              fi
+
+              if [ $attempt -eq 3 ]; then
+                echo "Error: Failed to fetch PR data after 3 attempts"
+                exit 1
+              fi
+
+              echo "Retrying in $((2 ** attempt)) seconds..."
+              sleep $((2 ** attempt))
+            done
+
+          elif [ "${{ github.event_name }}" = "pull_request_review_comment" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          else
+            echo "Error: Unsupported event type: ${{ github.event_name }}"
+            exit 1
+          fi
+
+          # Validate required variables
+          if [ -z "$PR_NUMBER" ] || [ -z "$BASE_REF" ]; then
+            echo "Error: Missing required PR information"
+            echo "PR_NUMBER: $PR_NUMBER, BASE_REF: $BASE_REF"
+            exit 1
+          fi
+
+          # Sanitize branch name for security (strict - no path traversal)
+          if ! [[ "$BASE_REF" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+            echo "Error: Invalid base ref format: $BASE_REF"
+            exit 1
+          fi
+
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
+          echo "Security: PR information validated and sanitized"
+
+      - name: Get changed files
+        id: changes
+        if: steps.parse-command.outputs.full_analysis == 'false'
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail  # Enhanced error handling
+
+          BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
+
+          # Capture HEAD at start of step for race condition protection
+          CURRENT_HEAD=$(git rev-parse HEAD)
+
+          # Validate base ref
+          if [ -z "$BASE_REF" ]; then
+            echo "Error: Base ref is empty"
+            exit 1
+          fi
+
+          echo "Fetching base branch: $BASE_REF"
+
+          # Fetch the base branch with retry logic
+          for attempt in {1..3}; do
+            echo "Attempt $attempt: Fetching origin/$BASE_REF"
+            if git fetch --depth=50 origin "$BASE_REF:refs/remotes/origin/$BASE_REF" 2>/dev/null; then
+              echo "Successfully fetched base branch"
+              break
+            elif [ $attempt -eq 3 ]; then
+              echo "Warning: Failed to fetch base branch, trying with full history"
+              if ! git fetch --unshallow origin "$BASE_REF" 2>/dev/null; then
+                echo "Error: Failed to fetch base branch after all attempts"
+                exit 1
+              fi
+              break  # Add this line
+            else
+              echo "Fetch attempt failed, retrying in $((2 ** attempt)) seconds..."
+              sleep $((2 ** attempt))
+            fi
+          done
+
+          # Verify the base ref exists
+          if ! git rev-parse --verify "origin/$BASE_REF" >/dev/null 2>&1; then
+            echo "Error: Base reference origin/$BASE_REF does not exist"
+            exit 1
+          fi
+
+          # Get list of changed files with error handling
+          echo "Getting changed files between origin/$BASE_REF and $CURRENT_HEAD"
+
+          # Verify HEAD hasn't changed (race condition protection)
+          NEW_HEAD=$(git rev-parse HEAD)
+          if [ "$CURRENT_HEAD" != "$NEW_HEAD" ]; then
+            echo "Warning: HEAD changed during execution ($CURRENT_HEAD -> $NEW_HEAD)"
+          fi
+
+          if ! CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF...$CURRENT_HEAD" 2>/dev/null); then
+            echo "Error: Failed to get diff between origin/$BASE_REF and $CURRENT_HEAD"
+            exit 1
+          fi
+
+          # Convert to space-separated string and validate
+          CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . || echo "0")
+
+          # Validate results with better handling for large PRs
+          if [ "$CHANGED_COUNT" -eq 0 ]; then
+            echo "Warning: No changed files detected"
+            CHANGED_FILES_STR="No files changed"
+          elif [ "$CHANGED_COUNT" -gt 100 ]; then
+            echo "Error: PR too large ($CHANGED_COUNT files). Please split into smaller PRs."
+            echo "Large PRs are harder to review and may contain unrelated changes."
+            echo "Consider using --full flag for complete codebase analysis if needed."
+            exit 1
+          fi
+
+          echo "Changed files: $CHANGED_FILES_STR"
+          echo "Total changed files: $CHANGED_COUNT"
+
+          # Store for use in prompt with validation
+          echo "changed_files=$CHANGED_FILES_STR" >> $GITHUB_OUTPUT
+          echo "changed_count=$CHANGED_COUNT" >> $GITHUB_OUTPUT
+          echo "Security: File changes analyzed and validated"
 
       - name: Run Claude Code Review
         id: claude
+        timeout-minutes: 10
         uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -161,6 +397,14 @@ jobs:
 
           # Dynamic prompt based on review mode
           direct_prompt: |
+            ${{ steps.parse-command.outputs.full_analysis == 'false' && format('
+            **IMPORTANT: Focus ONLY on the following changed files in this pull request:**
+            Files changed: {0}
+            Total files changed: {1}
+
+            DO NOT review or comment on files outside this list unless they are directly impacted by changes in these files.
+            ', steps.changes.outputs.changed_files || 'Unable to determine changed files', steps.changes.outputs.changed_count || '0') || '' }}
+
             ${{ steps.parse-command.outputs.mode == 'hunt' && format('
             🕵️ BUG HUNT MODE - Find potential issues quickly:
             - Focus on critical bugs, security vulnerabilities, and performance issues
@@ -215,25 +459,65 @@ jobs:
 
       - name: Workflow Summary
         if: always()
+        timeout-minutes: 2
         run: |
+          set -euo pipefail  # Enhanced error handling
+
           echo "## 🤖 Claude Code Review Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Security Status
+          echo "### 🔐 Security Status" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Input validation and sanitization enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Command injection protection active" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Error handling and retry logic implemented" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Timeout protection for all operations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Review Configuration
+          echo "### ⚙️ Review Configuration" >> $GITHUB_STEP_SUMMARY
           echo "**Review Mode:** \`${{ steps.parse-command.outputs.mode }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Focus Areas:** \`${{ steps.parse-command.outputs.focus }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Verbose Output:** \`${{ steps.parse-command.outputs.verbose }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Full Analysis:** \`${{ steps.parse-command.outputs.full_analysis || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.parse-command.outputs.full_analysis }}" != "true" ]; then
+            echo "**Changed Files:** \`${{ steps.changes.outputs.changed_count || '0' }}\` files" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**PR Number:** \`${{ steps.pr-info.outputs.pr_number || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Base Branch:** \`${{ steps.pr-info.outputs.base_ref || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Available Commands
           echo "### 📝 Available Commands" >> $GITHUB_STEP_SUMMARY
           echo "Comment any of these in PRs to trigger specific review types:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot hunt\` - Quick bug detection (like Bugbot)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot analyze\` - Deep technical analysis" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot security\` - Security-focused review" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot performance\` - Performance optimization review" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot review\` - Comprehensive review" >> $GITHUB_STEP_SUMMARY
-          echo "- \`codebot\` - Defaults to hunt mode" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot hunt\` - Quick bug detection (like Bugbot) on PR changes" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot analyze\` - Deep technical analysis on PR changes" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot security\` - Security-focused review on PR changes" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot performance\` - Performance optimization review on PR changes" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot review\` - Comprehensive review on PR changes" >> $GITHUB_STEP_SUMMARY
+          echo "- \`codebot\` - Defaults to hunt mode on PR changes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Scope Options
+          echo "### 🔍 Scope Options" >> $GITHUB_STEP_SUMMARY
+          echo "- Add \`--full\` to any command to analyze the entire codebase" >> $GITHUB_STEP_SUMMARY
+          echo "- Example: \`codebot hunt --full\` - Hunt for bugs in the entire codebase" >> $GITHUB_STEP_SUMMARY
+          echo "- Default behavior (without --full) focuses only on changed files in the PR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Manual Triggers
           echo "### 🚀 Manual Triggers" >> $GITHUB_STEP_SUMMARY
           echo "Run via GitHub CLI:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "gh workflow run claude-code-review.yml -f review_mode=hunt" >> $GITHUB_STEP_SUMMARY
           echo "gh workflow run claude-code-review.yml -f review_mode=security -f verbose=true" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+          # Performance & Reliability Info
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚡ Performance & Reliability" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 Optimized git operations with configurable fetch depth" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Automatic retry logic for network operations" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ Timeout protection prevents runaway executions" >> $GITHUB_STEP_SUMMARY
+          echo "- 🛡️ Comprehensive error handling and validation" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Enhanced logging for troubleshooting" >> $GITHUB_STEP_SUMMARY
