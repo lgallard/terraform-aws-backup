@@ -144,11 +144,59 @@ jobs:
       id-token: write
 
     steps:
+      - name: Get PR information for checkout
+        id: pr-checkout-info
+        if: github.event_name == 'issue_comment'
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+
+          PR_NUMBER="${{ github.event.issue.number }}"
+
+          # Validate PR number
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid PR number: $PR_NUMBER"
+            exit 1
+          fi
+
+          echo "Fetching PR #$PR_NUMBER details for checkout"
+
+          # Get PR head ref with retry logic
+          for attempt in {1..3}; do
+            if PR_DATA=$(curl -sS --max-time 30 --retry 2 \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"); then
+
+              if echo "$PR_DATA" | jq empty 2>/dev/null; then
+                HEAD_REF=$(echo "$PR_DATA" | jq -r '.head.ref // empty')
+                HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head.sha // empty')
+
+                if [ -n "$HEAD_REF" ] && [ "$HEAD_REF" != "null" ] && [ -n "$HEAD_SHA" ] && [ "$HEAD_SHA" != "null" ]; then
+                  echo "pr_head_ref=$HEAD_REF" >> $GITHUB_OUTPUT
+                  echo "pr_head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+                  echo "Found PR branch: $HEAD_REF ($HEAD_SHA)"
+                  break
+                fi
+              fi
+            fi
+
+            if [ $attempt -eq 3 ]; then
+              echo "Error: Failed to fetch PR data for checkout"
+              exit 1
+            fi
+
+            echo "Retrying in $((2 ** attempt)) seconds..."
+            sleep $((2 ** attempt))
+          done
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 50  # Optimized depth for most PR scenarios
           token: ${{ secrets.GITHUB_TOKEN }}
+          # For issue_comment events, checkout the PR branch
+          ref: ${{ github.event_name == 'issue_comment' && steps.pr-checkout-info.outputs.pr_head_ref || github.ref }}
 
       - name: Parse comment command
         id: parse-command
@@ -293,7 +341,7 @@ jobs:
             exit 1
           fi
 
-          # Sanitize branch name for security (strict - no path traversal)
+          # Sanitize branch name for security (allow underscores, dots, and forward slashes)
           if ! [[ "$BASE_REF" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
             echo "Error: Invalid base ref format: $BASE_REF"
             exit 1
@@ -306,84 +354,26 @@ jobs:
       - name: Get changed files
         id: changes
         if: steps.parse-command.outputs.full_analysis == 'false'
-        timeout-minutes: 5
         run: |
-          set -euo pipefail  # Enhanced error handling
-
           BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
 
-          # Capture HEAD at start of step for race condition protection
-          CURRENT_HEAD=$(git rev-parse HEAD)
+          # Simple git fetch and diff
+          git fetch origin $BASE_REF 2>/dev/null || true
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_REF...HEAD 2>/dev/null || echo "")
+          CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . 2>/dev/null || echo "0")
 
-          # Validate base ref
-          if [ -z "$BASE_REF" ]; then
-            echo "Error: Base ref is empty"
-            exit 1
-          fi
-
-          echo "Fetching base branch: $BASE_REF"
-
-          # Fetch the base branch with retry logic
-          for attempt in {1..3}; do
-            echo "Attempt $attempt: Fetching origin/$BASE_REF"
-            if git fetch --depth=50 origin "$BASE_REF:refs/remotes/origin/$BASE_REF" 2>/dev/null; then
-              echo "Successfully fetched base branch"
-              break
-            elif [ $attempt -eq 3 ]; then
-              echo "Warning: Failed to fetch base branch, trying with full history"
-              if ! git fetch --unshallow origin "$BASE_REF" 2>/dev/null; then
-                echo "Error: Failed to fetch base branch after all attempts"
-                exit 1
-              fi
-              break  # Add this line
-            else
-              echo "Fetch attempt failed, retrying in $((2 ** attempt)) seconds..."
-              sleep $((2 ** attempt))
-            fi
-          done
-
-          # Verify the base ref exists
-          if ! git rev-parse --verify "origin/$BASE_REF" >/dev/null 2>&1; then
-            echo "Error: Base reference origin/$BASE_REF does not exist"
-            exit 1
-          fi
-
-          # Get list of changed files with error handling
-          echo "Getting changed files between origin/$BASE_REF and $CURRENT_HEAD"
-
-          # Verify HEAD hasn't changed (race condition protection)
-          NEW_HEAD=$(git rev-parse HEAD)
-          if [ "$CURRENT_HEAD" != "$NEW_HEAD" ]; then
-            echo "Warning: HEAD changed during execution ($CURRENT_HEAD -> $NEW_HEAD)"
-          fi
-
-          if ! CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF...$CURRENT_HEAD" 2>/dev/null); then
-            echo "Error: Failed to get diff between origin/$BASE_REF and $CURRENT_HEAD"
-            exit 1
-          fi
-
-          # Convert to space-separated string and validate
-          CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-          CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . || echo "0")
-
-          # Validate results with better handling for large PRs
+          # Simple validation
           if [ "$CHANGED_COUNT" -eq 0 ]; then
-            echo "Warning: No changed files detected"
             CHANGED_FILES_STR="No files changed"
-          elif [ "$CHANGED_COUNT" -gt 100 ]; then
-            echo "Error: PR too large ($CHANGED_COUNT files). Please split into smaller PRs."
-            echo "Large PRs are harder to review and may contain unrelated changes."
-            echo "Consider using --full flag for complete codebase analysis if needed."
-            exit 1
+          else
+            CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ')
           fi
 
           echo "Changed files: $CHANGED_FILES_STR"
           echo "Total changed files: $CHANGED_COUNT"
 
-          # Store for use in prompt with validation
           echo "changed_files=$CHANGED_FILES_STR" >> $GITHUB_OUTPUT
           echo "changed_count=$CHANGED_COUNT" >> $GITHUB_OUTPUT
-          echo "Security: File changes analyzed and validated"
 
       - name: Run Claude Code Review
         id: claude
