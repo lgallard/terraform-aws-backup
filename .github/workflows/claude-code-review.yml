@@ -357,6 +357,11 @@ jobs:
             echo "Warning: HEAD changed during execution ($CURRENT_HEAD -> $NEW_HEAD)"
           fi
 
+          # Debug: Show current branch and comparison
+          CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+          echo "Debug: Current branch: $CURRENT_BRANCH"
+          echo "Debug: Comparing origin/$BASE_REF to $CURRENT_HEAD"
+
           if ! CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF...$CURRENT_HEAD" 2>/dev/null); then
             echo "Error: Failed to get diff between origin/$BASE_REF and $CURRENT_HEAD"
             exit 1
@@ -364,7 +369,22 @@ jobs:
 
           # Convert to space-separated string and validate
           CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-          CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . || echo "0")
+
+          # Count changed files safely with robust error handling
+          if [ -z "$CHANGED_FILES" ]; then
+            CHANGED_COUNT=0
+            echo "Debug: No changed files (empty CHANGED_FILES)"
+          else
+            # Use wc -l for more reliable counting
+            CHANGED_COUNT=$(echo "$CHANGED_FILES" | wc -l | tr -d ' \t\n\r')
+            echo "Debug: Found $CHANGED_COUNT changed files"
+          fi
+
+          # Ensure CHANGED_COUNT is a clean integer
+          if ! [[ "$CHANGED_COUNT" =~ ^[0-9]+$ ]]; then
+            echo "Error: CHANGED_COUNT is not a valid integer: '$CHANGED_COUNT'"
+            CHANGED_COUNT=0
+          fi
 
           # Validate results with better handling for large PRs
           if [ "$CHANGED_COUNT" -eq 0 ]; then
@@ -380,10 +400,17 @@ jobs:
           echo "Changed files: $CHANGED_FILES_STR"
           echo "Total changed files: $CHANGED_COUNT"
 
-          # Store for use in prompt with validation
-          echo "changed_files=$CHANGED_FILES_STR" >> $GITHUB_OUTPUT
+          # Store for use in prompt with validation - ensure clean output
+          # Sanitize CHANGED_FILES_STR for GitHub output (remove problematic characters)
+          CLEAN_FILES_STR=$(echo "$CHANGED_FILES_STR" | tr -d '\n\r\t' | sed 's/[[:space:]]\+/ /g')
+
+          echo "changed_files=$CLEAN_FILES_STR" >> $GITHUB_OUTPUT
           echo "changed_count=$CHANGED_COUNT" >> $GITHUB_OUTPUT
           echo "Security: File changes analyzed and validated"
+
+          # Debug: Verify outputs
+          echo "Debug: Output changed_files='$CLEAN_FILES_STR'"
+          echo "Debug: Output changed_count='$CHANGED_COUNT'"
 
       - name: Run Claude Code Review
         id: claude
