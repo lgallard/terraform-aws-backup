@@ -332,9 +332,7 @@ jobs:
                 echo "Error: Failed to fetch base branch after all attempts"
                 exit 1
               fi
-              break
-            fi
-              break
+              break  # Add this line
             else
               echo "Fetch attempt failed, retrying in $((2 ** attempt)) seconds..."
               sleep $((2 ** attempt))
