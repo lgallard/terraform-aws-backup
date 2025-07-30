@@ -309,7 +309,6 @@ jobs:
         timeout-minutes: 5
         run: |
           set -euo pipefail  # Enhanced error handling
-
           CURRENT_HEAD=$(git rev-parse HEAD)
           BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
 
@@ -333,6 +332,7 @@ jobs:
                 echo "Error: Failed to fetch base branch after all attempts"
                 exit 1
               fi
+              break
             else
               echo "Fetch attempt failed, retrying in $((2 ** attempt)) seconds..."
               sleep $((2 ** attempt))
@@ -345,6 +345,8 @@ jobs:
             exit 1
           fi
 
+          # Verify HEAD hasn't changed (race condition protection)
+          
           # Verify HEAD hasn't changed (race condition protection)
           NEW_HEAD=$(git rev-parse HEAD)
           if [ "$CURRENT_HEAD" != "$NEW_HEAD" ]; then
