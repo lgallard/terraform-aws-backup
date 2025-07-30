@@ -333,6 +333,8 @@ jobs:
                 exit 1
               fi
               break
+            fi
+              break
             else
               echo "Fetch attempt failed, retrying in $((2 ** attempt)) seconds..."
               sleep $((2 ** attempt))
