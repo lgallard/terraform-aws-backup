@@ -346,7 +346,6 @@ jobs:
           fi
 
           # Verify HEAD hasn't changed (race condition protection)
-          CURRENT_HEAD=$(git rev-parse HEAD)
           NEW_HEAD=$(git rev-parse HEAD)
           if [ "$CURRENT_HEAD" != "$NEW_HEAD" ]; then
             echo "Warning: HEAD changed during execution ($CURRENT_HEAD -> $NEW_HEAD)"
