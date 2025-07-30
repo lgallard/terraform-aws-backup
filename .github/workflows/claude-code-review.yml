@@ -310,6 +310,7 @@ jobs:
         run: |
           set -euo pipefail  # Enhanced error handling
 
+          CURRENT_HEAD=$(git rev-parse HEAD)
           BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
 
           # Validate base ref
