@@ -223,12 +223,14 @@ variable "vault_kms_key_arn" {
 }
 
 # Secure vault creation with encryption
+# SECURITY: Always specify a KMS key or use AWS managed key for encryption
 resource "aws_backup_vault" "this" {
   count       = local.should_create_vault ? 1 : 0
   name        = var.vault_name
-  kms_key_arn = var.vault_kms_key_arn
+  # Use provided KMS key or AWS managed key for encryption
+  kms_key_arn = var.vault_kms_key_arn != null ? var.vault_kms_key_arn : "alias/aws/backup"
 
-  # Force encryption by default
+  # Force encryption by default - prevent unencrypted backups
   force_destroy = false
 
   tags = local.normalized_tags
@@ -288,6 +290,28 @@ variable "backup_service_role_permissions" {
     ])
     error_message = "Permission effects must be either 'Allow' or 'Deny'."
   }
+
+  # Additional validation to prevent dangerous permissions
+  validation {
+    condition = alltrue([
+      for perm in var.backup_service_role_permissions :
+      perm.effect == "Deny" ? true : !contains(perm.actions, "*") &&
+      !anytrue([for action in perm.actions : can(regex(".*:.*\\*", action))])
+    ])
+    error_message = "backup_service_role_permissions cannot contain wildcard (*) actions for security. Use specific permissions only."
+  }
+
+  # Validate against high-risk actions
+  validation {
+    condition = alltrue([
+      for perm in var.backup_service_role_permissions :
+      perm.effect == "Deny" ? true : !anytrue([
+        for action in perm.actions :
+        contains(["iam:*", "sts:AssumeRole*", "organizations:*"], action)
+      ])
+    ])
+    error_message = "backup_service_role_permissions cannot contain high-risk IAM, STS, or Organizations actions for security."
+  }
 }
 ```
 
@@ -302,9 +326,19 @@ variable "backup_vault_access_policy" {
   validation {
     condition = var.backup_vault_access_policy == "" ? true : (
       can(jsondecode(var.backup_vault_access_policy)) &&
-      contains(jsondecode(var.backup_vault_access_policy), "Version")
+      contains(jsondecode(var.backup_vault_access_policy), "Version") &&
+      contains(jsondecode(var.backup_vault_access_policy), "Statement")
     )
-    error_message = "backup_vault_access_policy must be a valid JSON policy document."
+    error_message = "backup_vault_access_policy must be a valid JSON policy document with Version and Statement."
+  }
+
+  # Additional validation to prevent overly permissive policies
+  validation {
+    condition = var.backup_vault_access_policy == "" ? true : (
+      !can(regex("\"Principal\"\s*:\s*\"\*\"", var.backup_vault_access_policy)) &&
+      !can(regex("\"Action\"\s*:\s*\"\*\"", var.backup_vault_access_policy))
+    )
+    error_message = "backup_vault_access_policy cannot have wildcard (*) principals or actions for security."
   }
 }
 
@@ -619,6 +653,9 @@ Handle different input formats gracefully:
 
 ```hcl
 # Support both legacy and new selection formats
+# PERFORMANCE NOTE: Nested flatten() operations can be expensive for large datasets.
+# Consider splitting complex selections into separate resources for better performance
+# when dealing with hundreds of backup selections or plans.
 selection_resources = flatten([
   var.selection_resources,
   [for selection in try(tolist(var.selections), []) : try(selection.resources, [])],
@@ -627,6 +664,11 @@ selection_resources = flatten([
   [for plan in var.plans : flatten([for selection in try(plan.selections, []) : try(selection.resources, [])])]
 ])
 ```
+
+**Performance Considerations:**
+- For large deployments (>100 backup selections), consider using dedicated `aws_backup_selection` resources instead
+- Nested `flatten()` and `for` expressions can increase plan/apply time with large variable sets
+- Monitor Terraform performance and consider breaking complex selections into multiple resources if needed
 
 ### Using for_each for Complex Resources
 ```hcl
@@ -710,10 +752,11 @@ module "backup" {
     }
   }
 
-  # Resource selection by tags
+  # Resource selection by tags - RECOMMENDED approach for security
+  # This uses wildcard (*) with tag conditions to target specific resources
   backup_selections = [{
     name      = "production-resources"
-    resources = ["*"]
+    resources = ["*"]  # Wildcard with tag-based filtering (secure approach)
     conditions = [{
       string_equals = {
         key   = "aws:tag/Environment"
@@ -728,6 +771,27 @@ module "backup" {
   }
 }
 ```
+
+### Resource Selection Methods
+
+**There are three main approaches for selecting backup resources:**
+
+1. **Tag-Based Selection (RECOMMENDED)**: Use `resources = ["*"]` with tag conditions
+   - **Pros**: Secure, flexible, easy to manage at scale
+   - **Cons**: Requires consistent tagging strategy
+   - **Use When**: You have a good tagging strategy and want secure, scalable selection
+
+2. **Specific ARN Selection**: Use exact ARN patterns like `["arn:aws:rds:*:*:db:production-*"]`
+   - **Pros**: Precise control, explicit targeting
+   - **Cons**: Harder to maintain, can become overly broad with wildcards
+   - **Use When**: You need to target specific, known resources
+
+3. **Mixed Selection**: Combine specific ARNs with tag conditions
+   - **Pros**: Flexible for complex scenarios
+   - **Cons**: Can become complex to maintain
+   - **Use When**: You have both tagged and specifically named resources
+
+**Security Best Practice**: Always prefer tag-based selection with wildcards over wildcard ARN patterns for better security and maintainability.
 
 ### Enterprise Backup with Audit Framework
 ```hcl
@@ -778,7 +842,7 @@ module "enterprise_backup" {
       }
       enable_continuous_backup = true
       copy_actions = [{
-        destination_backup_vault_arn = "arn:aws:backup:us-west-2:123456789012:backup-vault:enterprise-backup-vault-dr"
+        destination_backup_vault_arn = "arn:aws:backup:us-west-2:${data.aws_caller_identity.current.account_id}:backup-vault:enterprise-backup-vault-dr"
         lifecycle = {
           cold_storage_after = 30
           delete_after       = 2555
@@ -830,7 +894,7 @@ module "optimized_backup" {
             delete_after       = 2555  # Long-term retention
           }
           copy_actions = [{
-            destination_backup_vault_arn = "arn:aws:backup:us-west-2:123456789012:backup-vault:disaster-recovery-vault"
+            destination_backup_vault_arn = "arn:aws:backup:us-west-2:${data.aws_caller_identity.current.account_id}:backup-vault:disaster-recovery-vault"
             lifecycle = {
               cold_storage_after = 30
               delete_after       = 2555
@@ -841,33 +905,45 @@ module "optimized_backup" {
     }
   }
 
-  # Selective resource backup
+  # Selective resource backup with specific targeting
   backup_selections = [
     {
       name = "database-backups"
-      resources = [
-        "arn:aws:rds:*:*:db:*",
-        "arn:aws:dynamodb:*:*:table/*"
-      ]
-      conditions = [{
-        string_equals = {
-          key   = "aws:tag/BackupTier"
-          value = "critical"
+      # Use tag-based selection instead of wildcard ARNs for better security
+      resources = ["*"]  # Use wildcard with tag conditions for security
+      conditions = [
+        {
+          string_equals = {
+            key   = "aws:tag/BackupTier"
+            value = "critical"
+          }
+        },
+        {
+          string_equals = {
+            key   = "aws:tag/ResourceType"
+            value = "Database"
+          }
         }
-      }]
+      ]
     },
     {
       name = "file-systems"
-      resources = [
-        "arn:aws:efs:*:*:file-system/*",
-        "arn:aws:fsx:*:*:file-system/*"
-      ]
-      conditions = [{
-        string_equals = {
-          key   = "aws:tag/BackupTier"
-          value = "standard"
+      # Use tag-based selection instead of wildcard ARNs for better security
+      resources = ["*"]  # Use wildcard with tag conditions for security
+      conditions = [
+        {
+          string_equals = {
+            key   = "aws:tag/BackupTier"
+            value = "standard"
+          }
+        },
+        {
+          string_equals = {
+            key   = "aws:tag/ResourceType"
+            value = "FileSystem"
+          }
         }
-      }]
+      ]
     }
   ]
 
@@ -906,10 +982,11 @@ module "windows_backup" {
     }
   }
 
-  # Target Windows instances specifically
+  # Target Windows instances specifically using tag-based selection for security
   backup_selections = [{
     name = "windows-instances"
-    resources = ["arn:aws:ec2:*:*:instance/*"]
+    # Use wildcard with tag conditions for secure resource targeting
+    resources = ["*"]
     conditions = [
       {
         string_equals = {

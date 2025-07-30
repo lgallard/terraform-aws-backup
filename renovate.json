@@ -1,13 +1,54 @@
 {
-  "extends": ["config:base"],
+  "extends": [
+    "config:recommended"
+  ],
   "terraform": {
-    "ignoreDeps": ["hashicorp/terraform"]
+    "ignoreDeps": [
+      "hashicorp/terraform"
+    ]
   },
   "packageRules": [
     {
-      "datasources": ["terraform-provider"],
-      "updateTypes": ["major"],
-      "enabled": false
+      "matchDatasources": [
+        "terraform-provider"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": true,
+      "dependencyDashboardApproval": true,
+      "prCreation": "approval"
+    },
+    {
+      "matchDatasources": [
+        "terraform-provider"
+      ],
+      "matchFileNames": [
+        "examples/**"
+      ],
+      "enabled": true,
+      "schedule": [
+        "before 9am on monday"
+      ]
+    },
+    {
+      "matchDatasources": [
+        "go"
+      ],
+      "enabled": true,
+      "schedule": [
+        "before 9am on monday"
+      ]
+    },
+    {
+      "matchDatasources": [
+        "github-actions"
+      ],
+      "enabled": true,
+      "schedule": [
+        "before 9am on monday"
+      ]
     }
   ]
 }
+
