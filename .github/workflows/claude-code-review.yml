@@ -386,6 +386,7 @@ jobs:
             CHANGED_COUNT=0
           fi
 
+
           # Validate results with better handling for large PRs
           if [ "$CHANGED_COUNT" -eq 0 ]; then
             echo "Warning: No changed files detected"
