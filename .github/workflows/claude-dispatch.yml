@@ -1,0 +1,36 @@
+name: Claude Dispatch
+
+on:
+  repository_dispatch:
+    types: [claude]
+
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Optional: customize model (defaults to Claude Sonnet 4)
+          # model: "claude-opus-4-20250514"
+          
+          # Optional: allow specific development commands  
+          # allowed_tools: "Bash(terraform fmt),Bash(terraform validate),Bash(go test ./...)"
+          
+          # Optional: custom instructions for Claude
+          # custom_instructions: |
+          #   Follow Terraform best practices
+          #   Ensure all changes are validated and formatted
+          #   Run tests before submitting changes
+          
+          # Optional: environment variables
+          # claude_env: |
+          #   TF_IN_AUTOMATION: true
