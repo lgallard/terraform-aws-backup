@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.37.0](https://github.com/lgallard/terraform-aws-backup/compare/0.36.0...0.37.0) (2025-08-07)
+
+
+### Features
+
+* add Claude dispatch workflow for repository events ([#198](https://github.com/lgallard/terraform-aws-backup/issues/198)) ([660d70d](https://github.com/lgallard/terraform-aws-backup/commit/660d70dbb5473ebad1bcb262212d1262f0db74eb))
+
 ## [0.36.0](https://github.com/lgallard/terraform-aws-backup/compare/0.35.0...0.36.0) (2025-07-30)
 
 
