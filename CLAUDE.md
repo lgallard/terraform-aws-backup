@@ -196,6 +196,170 @@ export AWS_BACKUP_ENABLE_LONG_RUNNING_TESTS=false
 - Test audit framework compliance
 - Validate organization policy enforcement
 
+## Pre-commit Configuration & Automation
+
+### Automated Code Quality with GitHub Actions
+
+This module includes a comprehensive pre-commit GitHub Actions workflow (`.github/workflows/pre-commit.yml`) that automatically validates code quality and formatting. The workflow runs on:
+
+- **Pull requests** targeting the master branch with changes to `.tf`, `.tfvars`, `.md`, or `.pre-commit-config.yaml` files
+- **Pushes** to the master branch with changes to the same file types
+
+#### Pre-commit Workflow Features
+
+**Automated Tools & Checks:**
+- 🔧 **Terraform formatting** (`terraform fmt`)
+- ✅ **Terraform validation** (`terraform validate`) 
+- 📚 **Documentation generation** (`terraform-docs`)
+- 🔍 **TFLint analysis** for best practices and errors
+- 🧹 **File formatting** (trailing whitespace, end-of-file fixes)
+- 📋 **YAML validation** for configuration files
+
+**Performance Optimizations:**
+- **Smart caching** of terraform-docs and tflint binaries
+- **Pre-commit hook caching** for faster subsequent runs
+- **Incremental checking** on pull requests (only changed files)
+- **Full validation** on master branch pushes
+- **15-minute timeout** to prevent hung jobs
+
+**Workflow Intelligence:**
+- **Changed file detection** - Only runs pre-commit on relevant changed files in PRs
+- **Comprehensive summary** - Provides detailed results in GitHub Actions summary
+- **Tool installation verification** - Automatically installs and caches required tools
+- **Cross-platform compatibility** - Optimized for Ubuntu runners
+
+#### Local Pre-commit Setup
+
+**Install pre-commit locally for development:**
+
+```bash
+# Install pre-commit (requires Python)
+pip install pre-commit
+
+# Install pre-commit hooks for this repository
+pre-commit install
+
+# Run pre-commit on all files manually
+pre-commit run --all-files
+
+# Run pre-commit on specific files
+pre-commit run --files main.tf variables.tf
+```
+
+**Required Tools for Local Development:**
+```bash
+# Terraform (version 1.3.0+ recommended)
+terraform --version
+
+# terraform-docs for README generation
+curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+tar -xzf terraform-docs.tar.gz
+sudo mv terraform-docs /usr/local/bin/
+
+# TFLint for Terraform linting
+curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+```
+
+#### Pre-commit Configuration
+
+The module uses `.pre-commit-config.yaml` with the following hooks:
+
+**Basic File Quality:**
+- `trailing-whitespace` - Remove trailing whitespace
+- `end-of-file-fixer` - Ensure files end with newline
+- `check-yaml` - Validate YAML syntax
+
+**Terraform Quality:**
+- `terraform_fmt` - Format Terraform files
+- `terraform_validate` - Validate Terraform syntax and logic
+- `terraform_docs` - Generate documentation
+- `terraform_tflint` - Advanced Terraform linting
+
+#### CI/CD Integration Benefits
+
+**Pull Request Automation:**
+- **Instant feedback** on code quality issues
+- **Prevents merge** of poorly formatted code
+- **Reduces review time** by catching common issues
+- **Maintains consistency** across contributors
+
+**Master Branch Protection:**
+- **Comprehensive validation** on all files after merge
+- **Documentation updates** automatically generated
+- **Quality gate** for production code
+
+**Development Experience:**
+- **Fast feedback loop** with incremental checking
+- **Clear error messages** with actionable guidance
+- **Automated fixes** for many formatting issues
+- **Consistent development environment** across team
+
+### Pre-commit Best Practices
+
+#### Local Development Workflow
+```bash
+# Before committing changes
+git add .
+pre-commit run --files $(git diff --cached --name-only)
+
+# If pre-commit fixes issues, add them and commit
+git add .
+git commit -m "feat: add backup vault lock configuration"
+```
+
+#### Troubleshooting Pre-commit Issues
+
+**Common Issues & Solutions:**
+
+**Terraform Formatting Errors:**
+```bash
+# Fix formatting automatically
+terraform fmt -recursive .
+
+# Check specific file
+terraform fmt -check main.tf
+```
+
+**Documentation Generation Errors:**
+```bash
+# Regenerate documentation
+terraform-docs markdown table . > README.md
+
+# Check terraform-docs configuration
+terraform-docs --version
+```
+
+**TFLint Errors:**
+```bash
+# Run TFLint locally to see detailed errors
+tflint
+
+# Initialize TFLint if needed
+tflint --init
+```
+
+**Pre-commit Hook Installation Issues:**
+```bash
+# Reinstall pre-commit hooks
+pre-commit uninstall
+pre-commit install
+
+# Clear pre-commit cache if needed
+pre-commit clean
+```
+
+#### Performance Considerations
+
+**Large Repositories:**
+- Pre-commit runs only on changed files in PRs (faster feedback)
+- Tool binaries are cached between runs
+- Pre-commit hooks are cached based on configuration hash
+
+**Network Issues:**
+- Tools are installed once and cached
+- Fallback installation methods for corporate networks
+- Offline capability after initial tool installation
+
 ## Security Considerations
 
 ### AWS Backup-Specific Security Practices
