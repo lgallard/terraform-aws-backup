@@ -39,7 +39,31 @@ jobs:
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-          
+
+          # MCP Configuration for Terraform and Context7 documentation access
+          mcp_config: |
+            {
+              "mcpServers": {
+                "terraform": {
+                  "command": "npx",
+                  "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-terraform@latest"
+                  ]
+                },
+                "context7": {
+                  "command": "npx",
+                  "args": [
+                    "-y",
+                    "@upstash/context7-mcp@latest"
+                  ]
+                }
+              }
+            }
+
+          # Allow Bash permissions for pre-commit hooks and documentation updates + MCP tools
+          allowed_tools: "Bash(pre-commit run --files),Bash(terraform fmt),Bash(terraform validate),Bash(terraform-docs),mcp__terraform-server__getProviderDocs,mcp__terraform-server__resolveProviderDocID,mcp__terraform-server__searchModules,mcp__terraform-server__moduleDetails,mcp__context7__resolve-library-id,mcp__context7__get-library-docs"
+
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
           # model: "claude-opus-4-20250514"
           
@@ -48,9 +72,6 @@ jobs:
           
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
-          
-          # Optional: Allow Claude to run specific commands
-          # allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
           
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           # custom_instructions: |
@@ -61,4 +82,3 @@ jobs:
           # Optional: Custom environment variables for Claude
           # claude_env: |
           #   NODE_ENV: test
-
