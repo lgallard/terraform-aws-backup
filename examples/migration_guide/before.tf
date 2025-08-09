@@ -1,5 +1,5 @@
 # Before migration - legacy single plan configuration
-module "aws_backup_example" {
+module "aws_backup_before" {
   source = "../.."
 
   # Vault
