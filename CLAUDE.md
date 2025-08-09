@@ -335,8 +335,8 @@ variable "backup_vault_access_policy" {
   # Additional validation to prevent overly permissive policies
   validation {
     condition = var.backup_vault_access_policy == "" ? true : (
-      !can(regex("\"Principal\"\s*:\s*\"\*\"", var.backup_vault_access_policy)) &&
-      !can(regex("\"Action\"\s*:\s*\"\*\"", var.backup_vault_access_policy))
+      !can(regex("\"Principal\"\\s*:\\s*\"\\*\"", var.backup_vault_access_policy)) &&
+      !can(regex("\"Action\"\\s*:\\s*\"\\*\"", var.backup_vault_access_policy))
     )
     error_message = "backup_vault_access_policy cannot have wildcard (*) principals or actions for security."
   }
@@ -1041,3 +1041,78 @@ terraform {
 10. **Performance Optimization** - Backup job scheduling and resource optimization
 
 *Note: This module focuses on AWS Backup best practices and patterns specific to backup and disaster recovery operations.*
+
+## MCP Server Configuration
+
+### Available MCP Servers
+This project is configured to use the following Model Context Protocol (MCP) servers for enhanced documentation access:
+
+#### Terraform MCP Server
+**Purpose**: Access up-to-date Terraform and AWS provider documentation
+**Package**: `@modelcontextprotocol/server-terraform`
+
+**Local Configuration** (`.mcp.json`):
+```json
+{
+  "mcpServers": {
+    "terraform": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-terraform@latest"]
+    }
+  }
+}
+```
+
+**Usage Examples**:
+- `Look up aws_backup_vault resource documentation`
+- `Find the latest AWS Backup lifecycle policy examples`  
+- `Search for AWS Backup Terraform modules`
+- `Get documentation for aws_backup_plan resource`
+
+#### Context7 MCP Server  
+**Purpose**: Access general library and framework documentation
+**Package**: `@upstash/context7-mcp`
+
+**Local Configuration** (`.mcp.json`):
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx", 
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    }
+  }
+}
+```
+
+**Usage Examples**:
+- `Look up Go testing patterns for Terratest`
+- `Find AWS CLI backup commands documentation`
+- `Get current Terraform best practices`
+- `Search for GitHub Actions workflow patterns`
+
+### GitHub Actions Integration
+The MCP servers are automatically available in GitHub Actions through the claude.yml workflow configuration. Claude can access the same documentation in PRs and issues as available locally.
+
+### Usage Tips
+1. **Be Specific**: When requesting documentation, specify the exact resource or concept
+2. **Version Awareness**: Both servers provide current, version-specific documentation  
+3. **Combine Sources**: Use Terraform MCP for backup-specific docs, Context7 for general development patterns
+4. **Local vs CI**: Same MCP servers work in both local development and GitHub Actions
+
+### Example Workflows
+
+**Backup Resource Development**:
+```
+@claude I need to add support for backup vault lock. Can you look up the latest aws_backup_vault_lock_configuration documentation and show me how to implement this feature?
+```
+
+**Testing Pattern Research**:
+```  
+@claude Look up current Terratest patterns for testing AWS Backup resources and help me add comprehensive tests for vault lock functionality.
+```
+
+**Security Enhancement**:
+```
+@claude Research the latest AWS Backup security best practices and help me implement enhanced encryption configurations in this module.
+```
