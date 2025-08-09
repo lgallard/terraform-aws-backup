@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.39.0](https://github.com/lgallard/terraform-aws-backup/compare/0.38.0...0.39.0) (2025-08-09)
+
+
+### Features
+
+* add pre-commit workflow for automated code quality ([#203](https://github.com/lgallard/terraform-aws-backup/issues/203)) ([102c1c6](https://github.com/lgallard/terraform-aws-backup/commit/102c1c6ba6130cf6b70d887deab975c06d891434))
+
 ## [0.38.0](https://github.com/lgallard/terraform-aws-backup/compare/0.37.0...0.38.0) (2025-08-09)
 
 
