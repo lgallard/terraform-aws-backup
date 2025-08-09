@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.38.0](https://github.com/lgallard/terraform-aws-backup/compare/0.37.0...0.38.0) (2025-08-09)
+
+
+### Features
+
+* add MCP server support for enhanced documentation access ([#201](https://github.com/lgallard/terraform-aws-backup/issues/201)) ([911e845](https://github.com/lgallard/terraform-aws-backup/commit/911e8456d7da7d59d3a97559f62b05a940743262))
+
 ## [0.37.0](https://github.com/lgallard/terraform-aws-backup/compare/0.36.0...0.37.0) (2025-08-07)
 
 
