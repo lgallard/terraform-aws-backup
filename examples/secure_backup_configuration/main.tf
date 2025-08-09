@@ -1,221 +1,214 @@
 # Secure AWS Backup Configuration Example
-# This example demonstrates security best practices for AWS Backup
+# This example demonstrates enterprise-grade backup security practices
 
-# Local values for consistent naming and tagging
+terraform {
+  required_version = ">= 1.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.0"
+      configuration_aliases = [aws.cross_region]
+    }
+  }
+}
+
+# Data sources for account and region information
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+data "aws_region" "cross_region" {
+  provider = aws.cross_region
+}
+
+# Local values for consistent resource naming and configuration
 locals {
+  vault_name = "${var.project_name}-${var.environment}-backup-vault"
+  
   common_tags = {
     Environment   = var.environment
     Project       = var.project_name
-    Owner         = var.owner
-    CreatedBy     = "terraform"
+    ManagedBy     = "terraform"
+    Purpose       = "backup"
     SecurityLevel = "high"
     Compliance    = "required"
+    CreatedBy     = "secure-backup-example"
   }
 
-  vault_name = "${var.project_name}-${var.environment}-secure-vault"
-  plan_name  = "${var.project_name}-${var.environment}-secure-plan"
-}
-
-# Main backup configuration with security best practices
-module "backup" {
-  source = "../../"
-
-  # Vault configuration with security controls
-  vault_name        = local.vault_name
-  vault_kms_key_arn = aws_kms_key.backup_key.arn
-
-  # Enable vault lock for compliance
-  locked              = var.enable_vault_lock
-  changeable_for_days = var.vault_lock_changeable_days
-
-  # Security-focused retention policies
-  min_retention_days = var.min_retention_days
-  max_retention_days = var.max_retention_days
-
-  # Backup plan with security controls
-  plan_name = local.plan_name
-
-  rules = [
-    {
-      name                     = "daily-secure-backup"
-      schedule                 = "cron(0 5 ? * * *)" # 5 AM UTC daily
-      start_window             = 480                 # 8 hours
-      completion_window        = 10080               # 7 days
-      enable_continuous_backup = var.enable_continuous_backup
-
+  # Security-focused backup rules with encryption and compliance
+  backup_rules = {
+    critical_daily = {
+      name              = "critical-daily-encrypted"
+      schedule          = "cron(0 3 ? * * *)"
+      start_window      = 60
+      completion_window = 300
       lifecycle = {
-        cold_storage_after = 30 # Move to cold storage after 30 days
-        delete_after       = var.backup_retention_days
+        cold_storage_after = 30
+        delete_after       = var.retention_days
       }
-
-      # Security-focused tagging
-      recovery_point_tags = merge(local.common_tags, {
-        BackupType = "daily"
-        Encrypted  = "true"
-      })
-
-      # Cross-region backup with security controls
-      copy_actions = var.enable_cross_region_backup ? [
-        {
-          destination_vault_arn = aws_backup_vault.cross_region_vault[0].arn
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = var.backup_retention_days
-          }
+      copy_actions = var.enable_cross_region_backup ? [{
+        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region_name}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        lifecycle = {
+          cold_storage_after = 30
+          delete_after       = var.retention_days
         }
-      ] : []
-    },
-    {
-      name                     = "weekly-secure-backup"
-      schedule                 = "cron(0 6 ? * SUN *)" # 6 AM UTC on Sundays
-      start_window             = 480
-      completion_window        = 10080
-      enable_continuous_backup = false
-
-      lifecycle = {
-        cold_storage_after = 90 # Move to cold storage after 90 days
-        delete_after       = var.weekly_backup_retention_days
+      }] : []
+      recovery_point_tags = {
+        BackupType   = "daily"
+        Criticality  = "high"
+        Environment  = var.environment
+        Encrypted    = "true"
+        Compliance   = "required"
       }
-
-      recovery_point_tags = merge(local.common_tags, {
-        BackupType = "weekly"
-        Encrypted  = "true"
-      })
     }
-  ]
-
-  # Secure backup selections
-  selections = {
-    "production-databases" = {
-      resources = var.database_resources
-
-      # Security-focused resource selection
-      conditions = {
-        "string_equals" = {
-          "aws:ResourceTag/Environment"    = var.environment
-          "aws:ResourceTag/SecurityLevel"  = "high"
-          "aws:ResourceTag/BackupRequired" = "true"
-        }
+    weekly_long_term = {
+      name              = "weekly-long-term-encrypted"
+      schedule          = "cron(0 4 ? * SUN *)"
+      start_window      = 60
+      completion_window = 480
+      lifecycle = {
+        cold_storage_after = 7
+        delete_after       = var.long_term_retention_days
       }
+      copy_actions = var.enable_cross_region_backup ? [{
+        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region_name}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        lifecycle = {
+          cold_storage_after = 7
+          delete_after       = var.long_term_retention_days
+        }
+      }] : []
+      recovery_point_tags = {
+        BackupType   = "weekly"
+        Criticality  = "high"
+        Environment  = var.environment
+        Encrypted    = "true"
+        Compliance   = "required"
+        LongTerm     = "true"
+      }
+    }
+  }
 
-      selection_tags = [
+  # Security-focused backup selections with specific resource targeting
+  backup_selections = {
+    production_databases = {
+      name = "production-databases-secure"
+      # Use tag-based selection for better security instead of wildcard ARNs
+      resources = ["*"]
+      conditions = [
         {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = var.environment
+          string_equals = {
+            key   = "aws:tag/Environment"
+            value = var.environment
+          }
         },
         {
-          type  = "STRINGEQUALS"
-          key   = "SecurityLevel"
-          value = "high"
+          string_equals = {
+            key   = "aws:tag/BackupRequired"
+            value = "true"
+          }
+        },
+        {
+          string_equals = {
+            key   = "aws:tag/ResourceType"
+            value = "Database"
+          }
         }
       ]
-    },
-
-    "production-volumes" = {
-      resources = var.volume_resources
-
-      conditions = {
-        "string_equals" = {
-          "aws:ResourceTag/Environment"    = var.environment
-          "aws:ResourceTag/SecurityLevel"  = "high"
-          "aws:ResourceTag/BackupRequired" = "true"
+    }
+    critical_file_systems = {
+      name = "critical-file-systems-secure"
+      # Use tag-based selection for better security
+      resources = ["*"]
+      conditions = [
+        {
+          string_equals = {
+            key   = "aws:tag/Environment"
+            value = var.environment
+          }
+        },
+        {
+          string_equals = {
+            key   = "aws:tag/BackupTier"
+            value = "critical"
+          }
+        },
+        {
+          string_equals = {
+            key   = "aws:tag/ResourceType"
+            value = "FileSystem"
+          }
         }
-      }
+      ]
+    }
+  }
+}
+
+# Secure backup module configuration
+module "backup" {
+  source = "../.."
+
+  enabled = true
+
+  # Vault configuration with KMS encryption
+  vault_name    = local.vault_name
+  vault_kms_key = aws_kms_key.backup_key.arn
+
+  # Enable vault lock for compliance (if specified)
+  locked                 = var.enable_vault_lock
+  min_retention_days     = var.min_retention_days
+  max_retention_days     = var.max_retention_days
+
+  # Security-focused backup plans
+  plans = {
+    secure_backup_plan = {
+      name  = "${var.project_name}-${var.environment}-secure-plan"
+      rules = values(local.backup_rules)
     }
   }
 
-  # Security notifications
-  notifications = {
-    backup_vault_events = [
-      "BACKUP_JOB_STARTED",
-      "BACKUP_JOB_COMPLETED",
-      "BACKUP_JOB_FAILED",
-      "RESTORE_JOB_STARTED",
-      "RESTORE_JOB_COMPLETED",
-      "RESTORE_JOB_FAILED"
-    ]
-    sns_topic_arn = aws_sns_topic.backup_notifications.arn
-  }
+  # Secure backup selections
+  backup_selections = values(local.backup_selections)
 
-  # Security-focused tagging
+  # Security and compliance tags
   tags = local.common_tags
 }
 
-# Cross-region backup vault for disaster recovery
+# Cross-region backup vault for disaster recovery (conditional)
 resource "aws_backup_vault" "cross_region_vault" {
   count = var.enable_cross_region_backup ? 1 : 0
+
+  provider = aws.cross_region
 
   name        = "${local.vault_name}-cross-region"
   kms_key_arn = aws_kms_key.cross_region_backup_key[0].arn
 
-  # Enable vault lock for compliance
-  dynamic "lock_configuration" {
-    for_each = var.enable_vault_lock ? [1] : []
-
-    content {
-      changeable_for_days = var.vault_lock_changeable_days
-      min_retention_days  = var.min_retention_days
-      max_retention_days  = var.max_retention_days
-    }
-  }
+  # Enable vault lock for compliance - use backup vault lock resource instead
+  # NOTE: vault lock should be configured using aws_backup_vault_lock_configuration resource
 
   tags = merge(local.common_tags, {
     Name = "${local.vault_name}-cross-region"
     Type = "cross-region"
+    Region = var.cross_region_name
   })
+}
+
+# Vault lock configuration for compliance (conditional)
+resource "aws_backup_vault_lock_configuration" "this" {
+  count = var.enable_vault_lock ? 1 : 0
+
+  backup_vault_name   = module.backup.vault_id
+  changeable_for_days = var.vault_lock_changeable_days
+  min_retention_days  = var.min_retention_days
+  max_retention_days  = var.max_retention_days
+}
+
+# Cross-region vault lock (conditional)
+resource "aws_backup_vault_lock_configuration" "cross_region" {
+  count = var.enable_cross_region_backup && var.enable_vault_lock ? 1 : 0
 
   provider = aws.cross_region
+
+  backup_vault_name   = aws_backup_vault.cross_region_vault[0].name
+  changeable_for_days = var.vault_lock_changeable_days
+  min_retention_days  = var.min_retention_days
+  max_retention_days  = var.max_retention_days
 }
-
-# SNS topic for security notifications
-resource "aws_sns_topic" "backup_notifications" {
-  name = "${var.project_name}-${var.environment}-backup-notifications"
-
-  # Enable encryption for SNS
-  kms_master_key_id = aws_kms_key.sns_key.arn
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-backup-notifications"
-  })
-}
-
-# SNS topic policy for backup service
-resource "aws_sns_topic_policy" "backup_notifications" {
-  arn = aws_sns_topic.backup_notifications.arn
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowBackupServiceToPublish"
-        Effect = "Allow"
-        Principal = {
-          Service = "backup.amazonaws.com"
-        }
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = aws_sns_topic.backup_notifications.arn
-        Condition = {
-          StringEquals = {
-            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
-      }
-    ]
-  })
-}
-
-# Email subscription for notifications
-resource "aws_sns_topic_subscription" "backup_notifications_email" {
-  count = var.notification_email != "" ? 1 : 0
-
-  topic_arn = aws_sns_topic.backup_notifications.arn
-  protocol  = "email"
-  endpoint  = var.notification_email
-}
-
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}

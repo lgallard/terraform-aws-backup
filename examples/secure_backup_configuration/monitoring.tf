@@ -7,13 +7,28 @@ resource "aws_cloudwatch_log_group" "backup_logs" {
   kms_key_id        = aws_kms_key.backup_key.arn
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-backup-logs"
+    Name    = "backup-logs"
+    Purpose = "audit-logging"
   })
 }
 
-# CloudWatch Alarms for backup security monitoring
+# CloudWatch Event Rule for backup job failures
+resource "aws_cloudwatch_event_rule" "backup_failure" {
+  name        = "${var.project_name}-${var.environment}-backup-failure"
+  description = "Capture backup job failures for security monitoring"
 
-# Alarm for failed backup jobs
+  event_pattern = jsonencode({
+    source      = ["aws.backup"]
+    detail-type = ["Backup Job State Change"]
+    detail = {
+      state = ["FAILED", "EXPIRED"]
+    }
+  })
+
+  tags = local.common_tags
+}
+
+# CloudWatch Metric Alarm for backup job failures
 resource "aws_cloudwatch_metric_alarm" "backup_job_failed" {
   alarm_name          = "${var.project_name}-${var.environment}-backup-job-failed"
   comparison_operator = "GreaterThanThreshold"
@@ -23,180 +38,180 @@ resource "aws_cloudwatch_metric_alarm" "backup_job_failed" {
   period              = "300"
   statistic           = "Sum"
   threshold           = "0"
-  alarm_description   = "This metric monitors failed backup jobs"
-  alarm_actions       = [aws_sns_topic.backup_notifications.arn]
+  alarm_description   = "This metric monitors backup job failures for security compliance"
+  alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
+  ok_actions          = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
+  treat_missing_data  = "notBreaching"
 
   dimensions = {
-    BackupVaultName = module.backup.backup_vault_id
+    BackupVaultName = module.backup.vault_id
   }
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-backup-job-failed"
+    AlarmType   = "security"
+    Criticality = "high"
   })
 }
 
-# Alarm for successful backup jobs (should have at least daily backups)
+# CloudWatch Metric Alarm for successful backup jobs (should be > 0)
 resource "aws_cloudwatch_metric_alarm" "backup_job_success" {
   alarm_name          = "${var.project_name}-${var.environment}-backup-job-success"
   comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = "2"
   metric_name         = "NumberOfBackupJobsCompleted"
   namespace           = "AWS/Backup"
-  period              = "86400" # 24 hours
+  period              = "86400"  # Daily check
   statistic           = "Sum"
   threshold           = "1"
-  alarm_description   = "This metric monitors that at least one backup job completed in the last 24 hours"
-  alarm_actions       = [aws_sns_topic.backup_notifications.arn]
+  alarm_description   = "This metric monitors successful backup job completion for security compliance"
+  alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
+  ok_actions          = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
+  treat_missing_data  = "breaching"
 
   dimensions = {
-    BackupVaultName = module.backup.backup_vault_id
+    BackupVaultName = module.backup.vault_id
   }
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-backup-job-success"
+    AlarmType   = "compliance"
+    Criticality = "medium"
   })
 }
 
-# Alarm for KMS key usage (security monitoring)
-resource "aws_cloudwatch_metric_alarm" "kms_key_usage" {
-  alarm_name          = "${var.project_name}-${var.environment}-kms-key-unusual-usage"
+# CloudWatch Metric Filter for backup vault access
+resource "aws_logs_metric_filter" "vault_access" {
+  name           = "${var.project_name}-${var.environment}-vault-access"
+  log_group_name = aws_cloudwatch_log_group.backup_logs.name
+  pattern        = "[timestamp, request_id, event_type=\"VAULT_ACCESS\", ...]"
+
+  metric_transformation {
+    name      = "VaultAccess"
+    namespace = "BackupSecurity/${var.project_name}"
+    value     = "1"
+    
+    # Add security context to metrics
+    default_value = "0"
+  }
+}
+
+# CloudWatch Metric Alarm for unusual vault access patterns
+resource "aws_cloudwatch_metric_alarm" "backup_vault_access" {
+  alarm_name          = "${var.project_name}-${var.environment}-unusual-vault-access"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "2"
-  metric_name         = "NumberOfRequestsSucceeded"
-  namespace           = "AWS/KMS"
-  period              = "300"
+  metric_name         = "VaultAccess"
+  namespace           = "BackupSecurity/${var.project_name}"
+  period              = "900"  # 15 minutes
   statistic           = "Sum"
-  threshold           = "1000" # Adjust based on normal usage
-  alarm_description   = "This metric monitors unusual KMS key usage patterns"
-  alarm_actions       = [aws_sns_topic.backup_notifications.arn]
+  threshold           = "10"   # Adjust based on normal access patterns
+  alarm_description   = "This metric monitors unusual backup vault access patterns for security"
+  alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
+  treat_missing_data  = "notBreaching"
 
   dimensions = {
-    KeyId = aws_kms_key.backup_key.key_id
+    BackupVaultName = module.backup.vault_id
   }
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-kms-key-usage"
+    AlarmType   = "security"
+    Criticality = "medium"
   })
 }
 
-# Alarm for backup vault access (security monitoring)
-resource "aws_cloudwatch_metric_alarm" "backup_vault_access" {
-  alarm_name          = "${var.project_name}-${var.environment}-backup-vault-unusual-access"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "1"
-  metric_name         = "NumberOfBackupVaultDeletions"
-  namespace           = "AWS/Backup"
-  period              = "300"
-  statistic           = "Sum"
-  threshold           = "0"
-  alarm_description   = "This metric monitors backup vault deletion attempts"
-  alarm_actions       = [aws_sns_topic.backup_notifications.arn]
-
-  dimensions = {
-    BackupVaultName = module.backup.backup_vault_id
-  }
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-backup-vault-access"
-  })
-}
-
-# CloudWatch Dashboard for backup monitoring
+# CloudWatch Dashboard for backup security monitoring
 resource "aws_cloudwatch_dashboard" "backup_dashboard" {
-  dashboard_name = "${var.project_name}-${var.environment}-backup-security-dashboard"
+  dashboard_name = "${var.project_name}-${var.environment}-backup-security"
 
   dashboard_body = jsonencode({
     widgets = [
       {
         type   = "metric"
-        x      = 0
-        y      = 0
         width  = 12
         height = 6
-
         properties = {
           metrics = [
-            ["AWS/Backup", "NumberOfBackupJobsCompleted", "BackupVaultName", module.backup.backup_vault_id],
-            [".", "NumberOfBackupJobsFailed", ".", "."],
-            [".", "NumberOfBackupJobsRunning", ".", "."]
+            ["AWS/Backup", "NumberOfBackupJobsCompleted", "BackupVaultName", module.backup.vault_id],
+            ["AWS/Backup", "NumberOfBackupJobsFailed", "BackupVaultName", module.backup.vault_id],
+            ["AWS/Backup", "NumberOfBackupJobsPending", "BackupVaultName", module.backup.vault_id]
           ]
-          period = 300
-          stat   = "Sum"
-          region = data.aws_region.current.name
-          title  = "Backup Job Status"
+          view    = "timeSeries"
+          stacked = false
+          region  = data.aws_region.current.id
+          title   = "Backup Job Status"
+          period  = 300
+          stat    = "Sum"
         }
       },
       {
         type   = "metric"
-        x      = 0
-        y      = 6
         width  = 12
         height = 6
-
         properties = {
           metrics = [
-            ["AWS/KMS", "NumberOfRequestsSucceeded", "KeyId", aws_kms_key.backup_key.key_id],
-            [".", "NumberOfRequestsFailed", ".", "."]
+            ["BackupSecurity/${var.project_name}", "VaultAccess", "BackupVaultName", module.backup.vault_id]
           ]
+          view   = "timeSeries"
+          region = data.aws_region.current.id
+          title  = "Vault Access Patterns"
           period = 300
           stat   = "Sum"
-          region = data.aws_region.current.name
-          title  = "KMS Key Usage"
         }
       },
       {
         type   = "log"
-        x      = 0
-        y      = 12
         width  = 24
         height = 6
-
         properties = {
-          query  = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 100"
-          region = data.aws_region.current.name
-          title  = "Recent Backup Errors"
+          query   = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, event_type, source_ip, user_identity\n| filter event_type = \"VAULT_ACCESS\"\n| sort @timestamp desc\n| limit 100"
+          region  = data.aws_region.current.id
+          title   = "Recent Vault Access Events"
         }
       }
     ]
   })
+
+  tags = merge(local.common_tags, {
+    Purpose = "security-monitoring"
+  })
 }
 
-# Custom CloudWatch metric for backup compliance
-resource "aws_cloudwatch_log_metric_filter" "backup_compliance" {
-  name           = "${var.project_name}-${var.environment}-backup-compliance"
-  log_group_name = aws_cloudwatch_log_group.backup_logs.name
-  pattern        = "[timestamp, request_id, event_type=\"BACKUP_JOB_COMPLETED\", ...]"
+# Security-focused SNS topic for backup alerts (conditional)
+resource "aws_sns_topic" "backup_security_alerts" {
+  count = var.create_sns_topic ? 1 : 0
 
-  metric_transformation {
-    name      = "BackupComplianceEvents"
-    namespace = "Custom/Backup"
-    value     = "1"
-  }
+  name         = "${var.project_name}-${var.environment}-backup-security-alerts"
+  display_name = "Backup Security Alerts"
+  
+  # Enable encryption for sensitive backup notifications
+  kms_master_key_id = aws_kms_key.backup_key.key_id
+
+  tags = merge(local.common_tags, {
+    Purpose = "security-alerts"
+  })
 }
 
-# Security-focused CloudWatch Insights queries
-resource "aws_cloudwatch_query_definition" "backup_security_analysis" {
-  name = "${var.project_name}-${var.environment}-backup-security-analysis"
+# SNS topic policy for secure access
+resource "aws_sns_topic_policy" "backup_security_alerts" {
+  count = var.create_sns_topic ? 1 : 0
 
-  log_group_names = [aws_cloudwatch_log_group.backup_logs.name]
+  arn = aws_sns_topic.backup_security_alerts[0].arn
 
-  query_string = <<EOF
-fields @timestamp, @message
-| filter @message like /BACKUP_JOB_FAILED/ or @message like /RESTORE_JOB_FAILED/
-| stats count() by bin(5m)
-| sort @timestamp desc
-EOF
-}
-
-resource "aws_cloudwatch_query_definition" "backup_encryption_analysis" {
-  name = "${var.project_name}-${var.environment}-backup-encryption-analysis"
-
-  log_group_names = [aws_cloudwatch_log_group.backup_logs.name]
-
-  query_string = <<EOF
-fields @timestamp, @message
-| filter @message like /kms/ or @message like /encryption/
-| stats count() by bin(1h)
-| sort @timestamp desc
-EOF
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudwatch.amazonaws.com"
+        }
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.backup_security_alerts[0].arn
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
 }
