@@ -43,13 +43,13 @@ locals {
       completion_window = 300
       lifecycle = {
         cold_storage_after = 30
-        delete_after       = var.retention_days
+        delete_after       = var.backup_retention_days
       }
       copy_actions = var.enable_cross_region_backup ? [{
-        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region_name}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
         lifecycle = {
           cold_storage_after = 30
-          delete_after       = var.retention_days
+          delete_after       = var.backup_retention_days
         }
       }] : []
       recovery_point_tags = {
@@ -67,13 +67,13 @@ locals {
       completion_window = 480
       lifecycle = {
         cold_storage_after = 7
-        delete_after       = var.long_term_retention_days
+        delete_after       = var.weekly_backup_retention_days
       }
       copy_actions = var.enable_cross_region_backup ? [{
-        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region_name}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
         lifecycle = {
           cold_storage_after = 7
-          delete_after       = var.long_term_retention_days
+          delete_after       = var.weekly_backup_retention_days
         }
       }] : []
       recovery_point_tags = {
@@ -187,7 +187,7 @@ resource "aws_backup_vault" "cross_region_vault" {
   tags = merge(local.common_tags, {
     Name = "${local.vault_name}-cross-region"
     Type = "cross-region"
-    Region = var.cross_region_name
+    Region = var.cross_region
   })
 }
 

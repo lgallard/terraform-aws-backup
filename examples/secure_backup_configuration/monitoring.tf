@@ -1,14 +1,22 @@
 # CloudWatch monitoring and alerting for backup security
 
-# CloudWatch Log Group for backup events
+# Local values for monitoring optimization
+locals {
+  current_region = local.current_region
+}
+
+# CloudWatch Log Group for CloudTrail backup events (optional, used if CloudTrail sends logs here)
+# NOTE: This log group is created for potential CloudTrail integration
+# If not using CloudTrail for backup audit logging, this can be omitted
 resource "aws_cloudwatch_log_group" "backup_logs" {
-  name              = "/aws/backup/${var.project_name}-${var.environment}"
+  name              = "/aws/cloudtrail/${var.project_name}-${var.environment}-backup"
   retention_in_days = var.log_retention_days
   kms_key_id        = aws_kms_key.backup_key.arn
 
   tags = merge(local.common_tags, {
-    Name    = "backup-logs"
+    Name    = "backup-cloudtrail-logs"
     Purpose = "audit-logging"
+    Service = "cloudtrail"
   })
 }
 
@@ -78,11 +86,12 @@ resource "aws_cloudwatch_metric_alarm" "backup_job_success" {
   })
 }
 
-# CloudWatch Metric Filter for backup vault access
+# CloudWatch Metric Filter for backup vault events (using CloudTrail patterns)
 resource "aws_logs_metric_filter" "vault_access" {
   name           = "${var.project_name}-${var.environment}-vault-access"
   log_group_name = aws_cloudwatch_log_group.backup_logs.name
-  pattern        = "[timestamp, request_id, event_type=\"VAULT_ACCESS\", ...]"
+  # Updated pattern to match actual AWS Backup CloudTrail events
+  pattern        = "{ $.eventSource = \"backup.amazonaws.com\" && ($.eventName = \"GetBackupVault*\" || $.eventName = \"DeleteBackupVault*\" || $.eventName = \"PutBackupVault*\") }"
 
   metric_transformation {
     name      = "VaultAccess"
@@ -103,7 +112,7 @@ resource "aws_cloudwatch_metric_alarm" "backup_vault_access" {
   namespace           = "BackupSecurity/${var.project_name}"
   period              = "900"  # 15 minutes
   statistic           = "Sum"
-  threshold           = "10"   # Adjust based on normal access patterns
+  threshold           = var.vault_access_alarm_threshold
   alarm_description   = "This metric monitors unusual backup vault access patterns for security"
   alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
   treat_missing_data  = "notBreaching"
@@ -136,7 +145,7 @@ resource "aws_cloudwatch_dashboard" "backup_dashboard" {
           ]
           view    = "timeSeries"
           stacked = false
-          region  = data.aws_region.current.id
+          region  = local.current_region
           title   = "Backup Job Status"
           period  = 300
           stat    = "Sum"
@@ -151,7 +160,7 @@ resource "aws_cloudwatch_dashboard" "backup_dashboard" {
             ["BackupSecurity/${var.project_name}", "VaultAccess", "BackupVaultName", module.backup.vault_id]
           ]
           view   = "timeSeries"
-          region = data.aws_region.current.id
+          region = local.current_region
           title  = "Vault Access Patterns"
           period = 300
           stat   = "Sum"
@@ -162,8 +171,8 @@ resource "aws_cloudwatch_dashboard" "backup_dashboard" {
         width  = 24
         height = 6
         properties = {
-          query   = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, event_type, source_ip, user_identity\n| filter event_type = \"VAULT_ACCESS\"\n| sort @timestamp desc\n| limit 100"
-          region  = data.aws_region.current.id
+          query   = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, eventSource, eventName, sourceIPAddress, userIdentity.type\n| filter eventSource = \"backup.amazonaws.com\"\n| sort @timestamp desc\n| limit 100"
+          region  = local.current_region
           title   = "Recent Vault Access Events"
         }
       }

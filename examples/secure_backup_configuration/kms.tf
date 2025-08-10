@@ -34,8 +34,28 @@ resource "aws_kms_key" "backup_key" {
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
-        Action   = "kms:*"
+        Action = [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ]
         Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "backup.${data.aws_region.current.id}.amazonaws.com"
+          }
+        }
       },
       {
         Sid    = "AllowCloudWatchLogsAccess"
@@ -108,7 +128,7 @@ resource "aws_kms_key" "cross_region_backup_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "backup.${var.cross_region_name}.amazonaws.com"
+            "kms:ViaService" = "backup.${var.cross_region}.amazonaws.com"
           }
         }
       },
@@ -118,8 +138,31 @@ resource "aws_kms_key" "cross_region_backup_key" {
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
-        Action   = "kms:*"
+        Action = [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ]
         Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = [
+              "backup.${data.aws_region.current.id}.amazonaws.com",
+              "backup.${var.cross_region}.amazonaws.com"
+            ]
+          }
+        }
       },
       {
         Sid    = "AllowCrossRegionBackupAccess"
@@ -137,7 +180,7 @@ resource "aws_kms_key" "cross_region_backup_key" {
           StringEquals = {
             "kms:ViaService" = [
               "backup.${data.aws_region.current.id}.amazonaws.com",
-              "backup.${var.cross_region_name}.amazonaws.com"
+              "backup.${var.cross_region}.amazonaws.com"
             ]
           }
         }
@@ -152,7 +195,7 @@ resource "aws_kms_key" "cross_region_backup_key" {
     Name        = "${var.project_name}-${var.environment}-backup-cross-region-key"
     Purpose     = "cross-region-backup-encryption"
     KeyType     = "cross-region"
-    Region      = var.cross_region_name
+    Region      = var.cross_region
     Compliance  = "required"
   })
 }
