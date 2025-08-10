@@ -193,10 +193,80 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 50  # Optimized depth for most PR scenarios
+          fetch-depth: 0  # Full history for reliable diff comparisons
           token: ${{ secrets.GITHUB_TOKEN }}
           # For issue_comment events, checkout the PR branch
           ref: ${{ github.event_name == 'issue_comment' && steps.pr-checkout-info.outputs.pr_head_ref || github.ref }}
+
+      - name: Refresh git state
+        id: git-refresh
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+
+          echo "🔄 Refreshing git state to ensure latest changes are analyzed"
+
+          # Get current branch name
+          CURRENT_BRANCH=$(git branch --show-current || echo "")
+          CURRENT_SHA=$(git rev-parse HEAD)
+
+          echo "Current branch: $CURRENT_BRANCH"
+          echo "Current SHA: $CURRENT_SHA"
+
+          # Fetch all remote references to ensure we have the latest state
+          echo "Fetching all remote references..."
+          git fetch --all --prune
+
+          # For issue_comment events, ensure we're on the latest commit of the PR branch
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            EXPECTED_SHA="${{ steps.pr-checkout-info.outputs.pr_head_sha }}"
+            echo "Expected SHA from PR: $EXPECTED_SHA"
+
+            # Fetch the specific PR branch to get latest changes
+            PR_HEAD_REF="${{ steps.pr-checkout-info.outputs.pr_head_ref }}"
+            if [ -n "$PR_HEAD_REF" ]; then
+              echo "Fetching latest changes for PR branch: $PR_HEAD_REF"
+              git fetch origin "$PR_HEAD_REF:$PR_HEAD_REF" 2>/dev/null || true
+
+              # Reset to the latest commit on the PR branch
+              echo "Resetting to latest commit on $PR_HEAD_REF"
+              git reset --hard "origin/$PR_HEAD_REF"
+
+              NEW_SHA=$(git rev-parse HEAD)
+              echo "Updated to SHA: $NEW_SHA"
+
+              if [ "$NEW_SHA" != "$CURRENT_SHA" ]; then
+                echo "⚠️  SHA changed from $CURRENT_SHA to $NEW_SHA - analyzing latest changes"
+              else
+                echo "✅ SHA unchanged - no new commits since checkout"
+              fi
+            fi
+          else
+            # For PR events, ensure we have the latest changes
+            if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "HEAD" ]; then
+              echo "Ensuring latest changes for branch: $CURRENT_BRANCH"
+              git fetch origin "$CURRENT_BRANCH" 2>/dev/null || true
+              git reset --hard "origin/$CURRENT_BRANCH" 2>/dev/null || git reset --hard HEAD
+
+              NEW_SHA=$(git rev-parse HEAD)
+              if [ "$NEW_SHA" != "$CURRENT_SHA" ]; then
+                echo "⚠️  SHA updated from $CURRENT_SHA to $NEW_SHA"
+              fi
+            fi
+          fi
+
+          # Final verification
+          FINAL_SHA=$(git rev-parse HEAD)
+          FINAL_BRANCH=$(git branch --show-current || echo "detached")
+
+          echo "✅ Git state refreshed successfully"
+          echo "Final branch: $FINAL_BRANCH"
+          echo "Final SHA: $FINAL_SHA"
+
+          # Output for use in subsequent steps
+          echo "current_sha=$FINAL_SHA" >> $GITHUB_OUTPUT
+          echo "current_branch=$FINAL_BRANCH" >> $GITHUB_OUTPUT
+
 
       - name: Parse comment command
         id: parse-command
@@ -355,25 +425,163 @@ jobs:
         id: changes
         if: steps.parse-command.outputs.full_analysis == 'false'
         run: |
+
+          set -euo pipefail
+
           BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
+          CURRENT_SHA="${{ steps.git-refresh.outputs.current_sha }}"
+          CURRENT_BRANCH="${{ steps.git-refresh.outputs.current_branch }}"
 
-          # Simple git fetch and diff
-          git fetch origin $BASE_REF 2>/dev/null || true
-          CHANGED_FILES=$(git diff --name-only origin/$BASE_REF...HEAD 2>/dev/null || echo "")
-          CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . 2>/dev/null || echo "0")
+          echo "🔍 Detecting changed files for analysis"
+          echo "Base branch: $BASE_REF"
+          echo "Current SHA: $CURRENT_SHA"
+          echo "Current branch: $CURRENT_BRANCH"
 
-          # Simple validation
-          if [ "$CHANGED_COUNT" -eq 0 ]; then
-            CHANGED_FILES_STR="No files changed"
-          else
-            CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ')
+          # Ensure we have the base branch reference
+          echo "Fetching base branch: $BASE_REF"
+          git fetch origin "$BASE_REF" 2>/dev/null || {
+            echo "⚠️  Failed to fetch $BASE_REF, trying fallback methods"
+            git fetch origin 2>/dev/null || true
+          }
+
+          # Multiple fallback strategies for getting changed files
+          CHANGED_FILES=""
+          DIFF_SUCCESS=false
+
+          # Strategy 1: Standard three-dot diff (preferred)
+          if [ "$DIFF_SUCCESS" = false ]; then
+            echo "Trying three-dot diff: origin/$BASE_REF...HEAD"
+            if CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF...HEAD" 2>/dev/null); then
+              echo "✅ Three-dot diff successful"
+              DIFF_SUCCESS=true
+            else
+              echo "❌ Three-dot diff failed"
+            fi
           fi
 
-          echo "Changed files: $CHANGED_FILES_STR"
-          echo "Total changed files: $CHANGED_COUNT"
+          # Strategy 2: Two-dot diff fallback
+          if [ "$DIFF_SUCCESS" = false ]; then
+            echo "Trying two-dot diff: origin/$BASE_REF..HEAD"
+            if CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF..HEAD" 2>/dev/null); then
+              echo "✅ Two-dot diff successful"
+              DIFF_SUCCESS=true
+            else
+              echo "❌ Two-dot diff failed"
+            fi
+          fi
 
+          # Strategy 3: Direct branch comparison
+          if [ "$DIFF_SUCCESS" = false ]; then
+            echo "Trying direct comparison: origin/$BASE_REF HEAD"
+            if CHANGED_FILES=$(git diff --name-only "origin/$BASE_REF" HEAD 2>/dev/null); then
+              echo "✅ Direct comparison successful"
+              DIFF_SUCCESS=true
+            else
+              echo "❌ Direct comparison failed"
+            fi
+          fi
+
+          # Strategy 4: Last resort - use merge-base
+          if [ "$DIFF_SUCCESS" = false ]; then
+            echo "Trying merge-base approach"
+            if MERGE_BASE=$(git merge-base "origin/$BASE_REF" HEAD 2>/dev/null); then
+              if CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" HEAD 2>/dev/null); then
+                echo "✅ Merge-base diff successful"
+                DIFF_SUCCESS=true
+              fi
+            fi
+          fi
+
+          # Validate and process results
+          if [ "$DIFF_SUCCESS" = false ]; then
+            echo "❌ All diff strategies failed - will analyze full codebase"
+            CHANGED_FILES=""
+            CHANGED_COUNT=0
+            CHANGED_FILES_STR="Unable to determine changed files - will analyze full codebase"
+          else
+            # Filter out empty lines and count
+            CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -v '^$' || echo "")
+            CHANGED_COUNT=$(echo "$CHANGED_FILES" | grep -c . 2>/dev/null || echo "0")
+
+            if [ "$CHANGED_COUNT" -eq 0 ]; then
+              CHANGED_FILES_STR="No files changed"
+              echo "⚠️  No changed files detected - this might indicate an issue"
+            else
+              CHANGED_FILES_STR=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+              echo "✅ Found $CHANGED_COUNT changed files"
+            fi
+          fi
+
+          # Debug output
+          echo "📋 Changed files summary:"
+          echo "  Count: $CHANGED_COUNT"
+          echo "  Files: $CHANGED_FILES_STR"
+
+
+          if [ "$CHANGED_COUNT" -gt 0 ]; then
+            echo "📄 Individual files:"
+            echo "$CHANGED_FILES" | while IFS= read -r file; do
+              [ -n "$file" ] && echo "  - $file"
+            done
+          fi
+
+          # Output for next steps
           echo "changed_files=$CHANGED_FILES_STR" >> $GITHUB_OUTPUT
           echo "changed_count=$CHANGED_COUNT" >> $GITHUB_OUTPUT
+          echo "diff_successful=$DIFF_SUCCESS" >> $GITHUB_OUTPUT
+
+      - name: Verify commit SHA and git state
+        id: verify-state
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+
+          echo "🔍 Verifying git state before analysis"
+
+          CURRENT_SHA="${{ steps.git-refresh.outputs.current_sha }}"
+          ACTUAL_SHA=$(git rev-parse HEAD)
+          CURRENT_BRANCH="${{ steps.git-refresh.outputs.current_branch }}"
+
+          # Verify SHA consistency
+          if [ "$CURRENT_SHA" != "$ACTUAL_SHA" ]; then
+            echo "⚠️  SHA mismatch detected!"
+            echo "  Expected: $CURRENT_SHA"
+            echo "  Actual: $ACTUAL_SHA"
+            echo "  This indicates a git state issue - attempting to resolve..."
+
+            # Update the SHA for consistency
+            CURRENT_SHA="$ACTUAL_SHA"
+            echo "current_sha=$ACTUAL_SHA" >> $GITHUB_OUTPUT
+          else
+            echo "✅ SHA verification passed: $CURRENT_SHA"
+            echo "current_sha=$CURRENT_SHA" >> $GITHUB_OUTPUT
+          fi
+
+          # Get additional context for debugging
+          echo "📊 Git state summary:"
+          echo "  Commit SHA: $CURRENT_SHA"
+          echo "  Branch: $CURRENT_BRANCH"
+          echo "  Repository: ${{ github.repository }}"
+          echo "  Event: ${{ github.event_name }}"
+
+          # Get commit info for better context
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "Unable to get commit message")
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:"%an" 2>/dev/null || echo "Unknown")
+          COMMIT_DATE=$(git log -1 --pretty=format:"%ci" 2>/dev/null || echo "Unknown")
+
+          echo "  Commit message: $COMMIT_MSG"
+          echo "  Author: $COMMIT_AUTHOR"
+          echo "  Date: $COMMIT_DATE"
+
+          # Create unique identifier for cache invalidation
+          REVIEW_ID="${CURRENT_SHA:0:8}-${{ github.event_name }}-$(date +%s)"
+          echo "  Review ID: $REVIEW_ID"
+
+          # Output additional context
+          echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "review_id=$REVIEW_ID" >> $GITHUB_OUTPUT
 
       - name: Run Claude Code Review
         id: claude
@@ -382,18 +590,28 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Optional: Add specific tools for running tests or linting
-          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          # Allow Bash permissions for pre-commit hooks and documentation updates
+          allowed_tools: "Bash(pre-commit run --files),Bash(terraform fmt),Bash(terraform validate),Bash(terraform-docs)"
 
           # Dynamic prompt based on review mode
           direct_prompt: |
+            🔄 **COMMIT ANALYSIS CONTEXT**
+            - **Commit SHA**: `${{ steps.verify-state.outputs.current_sha }}`
+            - **Review ID**: `${{ steps.verify-state.outputs.review_id }}`
+            - **Branch**: `${{ steps.git-refresh.outputs.current_branch }}`
+            - **Last Commit**: "${{ steps.verify-state.outputs.commit_message }}" by ${{ steps.verify-state.outputs.commit_author }}
+            - **Date**: ${{ steps.verify-state.outputs.commit_date }}
+
+            ---
+
             ${{ steps.parse-command.outputs.full_analysis == 'false' && format('
             **IMPORTANT: Focus ONLY on the following changed files in this pull request:**
             Files changed: {0}
             Total files changed: {1}
+            Diff detection: {2}
 
             DO NOT review or comment on files outside this list unless they are directly impacted by changes in these files.
-            ', steps.changes.outputs.changed_files || 'Unable to determine changed files', steps.changes.outputs.changed_count || '0') || '' }}
+            ', steps.changes.outputs.changed_files || 'Unable to determine changed files', steps.changes.outputs.changed_count || '0', steps.changes.outputs.diff_successful == 'true' && 'Successful' || 'Failed - analyzing full codebase') || '' }}
 
             ${{ steps.parse-command.outputs.mode == 'hunt' && format('
             🕵️ BUG HUNT MODE - Find potential issues quickly:
@@ -444,8 +662,9 @@ jobs:
             Be constructive and helpful.
             ', steps.parse-command.outputs.focus, steps.parse-command.outputs.verbose) || '' }}
 
-          # Use sticky comments for better UX
+          # Use sticky comments with commit-specific cache invalidation
           use_sticky_comment: true
+          # Note: The commit SHA and review ID in the prompt help ensure fresh analysis
 
       - name: Workflow Summary
         if: always()
@@ -472,10 +691,33 @@ jobs:
           echo "**Full Analysis:** \`${{ steps.parse-command.outputs.full_analysis || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.parse-command.outputs.full_analysis }}" != "true" ]; then
             echo "**Changed Files:** \`${{ steps.changes.outputs.changed_count || '0' }}\` files" >> $GITHUB_STEP_SUMMARY
+            echo "**Diff Detection:** \`${{ steps.changes.outputs.diff_successful == 'true' && 'Successful' || 'Failed' }}\`" >> $GITHUB_STEP_SUMMARY
           fi
           echo "**PR Number:** \`${{ steps.pr-info.outputs.pr_number || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Base Branch:** \`${{ steps.pr-info.outputs.base_ref || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Git State Information
+          echo "### 📊 Git State Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** \`${{ steps.verify-state.outputs.current_sha || steps.git-refresh.outputs.current_sha || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Review ID:** \`${{ steps.verify-state.outputs.review_id || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Branch:** \`${{ steps.git-refresh.outputs.current_branch || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Last Commit:** \"${{ steps.verify-state.outputs.commit_message || 'Unknown' }}\"" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** \`${{ steps.verify-state.outputs.commit_author || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** \`${{ steps.verify-state.outputs.commit_date || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Analysis Scope Details
+          if [ "${{ steps.parse-command.outputs.full_analysis }}" != "true" ] && [ "${{ steps.changes.outputs.changed_count || '0' }}" -gt "0" ]; then
+            echo "### 📄 Files Being Analyzed" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.changes.outputs.changed_files }}" | tr ' ' '\n' | grep -v '^$' | head -20 >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.changes.outputs.changed_count }}" -gt "20" ]; then
+              echo "... and $((${{ steps.changes.outputs.changed_count }} - 20)) more files" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
 
           # Available Commands
           echo "### 📝 Available Commands" >> $GITHUB_STEP_SUMMARY
@@ -506,8 +748,19 @@ jobs:
           # Performance & Reliability Info
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ⚡ Performance & Reliability" >> $GITHUB_STEP_SUMMARY
-          echo "- 🚀 Optimized git operations with configurable fetch depth" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔄 Automatic retry logic for network operations" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 Full git history fetch for reliable diff comparisons" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Automatic git state refresh and commit SHA verification" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 Multiple fallback strategies for change detection" >> $GITHUB_STEP_SUMMARY
           echo "- ⏱️ Timeout protection prevents runaway executions" >> $GITHUB_STEP_SUMMARY
           echo "- 🛡️ Comprehensive error handling and validation" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 Enhanced logging for troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Enhanced logging and debug information" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔐 Cache invalidation via commit-specific review IDs" >> $GITHUB_STEP_SUMMARY
+
+          # Troubleshooting section
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "If the review doesn't detect recent changes:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check the commit SHA matches your latest changes" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify the diff detection was successful" >> $GITHUB_STEP_SUMMARY
+          echo "3. Review the git state analysis above" >> $GITHUB_STEP_SUMMARY
+          echo "4. Try \`codebot hunt --full\` to analyze the entire codebase" >> $GITHUB_STEP_SUMMARY
