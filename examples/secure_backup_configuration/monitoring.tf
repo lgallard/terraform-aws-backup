@@ -2,7 +2,7 @@
 
 # Local values for monitoring optimization
 locals {
-  current_region = local.current_region
+  current_region = data.aws_region.current.id
 }
 
 # CloudWatch Log Group for CloudTrail backup events (optional, used if CloudTrail sends logs here)
