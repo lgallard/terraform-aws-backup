@@ -7,7 +7,7 @@ module "backup" {
 
   plan_name             = var.plan_name
   vault_name            = var.vault_name
-  backup_selection_name = "test-backup-selection"
+  selection_name = "test-backup-selection"
 
   # Basic backup rule
   rules = [{

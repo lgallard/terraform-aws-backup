@@ -137,8 +137,8 @@ module "backup" {
   enabled = true
 
   # Vault configuration with KMS encryption
-  vault_name    = local.vault_name
-  vault_kms_key = aws_kms_key.backup_key.arn
+  vault_name        = local.vault_name
+  vault_kms_key_arn = aws_kms_key.backup_key.arn
 
   # Enable vault lock for compliance (if specified)
   locked             = var.enable_vault_lock
