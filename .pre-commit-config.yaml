@@ -31,7 +31,6 @@ repos:
       - id: terraform_validate
         args:
           - --hook-config=--retry-once-with-cleanup=true  # Retry validation with cleanup
-          - --args=-backend=false  # Skip backend initialization
         exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
       - id: terraform_docs
         args:
