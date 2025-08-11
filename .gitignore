@@ -37,3 +37,9 @@ terraform.rc
 
 # Cursor rules
 .cursor/rules/*
+
+# Test files with intentional formatting issues
+test_formatting.tf
+*test_formatting.tf
+*_test.tf
+test_*.tf

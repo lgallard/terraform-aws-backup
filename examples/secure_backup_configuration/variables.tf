@@ -175,3 +175,32 @@ variable "compliance_framework" {
     error_message = "Compliance framework must be one of: SOC2, HIPAA, PCI-DSS, ISO27001, GDPR."
   }
 }
+
+# CloudWatch monitoring configuration
+variable "vault_access_alarm_threshold" {
+  description = "Threshold for unusual vault access alarm (adjust based on normal access patterns)"
+  type        = number
+  default     = 10
+
+  validation {
+    condition     = var.vault_access_alarm_threshold > 0
+    error_message = "Vault access alarm threshold must be greater than 0."
+  }
+}
+
+variable "sns_topic_arn" {
+  description = "SNS topic ARN for alarm notifications (optional)"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.sns_topic_arn == null || can(regex("^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:.*", var.sns_topic_arn))
+    error_message = "SNS topic ARN must be a valid SNS topic ARN format."
+  }
+}
+
+variable "create_sns_topic" {
+  description = "Whether to create an SNS topic for backup security alerts"
+  type        = bool
+  default     = false
+}
