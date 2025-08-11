@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.0.1](https://github.com/lgallard/terraform-aws-backup/compare/1.0.0...1.0.1) (2025-08-11)
+
+
+### Bug Fixes
+
+* remove malformed test_formatting.tf causing CI failures ([#213](https://github.com/lgallard/terraform-aws-backup/issues/213)) ([fb2337b](https://github.com/lgallard/terraform-aws-backup/commit/fb2337b067c8e583a413594297e846b7bbcb6cc7))
+
 ## [1.0.0](https://github.com/lgallard/terraform-aws-backup/compare/0.39.0...1.0.0) (2025-08-11)
 
 
