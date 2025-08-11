@@ -41,7 +41,7 @@ jobs:
           terraform_version: '1.3.0'
 
       - name: Cache terraform tools
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.local/bin/terraform-docs
@@ -76,7 +76,7 @@ jobs:
           pip install pre-commit
 
       - name: Cache pre-commit hooks
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
