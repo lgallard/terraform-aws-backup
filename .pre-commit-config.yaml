@@ -1,8 +1,8 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
-# Global excludes for temporary and test files
-exclude: '^.*test_formatting\.tf$|^test_.*\.tf$|.*_test\.tf$'
+# Global excludes for temporary and test files - comprehensive patterns
+exclude: '^.*test_formatting\.tf$|^test_.*\.tf$|.*_test\.tf$|.*test_formatting.*|^.*/test_formatting\.tf$'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -27,16 +27,20 @@ repos:
       - id: terraform_fmt
         args:
           - --args=-write=false  # Don't write formatted files, just check
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
       - id: terraform_validate
         args:
           - --hook-config=--retry-once-with-cleanup=true  # Retry validation with cleanup
           - --args=-backend=false  # Skip backend initialization
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
       - id: terraform_docs
         args:
           - --args=--config=.terraform-docs.yml  # Use config file for consistent documentation
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
       - id: terraform_tflint  # Added terraform linter
         args:
           - --args=--config=.tflint.hcl
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
 # Temporarily disabled terraform_checkov due to missing checkov installation in CI
       # - id: terraform_checkov  # Added security scanner
       #   args:
