@@ -1,18 +1,6 @@
 # Secure AWS Backup Configuration Example
 # This example demonstrates enterprise-grade backup security practices
 
-terraform {
-  required_version = ">= 1.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0"
-      configuration_aliases = [aws.cross_region]
-    }
-  }
-}
-
 # Data sources for account and region information
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
