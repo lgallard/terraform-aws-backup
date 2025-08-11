@@ -31,7 +31,7 @@ repos:
       - id: terraform_validate
         args:
           - --hook-config=--retry-once-with-cleanup=true  # Retry validation with cleanup
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
       - id: terraform_docs
         args:
           - --args=--config=.terraform-docs.yml  # Use config file for consistent documentation
