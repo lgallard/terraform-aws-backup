@@ -16,8 +16,8 @@ module "backup_source" {
     aws = aws.source
   }
 
-  plan_name             = var.plan_name
-  vault_name            = var.vault_name
+  plan_name      = var.plan_name
+  vault_name     = var.vault_name
   selection_name = "cross-region-backup-selection"
 
   # Basic backup rule with cross-region copy

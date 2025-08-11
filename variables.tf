@@ -295,8 +295,8 @@ variable "rules" {
     condition = alltrue([
       for rule in var.rules :
       rule.start_window == null || rule.completion_window == null ||
-      (rule.start_window != null && rule.completion_window != null && 
-       rule.completion_window >= rule.start_window + 60)
+      (rule.start_window != null && rule.completion_window != null &&
+      rule.completion_window >= rule.start_window + 60)
     ])
     error_message = "The completion_window must be at least 60 minutes longer than start_window."
   }
