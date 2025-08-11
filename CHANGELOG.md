@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.0.0](https://github.com/lgallard/terraform-aws-backup/compare/0.39.0...1.0.0) (2025-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* None - this is a documentation-only change
+
+### Documentation
+
+* optimize CLAUDE.md for improved readability and MCP integration ([#211](https://github.com/lgallard/terraform-aws-backup/issues/211)) ([49434ed](https://github.com/lgallard/terraform-aws-backup/commit/49434ed8a1907442bcae8c1b076f98a39f792158))
+
 ## [0.39.0](https://github.com/lgallard/terraform-aws-backup/compare/0.38.0...0.39.0) (2025-08-09)
 
 
