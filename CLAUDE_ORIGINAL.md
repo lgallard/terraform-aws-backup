@@ -8,7 +8,7 @@ This document outlines Terraform-specific development guidelines for the terrafo
 ### File Organization
 - **main.tf** - Primary resource definitions and locals
 - **variables.tf** - Input variable definitions with validation
-- **outputs.tf** - Output value definitions  
+- **outputs.tf** - Output value definitions
 - **versions.tf** - Provider version constraints
 - **iam.tf** - IAM roles and policies
 - **notifications.tf** - SNS and notification configurations
@@ -32,7 +32,7 @@ This document outlines Terraform-specific development guidelines for the terrafo
 # Preferred: Using for_each
 resource "aws_backup_plan" "this" {
   for_each = var.enabled ? var.plans : {}
-  
+
   name = each.value.name
   # ...
 }
@@ -69,10 +69,10 @@ locals {
   # Resource creation conditions
   should_create_vault = var.enabled && var.vault_name != null
   should_create_lock  = local.should_create_vault && var.locked
-  
+
   # Data processing
   rules = concat(local.rule, var.rules)
-  
+
   # Validation helpers
   vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
 }
@@ -209,7 +209,7 @@ This module includes a comprehensive pre-commit GitHub Actions workflow (`.githu
 
 **Automated Tools & Checks:**
 - 🔧 **Terraform formatting** (`terraform fmt`)
-- ✅ **Terraform validation** (`terraform validate`) 
+- ✅ **Terraform validation** (`terraform validate`)
 - 📚 **Documentation generation** (`terraform-docs`)
 - 🔍 **TFLint analysis** for best practices and errors
 - 🧹 **File formatting** (trailing whitespace, end-of-file fixes)
@@ -449,7 +449,7 @@ variable "backup_service_role_permissions" {
 
   validation {
     condition = alltrue([
-      for perm in var.backup_service_role_permissions : 
+      for perm in var.backup_service_role_permissions :
       contains(["Allow", "Deny"], perm.effect)
     ])
     error_message = "Permission effects must be either 'Allow' or 'Deny'."
@@ -631,7 +631,7 @@ resource "aws_organizations_policy" "backup_policy" {
   name        = var.org_policy_name
   description = var.org_policy_description
   type        = "BACKUP_POLICY"
-  
+
   content = jsonencode({
     plans = {
       for plan_name, plan in var.backup_policies : plan_name => {
@@ -660,7 +660,7 @@ resource "aws_organizations_policy" "backup_policy" {
 
   targets {
     root = var.org_policy_attach_to_root
-    
+
     dynamic "organizational_unit" {
       for_each = var.org_policy_target_ous
       content {
@@ -738,10 +738,10 @@ variable "vss_backup_configuration" {
 locals {
   vss_compatible_resources = [
     for resource in local.selection_resources : resource
-    if can(regex("^arn:aws:ec2:.*:instance/.*", resource)) || 
+    if can(regex("^arn:aws:ec2:.*:instance/.*", resource)) ||
        can(regex("^arn:aws:fsx:.*", resource))
   ]
-  
+
   vss_validation_passed = var.vss_backup_configuration.enabled ? (
     length(local.vss_compatible_resources) > 0
   ) : true
@@ -788,7 +788,7 @@ locals {
   optimized_backup_rules = [
     for rule in var.backup_optimization.cost_optimization_rules : {
       name                      = rule.rule_name
-      schedule                  = rule.schedule_frequency == "daily" ? "cron(0 3 ? * * *)" : 
+      schedule                  = rule.schedule_frequency == "daily" ? "cron(0 3 ? * * *)" :
                                  rule.schedule_frequency == "weekly" ? "cron(0 3 ? * SUN *)" :
                                  "cron(0 3 1 * ? *)"  # monthly
       target_vault_name        = var.vault_name
@@ -839,14 +839,14 @@ selection_resources = flatten([
 # Example: Creating multiple backup selections
 resource "aws_backup_selection" "this" {
   for_each = {
-    for idx, selection in var.backup_selections : 
+    for idx, selection in var.backup_selections :
     "${selection.name}_${idx}" => selection
   }
-  
+
   iam_role_arn = aws_iam_role.backup.arn
   name         = each.value.name
   plan_id      = aws_backup_plan.this[each.value.plan_name].id
-  
+
   dynamic "resources" {
     for_each = each.value.resources
     content {
@@ -1181,7 +1181,7 @@ module "windows_backup" {
 # Example provider configuration for AWS Backup
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -1229,11 +1229,11 @@ This project is configured to use the following Model Context Protocol (MCP) ser
 
 **Usage Examples**:
 - `Look up aws_backup_vault resource documentation`
-- `Find the latest AWS Backup lifecycle policy examples`  
+- `Find the latest AWS Backup lifecycle policy examples`
 - `Search for AWS Backup Terraform modules`
 - `Get documentation for aws_backup_plan resource`
 
-#### Context7 MCP Server  
+#### Context7 MCP Server
 **Purpose**: Access general library and framework documentation
 **Package**: `@upstash/context7-mcp`
 
@@ -1242,7 +1242,7 @@ This project is configured to use the following Model Context Protocol (MCP) ser
 {
   "mcpServers": {
     "context7": {
-      "command": "npx", 
+      "command": "npx",
       "args": ["-y", "@upstash/context7-mcp@latest"]
     }
   }
@@ -1260,7 +1260,7 @@ The MCP servers are automatically available in GitHub Actions through the claude
 
 ### Usage Tips
 1. **Be Specific**: When requesting documentation, specify the exact resource or concept
-2. **Version Awareness**: Both servers provide current, version-specific documentation  
+2. **Version Awareness**: Both servers provide current, version-specific documentation
 3. **Combine Sources**: Use Terraform MCP for backup-specific docs, Context7 for general development patterns
 4. **Local vs CI**: Same MCP servers work in both local development and GitHub Actions
 
@@ -1272,7 +1272,7 @@ The MCP servers are automatically available in GitHub Actions through the claude
 ```
 
 **Testing Pattern Research**:
-```  
+```
 @claude Look up current Terratest patterns for testing AWS Backup resources and help me add comprehensive tests for vault lock functionality.
 ```
 

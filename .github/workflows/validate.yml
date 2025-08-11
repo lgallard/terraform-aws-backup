@@ -104,4 +104,3 @@ jobs:
           cd examples/${{ matrix.example }}
           terraform validate
         fi
-
