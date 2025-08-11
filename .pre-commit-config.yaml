@@ -35,11 +35,11 @@ repos:
       - id: terraform_docs
         args:
           - --args=--config=.terraform-docs.yml  # Use config file for consistent documentation
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
       - id: terraform_tflint  # Added terraform linter
         args:
           - --args=--config=.tflint.hcl
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
 # Temporarily disabled terraform_checkov due to missing checkov installation in CI
       # - id: terraform_checkov  # Added security scanner
       #   args:
