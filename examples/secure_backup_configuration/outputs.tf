@@ -85,7 +85,7 @@ output "vault_lock_enabled" {
 
 output "encryption_enabled" {
   description = "Whether backup encryption is enabled"
-  value       = true  # Always true in this secure configuration
+  value       = true # Always true in this secure configuration
 }
 
 output "cross_region_replication_enabled" {

@@ -57,7 +57,7 @@ func TestBasicBackupPlan(t *testing.T) {
 
 	// Validate that the backup plan was created
 	backupClient := backup.New(sess)
-	
+
 	// Get the backup plan ARN from terraform output
 	backupPlanArn := terraform.Output(t, terraformOptions, "backup_plan_arn")
 	require.NotEmpty(t, backupPlanArn, "Backup plan ARN should not be empty")
@@ -286,7 +286,7 @@ func TestCrossRegionBackup(t *testing.T) {
 
 	// Test in both regions
 	regions := []string{GetTestRegion(), GetCrossRegion()}
-	
+
 	for _, region := range regions {
 		sess := session.Must(session.NewSession(&aws.Config{
 			Region: aws.String(region),
@@ -304,7 +304,7 @@ func TestCrossRegionBackup(t *testing.T) {
 			})
 			return vaultErr
 		})
-		
+
 		if region == GetTestRegion() {
 			// Source region should have the vault
 			require.NoError(t, vaultErr, fmt.Sprintf("Should be able to describe backup vault in %s", region))
@@ -392,16 +392,16 @@ func TestBackupRestore(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		
+
 		if len(result.Reservations) == 0 || len(result.Reservations[0].Instances) == 0 {
 			return fmt.Errorf("instance not found")
 		}
-		
+
 		state := *result.Reservations[0].Instances[0].State.Name
 		if state != "running" {
 			return fmt.Errorf("instance state is %s, waiting for running", state)
 		}
-		
+
 		return nil
 	})
 
@@ -411,20 +411,20 @@ func TestBackupRestore(t *testing.T) {
 
 	// Phase 1: Create backup jobs
 	t.Logf("Starting backup jobs...")
-	
+
 	// Start backup job for EBS volume
 	volumeBackupJobId := startBackupJob(t, backupClient, testVolumeId, backupVaultId, "EBS")
-	
+
 	// Start backup job for EC2 instance
 	instanceBackupJobId := startBackupJob(t, backupClient, testInstanceId, backupVaultId, "EC2")
-	
+
 	// Start backup job for DynamoDB table
 	tableArn := terraform.Output(t, terraformOptions, "test_dynamodb_table_arn")
 	dynamodbBackupJobId := startBackupJob(t, backupClient, tableArn, backupVaultId, "DynamoDB")
 
 	// Phase 2: Wait for backup jobs to complete
 	t.Logf("Waiting for backup jobs to complete...")
-	
+
 	volumeRecoveryPointArn := waitForBackupCompletion(t, backupClient, volumeBackupJobId, 30*time.Minute)
 	instanceRecoveryPointArn := waitForBackupCompletion(t, backupClient, instanceBackupJobId, 30*time.Minute)
 	dynamodbRecoveryPointArn := waitForBackupCompletion(t, backupClient, dynamodbBackupJobId, 30*time.Minute)
@@ -433,19 +433,19 @@ func TestBackupRestore(t *testing.T) {
 
 	// Phase 3: Restore from backups
 	t.Logf("Starting restore operations...")
-	
+
 	// Restore EBS volume
 	restoredVolumeArn := restoreEBSVolume(t, backupClient, volumeRecoveryPointArn, resourcePrefix)
-	
+
 	// Restore DynamoDB table
 	restoredTableName := restoreDynamoDBTable(t, backupClient, dynamodbRecoveryPointArn, resourcePrefix)
 
 	// Phase 4: Wait for restore operations to complete
 	t.Logf("Waiting for restore operations to complete...")
-	
+
 	// Wait for volume restore
 	waitForRestoreCompletion(t, backupClient, restoredVolumeArn, 20*time.Minute)
-	
+
 	// Wait for DynamoDB table restore
 	waitForRestoreCompletion(t, backupClient, restoredTableName, 20*time.Minute)
 
@@ -453,10 +453,10 @@ func TestBackupRestore(t *testing.T) {
 
 	// Phase 5: Validate restored data
 	t.Logf("Validating restored data...")
-	
+
 	// Validate EBS volume restore
 	validateEBSVolumeRestore(t, ec2Client, restoredVolumeArn)
-	
+
 	// Validate DynamoDB table restore
 	validateDynamoDBTableRestore(t, dynamodbClient, restoredTableName)
 
@@ -466,23 +466,23 @@ func TestBackupRestore(t *testing.T) {
 // Helper function to start a backup job
 func startBackupJob(t *testing.T, client *backup.Backup, resourceArn, vaultName, resourceType string) string {
 	var backupJobId string
-	
+
 	RetryableAWSOperation(t, fmt.Sprintf("start backup job for %s", resourceType), func() error {
 		input := &backup.StartBackupJobInput{
 			BackupVaultName: aws.String(vaultName),
 			ResourceArn:     aws.String(resourceArn),
 			IamRoleArn:      aws.String("arn:aws:iam::123456789012:role/aws-backup-default-service-role"), // This would be created by the module
 		}
-		
+
 		result, err := client.StartBackupJob(input)
 		if err != nil {
 			return err
 		}
-		
+
 		backupJobId = *result.BackupJobId
 		return nil
 	})
-	
+
 	t.Logf("Started backup job %s for %s resource", backupJobId, resourceType)
 	return backupJobId
 }
@@ -490,24 +490,24 @@ func startBackupJob(t *testing.T, client *backup.Backup, resourceArn, vaultName,
 // Helper function to wait for backup completion
 func waitForBackupCompletion(t *testing.T, client *backup.Backup, jobId string, timeout time.Duration) string {
 	var recoveryPointArn string
-	
+
 	start := time.Now()
 	for time.Since(start) < timeout {
 		var job *backup.DescribeBackupJobOutput
-		
+
 		RetryableAWSOperation(t, "describe backup job", func() error {
 			input := &backup.DescribeBackupJobInput{
 				BackupJobId: aws.String(jobId),
 			}
-			
+
 			var err error
 			job, err = client.DescribeBackupJob(input)
 			return err
 		})
-		
+
 		state := *job.State
 		t.Logf("Backup job %s state: %s", jobId, state)
-		
+
 		switch state {
 		case "COMPLETED":
 			recoveryPointArn = *job.RecoveryPointArn
@@ -522,7 +522,7 @@ func waitForBackupCompletion(t *testing.T, client *backup.Backup, jobId string, 
 			time.Sleep(30 * time.Second)
 		}
 	}
-	
+
 	t.Fatalf("Backup job %s did not complete within %v", jobId, timeout)
 	return ""
 }
@@ -530,7 +530,7 @@ func waitForBackupCompletion(t *testing.T, client *backup.Backup, jobId string, 
 // Helper function to restore EBS volume
 func restoreEBSVolume(t *testing.T, client *backup.Backup, recoveryPointArn, resourcePrefix string) string {
 	var restoreJobId string
-	
+
 	RetryableAWSOperation(t, "start EBS volume restore", func() error {
 		input := &backup.StartRestoreJobInput{
 			RecoveryPointArn: aws.String(recoveryPointArn),
@@ -541,16 +541,16 @@ func restoreEBSVolume(t *testing.T, client *backup.Backup, recoveryPointArn, res
 			},
 			IamRoleArn: aws.String("arn:aws:iam::123456789012:role/aws-backup-default-service-role"),
 		}
-		
+
 		result, err := client.StartRestoreJob(input)
 		if err != nil {
 			return err
 		}
-		
+
 		restoreJobId = *result.RestoreJobId
 		return nil
 	})
-	
+
 	t.Logf("Started EBS volume restore job: %s", restoreJobId)
 	return restoreJobId
 }
@@ -558,7 +558,7 @@ func restoreEBSVolume(t *testing.T, client *backup.Backup, recoveryPointArn, res
 // Helper function to restore DynamoDB table
 func restoreDynamoDBTable(t *testing.T, client *backup.Backup, recoveryPointArn, resourcePrefix string) string {
 	var restoreJobId string
-	
+
 	RetryableAWSOperation(t, "start DynamoDB table restore", func() error {
 		input := &backup.StartRestoreJobInput{
 			RecoveryPointArn: aws.String(recoveryPointArn),
@@ -567,16 +567,16 @@ func restoreDynamoDBTable(t *testing.T, client *backup.Backup, recoveryPointArn,
 			},
 			IamRoleArn: aws.String("arn:aws:iam::123456789012:role/aws-backup-default-service-role"),
 		}
-		
+
 		result, err := client.StartRestoreJob(input)
 		if err != nil {
 			return err
 		}
-		
+
 		restoreJobId = *result.RestoreJobId
 		return nil
 	})
-	
+
 	t.Logf("Started DynamoDB table restore job: %s", restoreJobId)
 	return restoreJobId
 }
@@ -586,20 +586,20 @@ func waitForRestoreCompletion(t *testing.T, client *backup.Backup, jobId string,
 	start := time.Now()
 	for time.Since(start) < timeout {
 		var job *backup.DescribeRestoreJobOutput
-		
+
 		RetryableAWSOperation(t, "describe restore job", func() error {
 			input := &backup.DescribeRestoreJobInput{
 				RestoreJobId: aws.String(jobId),
 			}
-			
+
 			var err error
 			job, err = client.DescribeRestoreJob(input)
 			return err
 		})
-		
+
 		state := *job.Status
 		t.Logf("Restore job %s state: %s", jobId, state)
-		
+
 		switch state {
 		case "COMPLETED":
 			t.Logf("Restore job %s completed successfully", jobId)
@@ -613,7 +613,7 @@ func waitForRestoreCompletion(t *testing.T, client *backup.Backup, jobId string,
 			time.Sleep(30 * time.Second)
 		}
 	}
-	
+
 	t.Fatalf("Restore job %s did not complete within %v", jobId, timeout)
 }
 
@@ -622,29 +622,29 @@ func validateEBSVolumeRestore(t *testing.T, client *ec2.EC2, volumeArn string) {
 	// Extract volume ID from ARN
 	parts := strings.Split(volumeArn, "/")
 	volumeId := parts[len(parts)-1]
-	
+
 	RetryableAWSOperation(t, "validate EBS volume restore", func() error {
 		input := &ec2.DescribeVolumesInput{
 			VolumeIds: []*string{aws.String(volumeId)},
 		}
-		
+
 		result, err := client.DescribeVolumes(input)
 		if err != nil {
 			return err
 		}
-		
+
 		if len(result.Volumes) == 0 {
 			return fmt.Errorf("restored volume not found")
 		}
-		
+
 		volume := result.Volumes[0]
 		assert.Equal(t, "available", *volume.State, "Restored volume should be available")
 		assert.Equal(t, int64(8), *volume.Size, "Restored volume should have correct size")
 		assert.True(t, *volume.Encrypted, "Restored volume should be encrypted")
-		
+
 		return nil
 	})
-	
+
 	t.Logf("EBS volume restore validation completed successfully")
 }
 
@@ -654,16 +654,16 @@ func validateDynamoDBTableRestore(t *testing.T, client *dynamodb.DynamoDB, table
 		input := &dynamodb.DescribeTableInput{
 			TableName: aws.String(tableName),
 		}
-		
+
 		result, err := client.DescribeTable(input)
 		if err != nil {
 			return err
 		}
-		
+
 		table := result.Table
 		assert.Equal(t, "ACTIVE", *table.TableStatus, "Restored table should be active")
 		assert.Equal(t, "PAY_PER_REQUEST", *table.BillingModeSummary.BillingMode, "Restored table should use PAY_PER_REQUEST")
-		
+
 		// Check if test data exists
 		getInput := &dynamodb.GetItemInput{
 			TableName: aws.String(tableName),
@@ -673,18 +673,18 @@ func validateDynamoDBTableRestore(t *testing.T, client *dynamodb.DynamoDB, table
 				},
 			},
 		}
-		
+
 		getResult, err := client.GetItem(getInput)
 		if err != nil {
 			return err
 		}
-		
+
 		if getResult.Item == nil {
 			return fmt.Errorf("test data not found in restored table")
 		}
-		
+
 		return nil
 	})
-	
+
 	t.Logf("DynamoDB table restore validation completed successfully")
 }

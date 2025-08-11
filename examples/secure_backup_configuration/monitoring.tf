@@ -68,7 +68,7 @@ resource "aws_cloudwatch_metric_alarm" "backup_job_success" {
   evaluation_periods  = "2"
   metric_name         = "NumberOfBackupJobsCompleted"
   namespace           = "AWS/Backup"
-  period              = "86400"  # Daily check
+  period              = "86400" # Daily check
   statistic           = "Sum"
   threshold           = "1"
   alarm_description   = "This metric monitors successful backup job completion for security compliance"
@@ -91,13 +91,13 @@ resource "aws_logs_metric_filter" "vault_access" {
   name           = "${var.project_name}-${var.environment}-vault-access"
   log_group_name = aws_cloudwatch_log_group.backup_logs.name
   # Updated pattern to match actual AWS Backup CloudTrail events
-  pattern        = "{ $.eventSource = \"backup.amazonaws.com\" && ($.eventName = \"GetBackupVault*\" || $.eventName = \"DeleteBackupVault*\" || $.eventName = \"PutBackupVault*\") }"
+  pattern = "{ $.eventSource = \"backup.amazonaws.com\" && ($.eventName = \"GetBackupVault*\" || $.eventName = \"DeleteBackupVault*\" || $.eventName = \"PutBackupVault*\") }"
 
   metric_transformation {
     name      = "VaultAccess"
     namespace = "BackupSecurity/${var.project_name}"
     value     = "1"
-    
+
     # Add security context to metrics
     default_value = "0"
   }
@@ -110,7 +110,7 @@ resource "aws_cloudwatch_metric_alarm" "backup_vault_access" {
   evaluation_periods  = "2"
   metric_name         = "VaultAccess"
   namespace           = "BackupSecurity/${var.project_name}"
-  period              = "900"  # 15 minutes
+  period              = "900" # 15 minutes
   statistic           = "Sum"
   threshold           = var.vault_access_alarm_threshold
   alarm_description   = "This metric monitors unusual backup vault access patterns for security"
@@ -171,9 +171,9 @@ resource "aws_cloudwatch_dashboard" "backup_dashboard" {
         width  = 24
         height = 6
         properties = {
-          query   = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, eventSource, eventName, sourceIPAddress, userIdentity.type\n| filter eventSource = \"backup.amazonaws.com\"\n| sort @timestamp desc\n| limit 100"
-          region  = local.current_region
-          title   = "Recent Vault Access Events"
+          query  = "SOURCE '${aws_cloudwatch_log_group.backup_logs.name}' | fields @timestamp, eventSource, eventName, sourceIPAddress, userIdentity.type\n| filter eventSource = \"backup.amazonaws.com\"\n| sort @timestamp desc\n| limit 100"
+          region = local.current_region
+          title  = "Recent Vault Access Events"
         }
       }
     ]
@@ -190,7 +190,7 @@ resource "aws_sns_topic" "backup_security_alerts" {
 
   name         = "${var.project_name}-${var.environment}-backup-security-alerts"
   display_name = "Backup Security Alerts"
-  
+
   # Enable encryption for sensitive backup notifications
   kms_master_key_id = aws_kms_key.backup_key.key_id
 

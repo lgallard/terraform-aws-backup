@@ -137,7 +137,7 @@ delete_after = try(lifecycle.value.delete_after, 90)
    ```bash
    # Before changes
    terraform plan -out=before.plan
-   # After changes  
+   # After changes
    terraform plan -out=after.plan
    # Compare plans should show identical resources
    ```

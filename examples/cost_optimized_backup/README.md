@@ -32,7 +32,7 @@ Cost-optimized backup strategies provide:
 - **Retention**: Short 30-day retention to balance protection with cost
 - **Use Case**: Production databases, critical application data
 
-### Tier 2: Standard Resources  
+### Tier 2: Standard Resources
 - **Frequency**: Daily backups during off-hours
 - **Storage**: 30-day warm storage, then cold storage for cost savings
 - **Retention**: 90-day retention for operational recovery needs
@@ -56,12 +56,12 @@ Cost-optimized backup strategies provide:
    region      = "us-east-1"
    vault_name  = "my-cost-optimized-vault"
    environment = "prod"
-   
+
    critical_resources = [
      "arn:aws:rds:us-east-1:123456789012:db:production-app-db",
      "arn:aws:dynamodb:us-east-1:123456789012:table/production-user-data"
    ]
-   
+
    standard_resources = [
      "arn:aws:ec2:us-east-1:123456789012:instance/*",
      "arn:aws:elasticfilesystem:us-east-1:123456789012:file-system/*"
@@ -103,7 +103,7 @@ Cost-optimized backup strategies provide:
 # More frequent critical backups
 schedule = "cron(0 */4 * * ? *)"  # Every 4 hours
 
-# Less frequent development backups  
+# Less frequent development backups
 schedule = "cron(0 1 ? * MON *)"  # Weekly on Monday
 ```
 
@@ -139,6 +139,6 @@ selection_tags = [
 ## Example Use Cases
 
 - **Startups**: Minimize backup costs while maintaining essential protection
-- **Cost-conscious enterprises**: Optimize backup spending across large infrastructures  
+- **Cost-conscious enterprises**: Optimize backup spending across large infrastructures
 - **Multi-environment setups**: Different backup strategies for prod/staging/dev
 - **Regulated industries**: Meet compliance requirements cost-effectively

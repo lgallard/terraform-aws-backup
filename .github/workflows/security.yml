@@ -12,7 +12,7 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -97,7 +97,7 @@ jobs:
           'simple_audit_framework',
           'secure_backup_configuration'
         ]
-    
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4

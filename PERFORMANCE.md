@@ -52,7 +52,7 @@ locals {
   }
 }
 
-# Medium resources (1-100GB)  
+# Medium resources (1-100GB)
 locals {
   medium_resource_window = {
     start_window      = 120   # 2 hours
@@ -93,7 +93,7 @@ variable "backup_rules_by_size" {
       delete_after       = number
     })
   }))
-  
+
   default = {
     "small" = {
       schedule          = "cron(0 2 * * ? *)"
@@ -177,7 +177,7 @@ resource "aws_cloudwatch_metric_alarm" "efs_backup_duration" {
   statistic           = "Average"
   threshold           = "28800"  # 8 hours in seconds
   alarm_description   = "EFS backup taking too long"
-  
+
   dimensions = {
     ResourceType = "EFS"
   }
@@ -322,7 +322,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_backup_performance" {
   statistic           = "Average"
   threshold           = "7200"  # 2 hours
   alarm_description   = "EC2 backup taking longer than expected"
-  
+
   dimensions = {
     ResourceType = "EC2"
   }
@@ -344,14 +344,14 @@ locals {
       weekly  = "cron(0 1 ? * SUN *)" # Sunday 1 AM EST
       monthly = "cron(0 0 1 * ? *)"   # 1st of month 12 AM EST
     }
-    
+
     # US West Coast (PST/PDT)
     us_west = {
       daily   = "cron(0 5 * * ? *)"   # 2 AM PST (5 AM UTC)
       weekly  = "cron(0 4 ? * SUN *)" # Sunday 1 AM PST
       monthly = "cron(0 3 1 * ? *)"   # 1st of month 12 AM PST
     }
-    
+
     # Europe (CET/CEST)
     europe = {
       daily   = "cron(0 1 * * ? *)"   # 2 AM CET (1 AM UTC)
@@ -377,7 +377,7 @@ plans = {
       }
     ]
   }
-  
+
   "critical-tier-2" = {
     rules = [
       {
@@ -389,7 +389,7 @@ plans = {
       }
     ]
   }
-  
+
   "standard-systems" = {
     rules = [
       {
@@ -476,7 +476,7 @@ rules = [
     schedule = "cron(0 23 * * ? *)"  # Start late to avoid peak hours
     start_window = 120                # Extended start window
     completion_window = 720           # Extended completion window
-    
+
     copy_actions = [
       {
         destination_vault_arn = "arn:aws:backup:us-west-2:123456789012:backup-vault:dr-vault"
@@ -516,7 +516,7 @@ resource "aws_vpc_endpoint" "backup" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = var.private_subnet_ids
   security_group_ids  = [aws_security_group.backup_endpoint.id]
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -541,7 +541,7 @@ resource "aws_vpc_endpoint" "backup" {
 ```hcl
 resource "aws_cloudwatch_dashboard" "backup_performance" {
   dashboard_name = "backup-performance-dashboard"
-  
+
   dashboard_body = jsonencode({
     widgets = [
       {
@@ -550,7 +550,7 @@ resource "aws_cloudwatch_dashboard" "backup_performance" {
         y      = 0
         width  = 12
         height = 6
-        
+
         properties = {
           metrics = [
             ["AWS/Backup", "NumberOfBackupJobsCompleted"],
@@ -569,7 +569,7 @@ resource "aws_cloudwatch_dashboard" "backup_performance" {
         y      = 6
         width  = 12
         height = 6
-        
+
         properties = {
           metrics = [
             ["AWS/Backup", "BackupJobDuration", "ResourceType", "EFS"],
@@ -599,7 +599,7 @@ resource "aws_lambda_function" "backup_performance_metrics" {
   handler         = "index.handler"
   runtime         = "python3.9"
   timeout         = 300
-  
+
   environment {
     variables = {
       BACKUP_VAULT_NAME = var.backup_vault_name

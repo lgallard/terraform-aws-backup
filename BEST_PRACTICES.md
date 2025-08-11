@@ -22,7 +22,7 @@ This guide outlines best practices for using AWS Backup with the terraform-aws-b
 resource "aws_kms_key" "backup" {
   description             = "Backup vault encryption key"
   deletion_window_in_days = 7
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -55,7 +55,7 @@ resource "aws_kms_key" "backup" {
 # Use the key in backup vault
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   vault_name        = "secure-backup-vault"
   vault_kms_key_arn = aws_kms_key.backup.arn
 }
@@ -67,7 +67,7 @@ module "backup" {
 ```hcl
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   vault_name           = "compliance-vault"
   locked               = true
   changeable_for_days  = 3      # Governance mode
@@ -122,9 +122,9 @@ vault_name = "prod-backup-vault-${random_id.suffix.hex}"
 # Source account configuration
 module "backup_source" {
   source = "lgallard/backup/aws"
-  
+
   vault_name = "source-backup-vault"
-  
+
   rules = [
     {
       name = "cross_account_backup"
@@ -414,7 +414,7 @@ resource "aws_cloudwatch_metric_alarm" "backup_job_expired" {
 ```hcl
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   notifications = {
     backup_vault_events = [
       "BACKUP_JOB_STARTED",
@@ -441,9 +441,9 @@ module "backup" {
 resource "aws_cloudwatch_log_metric_filter" "backup_success_rate" {
   name           = "backup-success-rate"
   log_group_name = aws_cloudwatch_log_group.backup_logs.name
-  
+
   pattern = "[timestamp, request_id, event_type=\"BACKUP_JOB_COMPLETED\"]"
-  
+
   metric_transformation {
     name      = "BackupSuccessRate"
     namespace = "Custom/Backup"
@@ -460,7 +460,7 @@ resource "aws_cloudwatch_log_metric_filter" "backup_success_rate" {
 ```hcl
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   tags = {
     Environment   = "production"
     Project       = "backup-infrastructure"
@@ -471,7 +471,7 @@ module "backup" {
     DataClass     = "confidential"
     RetentionDays = "365"
   }
-  
+
   # Tag recovery points
   rules = [
     {
@@ -494,7 +494,7 @@ module "backup" {
 ```hcl
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   reports = [
     {
       name            = "compliance-backup-report"
@@ -503,7 +503,7 @@ module "backup" {
       s3_bucket_name  = "backup-compliance-reports"
       s3_key_prefix   = "monthly-reports/"
       report_template = "BACKUP_COMPLIANCE_REPORT"
-      
+
       # Generate monthly reports
       accounts = [data.aws_caller_identity.current.account_id]
       regions  = ["us-east-1", "us-west-2"]
@@ -518,12 +518,12 @@ module "backup" {
 ```hcl
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   audit_framework = {
     create      = true
     name        = "backup-compliance-framework"
     description = "Comprehensive backup compliance framework"
-    
+
     controls = [
       {
         name           = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_PLAN"
@@ -553,18 +553,18 @@ module "backup" {
 # Primary region backup
 module "backup_primary" {
   source = "lgallard/backup/aws"
-  
+
   providers = {
     aws = aws.primary
   }
-  
+
   vault_name = "primary-backup-vault"
-  
+
   rules = [
     {
       name = "cross_region_backup"
       schedule = "cron(0 2 * * ? *)"
-      
+
       # Copy to secondary region
       copy_actions = [
         {
@@ -574,7 +574,7 @@ module "backup_primary" {
           }
         }
       ]
-      
+
       lifecycle = {
         delete_after = 30
       }
@@ -585,11 +585,11 @@ module "backup_primary" {
 # Secondary region backup vault
 module "backup_secondary" {
   source = "lgallard/backup/aws"
-  
+
   providers = {
     aws = aws.secondary
   }
-  
+
   vault_name = "disaster-recovery-vault"
   vault_kms_key_arn = aws_kms_key.backup_dr.arn
 }
@@ -604,11 +604,11 @@ resource "aws_backup_restore_testing_plan" "main" {
   name                         = "backup-recovery-testing"
   schedule_expression          = "cron(0 6 ? * SUN *)"  # Weekly testing
   schedule_expression_timezone = "UTC"
-  
+
   recovery_point_selection {
     algorithm = "LATEST_WITHIN_WINDOW"
     include_vaults = [module.backup.backup_vault_name]
-    
+
     lookup_statuses = [
       "COMPLETED"
     ]
@@ -653,12 +653,12 @@ standard_backup_rules = [
 # Environment-specific configurations
 module "backup_production" {
   source = "lgallard/backup/aws"
-  
+
   vault_name = "prod-backup-vault"
   locked     = true
-  
+
   plans = var.production_backup_plans
-  
+
   tags = merge(var.common_tags, {
     Environment = "production"
   })
@@ -666,11 +666,11 @@ module "backup_production" {
 
 module "backup_staging" {
   source = "lgallard/backup/aws"
-  
+
   vault_name = "staging-backup-vault"
-  
+
   plans = var.staging_backup_plans
-  
+
   tags = merge(var.common_tags, {
     Environment = "staging"
   })
@@ -689,7 +689,7 @@ resource "aws_lambda_function" "backup_validator" {
   handler         = "index.handler"
   runtime         = "python3.9"
   timeout         = 300
-  
+
   environment {
     variables = {
       BACKUP_VAULT_NAME = module.backup.backup_vault_name
@@ -701,7 +701,7 @@ resource "aws_lambda_function" "backup_validator" {
 resource "aws_cloudwatch_event_rule" "backup_validation" {
   name        = "backup-validation-rule"
   description = "Trigger backup validation after backup completion"
-  
+
   event_pattern = jsonencode({
     source      = ["aws.backup"]
     detail-type = ["Backup Job State Change"]
@@ -724,7 +724,7 @@ resource "aws_lambda_function" "backup_cost_optimizer" {
   handler         = "index.handler"
   runtime         = "python3.9"
   timeout         = 900
-  
+
   environment {
     variables = {
       BACKUP_VAULT_NAME = module.backup.backup_vault_name

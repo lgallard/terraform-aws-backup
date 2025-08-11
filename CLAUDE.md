@@ -8,7 +8,7 @@ This document outlines Terraform-specific development guidelines for the terrafo
 ### File Organization
 - **main.tf** - Primary resource definitions and locals
 - **variables.tf** - Input variable definitions with validation
-- **outputs.tf** - Output value definitions  
+- **outputs.tf** - Output value definitions
 - **versions.tf** - Provider version constraints
 - **iam.tf** - IAM roles and policies
 - **notifications.tf** - SNS and notification configurations
@@ -64,7 +64,7 @@ Terraform MCP: "Look up aws_kms_key for backup vault"
 # Preferred: Using for_each
 resource "aws_backup_plan" "this" {
   for_each = var.enabled ? var.plans : {}
-  
+
   name = each.value.name
   # ...
 }
@@ -97,10 +97,10 @@ locals {
   # Resource creation conditions
   should_create_vault = var.enabled && var.vault_name != null
   should_create_lock  = local.should_create_vault && var.locked
-  
+
   # Data processing
   rules = concat(local.rule, var.rules)
-  
+
   # Validation helpers
   vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
 }
@@ -205,7 +205,7 @@ variable "security_config" {
 resource "aws_backup_vault" "this" {
   name        = var.vault_name
   kms_key_arn = var.security_config.vault_kms_key_arn
-  
+
   # Vault lock for compliance
   dynamic "backup_vault_lock_configuration" {
     for_each = var.security_config.enable_vault_lock ? [1] : []
@@ -239,15 +239,15 @@ variable "backup_config" {
     # Audit framework settings
     enable_audit     = bool
     audit_controls   = list(string)
-    
-    # Organization policy settings  
+
+    # Organization policy settings
     enable_org_policy = bool
     target_ous        = list(string)
-    
+
     # VSS settings for Windows
     enable_vss        = bool
     vss_timeout       = number
-    
+
     # Cost optimization
     enable_tiering    = bool
     cold_storage_days = number
@@ -368,7 +368,7 @@ The module includes 16 comprehensive examples demonstrating various backup scena
 ```hcl
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

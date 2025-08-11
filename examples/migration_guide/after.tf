@@ -45,7 +45,7 @@ module "aws_backup_example" {
 #   default = {
 #     # Your existing daily backup plan (as above)
 #   }
-#   
+#
 #   weekly = {
 #     name = "weekly-backup-plan"
 #     rules = [
