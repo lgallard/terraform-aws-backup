@@ -42,41 +42,27 @@ content: |-
 
   ### Simple plan
 
-  ```hcl
-  {{ include "examples/simple_plan/main.tf" }}
-  ```
+  See [examples/simple_plan/main.tf](examples/simple_plan/main.tf) for a basic backup plan configuration.
 
   ### Simple plan using variables
 
-  ```hcl
-  {{ include "examples/simple_plan_using_variables/main.tf" }}
-  ```
-
+  See [examples/simple_plan_using_variables/main.tf](examples/simple_plan_using_variables/main.tf) for a backup plan using variables.
 
   ### Complete plan
 
-  ```hcl
-  {{ include "examples/complete_plan/main.tf" }}
-  ```
+  See [examples/complete_plan/main.tf](examples/complete_plan/main.tf) for a comprehensive backup plan setup.
 
   ### Multiple backup plans
 
-  ```hcl
-  {{ include "examples/multiple_plans/main.tf" }}
-  ```
-
+  See [examples/multiple_plans/main.tf](examples/multiple_plans/main.tf) for managing multiple backup plans.
 
   ### Simple plan using AWS Organizations backup policies
 
-  ```hcl
-  {{ include "examples/organization_backup_policy/main.tf" }}
-  ```
+  See [examples/organization_backup_policy/main.tf](examples/organization_backup_policy/main.tf) for organization-wide backup policies.
 
   ### AWS Backup Audit Manager Framework
 
-  ```hcl
-  {{ include "examples/simple_audit_framework/main.tf" }}
-  ```
+  See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
 
   <!-- BEGIN_TF_DOCS -->
   {{ .Requirements }}
