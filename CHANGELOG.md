@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.0.2](https://github.com/lgallard/terraform-aws-backup/compare/1.0.1...1.0.2) (2025-08-12)
+
+
+### Bug Fixes
+
+* resolve remaining terraform validation and pre-commit CI failures ([#217](https://github.com/lgallard/terraform-aws-backup/issues/217)) ([bf4e432](https://github.com/lgallard/terraform-aws-backup/commit/bf4e4322239bb334c25712e6880283e858477e4d))
+* resolve terraform validation errors found by pre-commit workflow ([#205](https://github.com/lgallard/terraform-aws-backup/issues/205)) ([efcf067](https://github.com/lgallard/terraform-aws-backup/commit/efcf067a8795875033a496d69452434bef443dfa))
+
 ## [1.0.1](https://github.com/lgallard/terraform-aws-backup/compare/1.0.0...1.0.1) (2025-08-11)
 
 
