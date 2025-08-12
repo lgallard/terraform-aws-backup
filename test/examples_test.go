@@ -56,10 +56,10 @@ func TestExamplesValidation(t *testing.T) {
 
 			// Init and validate
 			RetryableInit(t, terraformOptions)
-			
+
 			// Run terraform plan to validate configuration
 			RetryablePlan(t, terraformOptions)
-			
+
 			// Validate that plan was created successfully
 			planFile := filepath.Join(exampleDir, "tfplan")
 			assert.FileExists(t, planFile, "Plan file should be created")
@@ -139,10 +139,10 @@ func TestExamplesWithCustomVariables(t *testing.T) {
 
 			// Init and validate
 			RetryableInit(t, terraformOptions)
-			
+
 			// Run terraform plan with custom variables
 			RetryablePlan(t, terraformOptions)
-			
+
 			// Validate that plan was created successfully
 			planFile := filepath.Join(exampleDir, fmt.Sprintf("tfplan-%s", tc.name))
 			assert.FileExists(t, planFile, "Plan file should be created with custom variables")
@@ -170,10 +170,10 @@ func TestConditionsVariableTypes(t *testing.T) {
 
 	// Init and validate
 	RetryableInit(t, terraformOptions)
-	
+
 	// Run terraform plan to validate the conditions structure works
 	RetryablePlan(t, terraformOptions)
-	
+
 	// Validate that plan was created successfully
 	planFile := filepath.Join("./fixtures/terraform/conditions", "tfplan-conditions")
 	assert.FileExists(t, planFile, "Plan file should be created for conditions test")
@@ -196,7 +196,7 @@ func TestExampleTerraformFiles(t *testing.T) {
 			t.Parallel()
 
 			exampleDir := filepath.Join("..", "examples", example)
-			
+
 			// Skip if example directory doesn't exist
 			if _, err := os.Stat(exampleDir); os.IsNotExist(err) {
 				t.Skipf("Example directory %s does not exist", exampleDir)

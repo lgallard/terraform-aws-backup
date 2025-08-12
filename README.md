@@ -33,495 +33,27 @@ Check the [examples](/examples/) folder where you can see how to configure backu
 
 ### Simple plan
 
-```hcl
-# AWS SNS Topic
-resource "aws_sns_topic" "backup_vault_notifications" {
-  name = "backup-vault-events"
-}
-
-# AWS Backup
-module "aws_backup_example" {
-  source = "../.."
-
-  # Vault
-  vault_name = "vault-3"
-
-  # Vault lock configuration
-  min_retention_days = 7  # Minimum retention of 7 days
-  max_retention_days = 90 # Maximum retention of 90 days
-
-  # Plan
-  plan_name = "simple-plan"
-
-  # Multiple rules using a list of maps
-  rules = [
-    {
-      name              = "rule-1"
-      schedule          = "cron(0 12 * * ? *)"
-      start_window      = 120
-      completion_window = 360
-      lifecycle = {
-        delete_after = 90
-      }
-      copy_actions = []
-      recovery_point_tags = {
-        Environment = "prod"
-      }
-    },
-    {
-      name              = "rule-2"
-      target_vault_name = "Default"
-      schedule          = "cron(0 7 * * ? *)"
-      start_window      = 120
-      completion_window = 360
-      lifecycle = {
-        delete_after = 90
-      }
-      copy_actions = []
-      recovery_point_tags = {
-        Environment = "prod"
-      }
-    }
-  ]
-
-  # Multiple selections
-  selections = [
-    {
-      name = "selection-1"
-      resources = [
-        "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
-        "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
-      ]
-      selection_tags = [
-        {
-          type  = "STRINGEQUALS"
-          key   = "Environment"
-          value = "prod"
-        }
-      ]
-    }
-  ]
-
-  tags = {
-    Owner       = "backup team"
-    Environment = "prod"
-    Terraform   = true
-  }
-}
-```
+See [examples/simple_plan/main.tf](examples/simple_plan/main.tf) for a basic backup plan configuration.
 
 ### Simple plan using variables
 
-```hcl
-# AWS SNS Topic
-resource "aws_sns_topic" "backup_vault_notifications" {
-  name = "backup-vault-events"
-}
-
-# AWS Backup
-module "aws_backup_example" {
-  source = "../.."
-
-  # Vault
-  vault_name = "vault-1"
-
-  # Vault lock configuration
-  min_retention_days = 7
-  max_retention_days = 120
-
-  # Plan
-  plan_name = "simple-plan"
-
-  # Rule
-  rule_name                         = "rule-1"
-  rule_schedule                     = "cron(0 12 * * ? *)"
-  rule_start_window                 = 120
-  rule_completion_window            = 360
-  rule_lifecycle_cold_storage_after = 30
-  rule_lifecycle_delete_after       = 120
-  rule_recovery_point_tags = {
-    Environment = "prod"
-  }
-
-  # Selection
-  selection_name = "selection-1"
-  selection_resources = [
-    "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
-    "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
-  ]
-  selection_tags = [
-    {
-      type  = "STRINGEQUALS"
-      key   = "Environment"
-      value = "prod"
-    }
-  ]
-
-  # Tags
-  tags = {
-    Owner       = "backup team"
-    Environment = "prod"
-    Terraform   = true
-  }
-}
-```
-
+See [examples/simple_plan_using_variables/main.tf](examples/simple_plan_using_variables/main.tf) for a backup plan using variables.
 
 ### Complete plan
 
-```hcl
-# AWS SNS Topic
-resource "aws_sns_topic" "backup_vault_notifications" {
-  name = "backup-vault-events"
-}
-
-# AWS Backup
-module "aws_backup_example" {
-  source = "../.."
-
-  # Vault configuration
-  vault_name          = "complete_vault"
-  vault_kms_key_arn   = "arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
-  vault_force_destroy = true
-  min_retention_days  = 7
-  max_retention_days  = 360
-  locked              = true
-  changeable_for_days = 3
-
-  # Backup plan configuration
-  plan_name = "complete_backup_plan"
-
-  # Backup rules configuration
-  rules = [
-    {
-      name                     = "rule_1"
-      schedule                 = "cron(0 5 ? * * *)"
-      start_window             = 480
-      completion_window        = 561
-      enable_continuous_backup = false
-      lifecycle = {
-        cold_storage_after = 30
-        delete_after       = 180
-      }
-      recovery_point_tags = {
-        Environment = "prod"
-      }
-      copy_actions = [
-        {
-          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = 180
-          }
-        }
-      ]
-    },
-    {
-      name                     = "rule_2"
-      schedule                 = "cron(0 5 ? * * *)"
-      start_window             = 480
-      completion_window        = 561
-      enable_continuous_backup = false
-      lifecycle = {
-        cold_storage_after = 30
-        delete_after       = 360
-      }
-      recovery_point_tags = {
-        Environment = "prod"
-      }
-      copy_actions = [
-        {
-          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = 360
-          }
-        }
-      ]
-    }
-  ]
-
-  # Backup selection configuration
-  selections = [
-    {
-      name = "complete_selection"
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Environment"
-        value = "prod"
-      }
-      resources = [
-        "arn:aws:dynamodb:us-west-2:123456789012:table/my-table",
-        "arn:aws:ec2:us-west-2:123456789012:volume/vol-12345678"
-      ]
-    }
-  ]
-
-  tags = {
-    Environment = "prod"
-    Project     = "complete_backup"
-  }
-}
-```
+See [examples/complete_plan/main.tf](examples/complete_plan/main.tf) for a comprehensive backup plan setup.
 
 ### Multiple backup plans
 
-```hcl
-# AWS SNS Topic
-resource "aws_sns_topic" "backup_vault_notifications" {
-  name = "backup-vault-events"
-}
-
-# AWS Backup
-module "aws_backup_example" {
-  source = "../.."
-
-  # Vault
-  vault_name = "vault-1"
-
-  # Vault lock configuration
-  min_retention_days = 7
-  max_retention_days = 120
-
-  # Multiple plans
-  plans = {
-    # First plan for daily backups
-    daily = {
-      name = "daily-backup-plan"
-      rules = [
-        {
-          name              = "daily-rule"
-          schedule          = "cron(0 12 * * ? *)"
-          start_window      = 120
-          completion_window = 360
-          lifecycle = {
-            delete_after = 30
-          }
-          recovery_point_tags = {
-            Environment = "prod"
-            Frequency   = "daily"
-          }
-        }
-      ]
-      selections = {
-        prod_databases = {
-          resources = [
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
-          ]
-          selection_tags = [
-            {
-              type  = "STRINGEQUALS"
-              key   = "Environment"
-              value = "prod"
-            }
-          ]
-        }
-      }
-    },
-    # Second plan for weekly backups
-    weekly = {
-      name = "weekly-backup-plan"
-      rules = [
-        {
-          name              = "weekly-rule"
-          schedule          = "cron(0 0 ? * 1 *)" # Run every Sunday at midnight
-          start_window      = 120
-          completion_window = 480
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = 120
-          }
-          recovery_point_tags = {
-            Environment = "prod"
-            Frequency   = "weekly"
-          }
-        }
-      ]
-      selections = {
-        all_databases = {
-          resources = [
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1",
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table2"
-          ]
-        }
-      }
-    },
-    # Third plan for monthly backups with cross-region copy
-    monthly = {
-      name = "monthly-backup-plan"
-      rules = [
-        {
-          name              = "monthly-rule"
-          schedule          = "cron(0 0 1 * ? *)" # Run at midnight on the first day of every month
-          start_window      = 120
-          completion_window = 720
-          lifecycle = {
-            cold_storage_after = 90
-            delete_after       = 365
-          }
-          copy_actions = [
-            {
-              destination_vault_arn = "arn:aws:backup:us-west-2:123456789101:backup-vault:Default"
-              lifecycle = {
-                cold_storage_after = 90
-                delete_after       = 365
-              }
-            }
-          ]
-          recovery_point_tags = {
-            Environment = "prod"
-            Frequency   = "monthly"
-          }
-        }
-      ]
-      selections = {
-        critical_databases = {
-          resources = [
-            "arn:aws:dynamodb:us-east-1:123456789101:table/mydynamodb-table1"
-          ]
-          selection_tags = [
-            {
-              type  = "STRINGEQUALS"
-              key   = "Criticality"
-              value = "high"
-            }
-          ]
-        }
-      }
-    }
-  }
-
-  # Tags
-  tags = {
-    Owner       = "backup team"
-    Environment = "prod"
-    Terraform   = true
-  }
-}
-```
-
+See [examples/multiple_plans/main.tf](examples/multiple_plans/main.tf) for managing multiple backup plans.
 
 ### Simple plan using AWS Organizations backup policies
 
-```hcl
-module "aws_backup_example" {
-  source = "../.."
-
-  # Backup Plan configuration
-  plan_name = "organization_backup_plan"
-
-  # Vault configuration
-  vault_name         = "organization_backup_vault"
-  min_retention_days = 7
-  max_retention_days = 365
-
-  rules = [
-    {
-      name                     = "critical_systems"
-      target_vault_name        = "critical_systems_vault"
-      schedule                 = "cron(0 5 ? * * *)"
-      start_window             = 480
-      completion_window        = 561
-      enable_continuous_backup = false
-      lifecycle = {
-        cold_storage_after = 30
-        delete_after       = 365
-      }
-      recovery_point_tags = {
-        Environment = "prod"
-        Criticality = "high"
-      }
-      copy_actions = [
-        {
-          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
-          lifecycle = {
-            cold_storage_after = 30
-            delete_after       = 365
-          }
-        }
-      ]
-    },
-    {
-      name                     = "standard_systems"
-      target_vault_name        = "standard_systems_vault"
-      schedule                 = "cron(0 5 ? * * *)"
-      start_window             = 480
-      completion_window        = 561
-      enable_continuous_backup = false
-      lifecycle = {
-        delete_after = 90
-      }
-      recovery_point_tags = {
-        Environment = "prod"
-        Criticality = "standard"
-      }
-      copy_actions = [
-        {
-          destination_vault_arn = "arn:aws:backup:us-east-1:123456789012:backup-vault:secondary_vault"
-          lifecycle = {
-            delete_after = 90
-          }
-        }
-      ]
-    }
-  ]
-
-  # Selection configuration
-  selections = [
-    {
-      name = "critical_systems"
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Criticality"
-        value = "high"
-      }
-    },
-    {
-      name = "standard_systems"
-      selection_tag = {
-        type  = "STRINGEQUALS"
-        key   = "Criticality"
-        value = "standard"
-      }
-    }
-  ]
-
-  tags = {
-    Environment = "prod"
-    Project     = "organization_backup"
-  }
-}
-```
+See [examples/organization_backup_policy/main.tf](examples/organization_backup_policy/main.tf) for organization-wide backup policies.
 
 ### AWS Backup Audit Manager Framework
 
-```hcl
-# AWS Backup
-module "aws_backup_example" {
-  source = "../.."
-
-  # Audit Framework
-  audit_framework = {
-    create      = true
-    name        = "exampleFramework"
-    description = "this is an example framework"
-
-    controls = [
-      # Vault lock check - ensures resources are protected by vault lock
-      {
-        name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK"
-        parameter_name  = "maxRetentionDays"
-        parameter_value = "100" # Maximum retention period allowed by vault lock
-      },
-    ]
-  }
-
-  # Tags are now specified separately
-  tags = {
-    Name = "Example Framework"
-  }
-}
-```
+See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -535,7 +67,7 @@ module "aws_backup_example" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.91.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.3.0 |
 
 ## Modules
 
@@ -630,6 +162,51 @@ No modules.
 | <a name="output_plans"></a> [plans](#output\_plans) | Map of plans created and their attributes |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues

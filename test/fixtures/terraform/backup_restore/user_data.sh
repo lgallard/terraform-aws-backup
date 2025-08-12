@@ -42,24 +42,24 @@ echo "Test data initialization completed at $(date)" > /var/log/test-data-init.l
 if [ -b /dev/xvdf ]; then
     # Wait for volume to be available
     sleep 30
-    
+
     # Format the volume
     mkfs.ext4 /dev/xvdf
-    
+
     # Create mount point
     mkdir -p /mnt/test-data
-    
+
     # Mount the volume
     mount /dev/xvdf /mnt/test-data
-    
+
     # Create test data on the volume
     mkdir -p /mnt/test-data/backup-test
     echo "EBS volume test data created at $(date)" > /mnt/test-data/backup-test/ebs-test-file.txt
     echo "Volume mount test successful" > /mnt/test-data/backup-test/mount-test.txt
-    
+
     # Add to fstab for persistent mounting
     echo "/dev/xvdf /mnt/test-data ext4 defaults 0 2" >> /etc/fstab
-    
+
     # Log success
     echo "EBS volume setup completed at $(date)" >> /var/log/test-data-init.log
 fi

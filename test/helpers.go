@@ -116,7 +116,7 @@ func retryWithConfig(t *testing.T, config *RetryConfig, description string, fn f
 		}
 
 		// Log the retry attempt
-		t.Logf("%s failed (attempt %d/%d), retrying in %v: %v", 
+		t.Logf("%s failed (attempt %d/%d), retrying in %v: %v",
 			description, attempt+1, config.MaxRetries, delay, lastErr)
 
 		// Wait before retrying
@@ -232,17 +232,17 @@ func GenerateUniqueTestID(t *testing.T) string {
 	timestamp := strconv.FormatInt(time.Now().UnixNano(), 10)
 	randomID := strings.ToLower(random.UniqueId())
 	suffix := os.Getenv("TEST_UNIQUE_SUFFIX")
-	
+
 	baseID := fmt.Sprintf("%s-%s-%s", testName, timestamp, randomID)
 	if suffix != "" {
 		baseID = fmt.Sprintf("%s-%s", baseID, suffix)
 	}
-	
+
 	// Ensure the ID doesn't exceed AWS resource name limits
 	if len(baseID) > 50 {
 		baseID = baseID[:50]
 	}
-	
+
 	return baseID
 }
 
@@ -250,12 +250,12 @@ func GenerateUniqueTestID(t *testing.T) string {
 func GenerateUniqueResourceName(t *testing.T, prefix string) string {
 	uniqueID := GenerateUniqueTestID(t)
 	resourceName := fmt.Sprintf("%s-%s", prefix, uniqueID)
-	
+
 	// Ensure the name doesn't exceed AWS resource name limits
 	if len(resourceName) > 63 {
 		resourceName = resourceName[:63]
 	}
-	
+
 	return resourceName
 }
 
@@ -288,12 +288,12 @@ func GenerateUniqueRoleName(t *testing.T) string {
 func GenerateRegionSpecificResourceName(t *testing.T, prefix, region string) string {
 	uniqueID := GenerateUniqueTestID(t)
 	resourceName := fmt.Sprintf("%s-%s-%s", prefix, region, uniqueID)
-	
+
 	// Ensure the name doesn't exceed AWS resource name limits
 	if len(resourceName) > 63 {
 		resourceName = resourceName[:63]
 	}
-	
+
 	return resourceName
 }
 
@@ -304,23 +304,23 @@ func sanitizeTestName(testName string) string {
 	if len(parts) > 0 {
 		testName = parts[len(parts)-1]
 	}
-	
+
 	// Replace invalid characters with hyphens
 	sanitized := strings.ReplaceAll(testName, "_", "-")
 	sanitized = strings.ReplaceAll(sanitized, " ", "-")
 	sanitized = strings.ReplaceAll(sanitized, ".", "-")
 	sanitized = strings.ToLower(sanitized)
-	
+
 	// Ensure it starts with a letter (required for some AWS resources)
 	if len(sanitized) > 0 && !isLetter(sanitized[0]) {
 		sanitized = "test-" + sanitized
 	}
-	
+
 	// Truncate if too long
 	if len(sanitized) > 20 {
 		sanitized = sanitized[:20]
 	}
-	
+
 	return sanitized
 }
 
@@ -376,9 +376,9 @@ func ValidateResourceName(name string) error {
 
 // isValidNameChar checks if a character is valid for AWS resource names
 func isValidNameChar(char rune) bool {
-	return (char >= 'a' && char <= 'z') || 
-		   (char >= 'A' && char <= 'Z') || 
-		   (char >= '0' && char <= '9') || 
+	return (char >= 'a' && char <= 'z') ||
+		   (char >= 'A' && char <= 'Z') ||
+		   (char >= '0' && char <= '9') ||
 		   char == '-' || char == '_'
 }
 

@@ -5,9 +5,9 @@ resource "aws_sns_topic" "backup_notifications" {
 module "backup" {
   source = "../../../../"
 
-  plan_name             = var.plan_name
-  vault_name            = var.vault_name
-  backup_selection_name = "test-backup-selection"
+  plan_name      = var.plan_name
+  vault_name     = var.vault_name
+  selection_name = "test-backup-selection"
 
   # Basic backup rule
   rules = [{

@@ -7,10 +7,10 @@ This example demonstrates how to migrate from the legacy single plan configurati
 ```hcl
 module "aws_backup_example" {
   source = "lgallard/backup/aws"
-  
+
   # Vault
   vault_name = "my-backup-vault"
-  
+
   # Single plan using rules list
   plan_name = "daily-backup-plan"
   rules = [
@@ -22,7 +22,7 @@ module "aws_backup_example" {
       }
     }
   ]
-  
+
   # Multiple selections
   selections = [
     {
@@ -39,7 +39,7 @@ module "aws_backup_example" {
       ]
     }
   ]
-  
+
   tags = {
     Environment = "production"
     Team        = "platform"
@@ -52,10 +52,10 @@ module "aws_backup_example" {
 ```hcl
 module "aws_backup_example" {
   source = "lgallard/backup/aws"
-  
+
   # Vault (unchanged)
   vault_name = "my-backup-vault"
-  
+
   # Multiple plans configuration
   plans = {
     default = {
@@ -84,7 +84,7 @@ module "aws_backup_example" {
       }
     }
   }
-  
+
   tags = {
     Environment = "production"
     Team        = "platform"
@@ -149,7 +149,7 @@ plans = {
     rules = [/* existing rules */]
     selections = {/* existing selections */}
   }
-  
+
   # Add a new weekly backup plan
   weekly = {
     name = "weekly-backup-plan"

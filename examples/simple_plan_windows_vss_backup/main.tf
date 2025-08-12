@@ -55,4 +55,4 @@ module "aws_backup_windows_vss" {
     Environment = "test"
     Purpose     = "Windows VSS Backup Example"
   }
-} 
+}

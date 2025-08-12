@@ -238,4 +238,3 @@ resource "aws_backup_plan" "ab_plans" {
     }
   }
 }
-

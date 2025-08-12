@@ -36,10 +36,10 @@ We will acknowledge your report within 48 hours and provide a timeline for resol
 # ✅ Secure - Using customer-managed KMS key
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   vault_name        = "production-backup-vault"
   vault_kms_key_arn = "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
-  
+
   # ... other configuration
 }
 ```
@@ -48,10 +48,10 @@ module "backup" {
 # ❌ Insecure - Using AWS managed key
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   vault_name        = "production-backup-vault"
   vault_kms_key_arn = "arn:aws:kms:us-east-1:123456789012:alias/aws/backup"  # Avoid this
-  
+
   # ... other configuration
 }
 ```
@@ -64,10 +64,10 @@ module "backup" {
 # ✅ Secure - Using service-specific IAM role
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   # Let the module create the IAM role with minimal permissions
   # Or provide a custom role with only necessary permissions
-  
+
   # ... other configuration
 }
 ```
@@ -76,9 +76,9 @@ module "backup" {
 # ❌ Insecure - Using overly permissive role
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   iam_role_arn = "arn:aws:iam::123456789012:role/AdminRole"  # Avoid this
-  
+
   # ... other configuration
 }
 ```
@@ -91,15 +91,15 @@ module "backup" {
 # ✅ Secure configuration
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   vault_name         = "production-backup-vault"
   min_retention_days = 30    # Minimum 30 days for compliance
   max_retention_days = 2555  # Maximum 7 years for compliance
-  
+
   # Enable vault lock for compliance
   locked              = true
   changeable_for_days = 3
-  
+
   # ... other configuration
 }
 ```
@@ -112,12 +112,12 @@ module "backup" {
 # ✅ Secure cross-region configuration
 module "backup" {
   source = "lgallard/backup/aws"
-  
+
   rules = [
     {
       name = "daily-backup"
       schedule = "cron(0 5 ? * * *)"
-      
+
       copy_actions = [
         {
           destination_vault_arn = "arn:aws:backup:us-west-2:123456789012:backup-vault:dr-vault"
@@ -128,7 +128,7 @@ module "backup" {
       ]
     }
   ]
-  
+
   # ... other configuration
 }
 ```

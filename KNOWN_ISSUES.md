@@ -125,7 +125,7 @@ If you need to change vault lock settings, create a new vault:
 resource "aws_backup_vault" "locked_vault" {
   name        = "locked-backup-vault"
   kms_key_arn = aws_kms_key.backup.arn
-  
+
   # Vault lock configuration
   force_destroy = false
 }
@@ -150,12 +150,12 @@ resource "aws_dynamodb_table" "example" {
   name           = "example"
   hash_key       = "id"
   billing_mode   = "PAY_PER_REQUEST"
-  
+
   # Enable Point-in-Time Recovery
   point_in_time_recovery {
     enabled = true
   }
-  
+
   attribute {
     name = "id"
     type = "S"

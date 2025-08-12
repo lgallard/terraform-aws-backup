@@ -206,7 +206,7 @@ Error: KMS key not allowed
 resource "aws_kms_key" "backup" {
   description             = "Backup vault encryption key"
   deletion_window_in_days = 7
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

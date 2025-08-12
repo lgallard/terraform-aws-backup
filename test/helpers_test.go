@@ -67,7 +67,7 @@ func TestIsRetryableError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := isRetryableError(tt.err)
-			assert.Equal(t, tt.expected, result, 
+			assert.Equal(t, tt.expected, result,
 				"isRetryableError(%v) = %v, want %v", tt.err, result, tt.expected)
 		})
 	}

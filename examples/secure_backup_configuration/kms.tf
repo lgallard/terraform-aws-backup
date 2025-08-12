@@ -87,10 +87,10 @@ resource "aws_kms_key" "backup_key" {
   deletion_window_in_days = 30
 
   tags = merge(local.common_tags, {
-    Name        = "${var.project_name}-${var.environment}-backup-key"
-    Purpose     = "backup-encryption"
-    KeyType     = "primary"
-    Compliance  = "required"
+    Name       = "${var.project_name}-${var.environment}-backup-key"
+    Purpose    = "backup-encryption"
+    KeyType    = "primary"
+    Compliance = "required"
   })
 }
 
@@ -192,11 +192,11 @@ resource "aws_kms_key" "cross_region_backup_key" {
   deletion_window_in_days = 30
 
   tags = merge(local.common_tags, {
-    Name        = "${var.project_name}-${var.environment}-backup-cross-region-key"
-    Purpose     = "cross-region-backup-encryption"
-    KeyType     = "cross-region"
-    Region      = var.cross_region
-    Compliance  = "required"
+    Name       = "${var.project_name}-${var.environment}-backup-cross-region-key"
+    Purpose    = "cross-region-backup-encryption"
+    KeyType    = "cross-region"
+    Region     = var.cross_region
+    Compliance = "required"
   })
 }
 

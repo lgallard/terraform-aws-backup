@@ -11,7 +11,7 @@ data "aws_region" "cross_region" {
 # Local values for consistent resource naming and configuration
 locals {
   vault_name = "${var.project_name}-${var.environment}-backup-vault"
-  
+
   common_tags = {
     Environment   = var.environment
     Project       = var.project_name
@@ -41,11 +41,11 @@ locals {
         }
       }] : []
       recovery_point_tags = {
-        BackupType   = "daily"
-        Criticality  = "high"
-        Environment  = var.environment
-        Encrypted    = "true"
-        Compliance   = "required"
+        BackupType  = "daily"
+        Criticality = "high"
+        Environment = var.environment
+        Encrypted   = "true"
+        Compliance  = "required"
       }
     }
     weekly_long_term = {
@@ -65,12 +65,12 @@ locals {
         }
       }] : []
       recovery_point_tags = {
-        BackupType   = "weekly"
-        Criticality  = "high"
-        Environment  = var.environment
-        Encrypted    = "true"
-        Compliance   = "required"
-        LongTerm     = "true"
+        BackupType  = "weekly"
+        Criticality = "high"
+        Environment = var.environment
+        Encrypted   = "true"
+        Compliance  = "required"
+        LongTerm    = "true"
       }
     }
   }
@@ -137,13 +137,13 @@ module "backup" {
   enabled = true
 
   # Vault configuration with KMS encryption
-  vault_name    = local.vault_name
-  vault_kms_key = aws_kms_key.backup_key.arn
+  vault_name        = local.vault_name
+  vault_kms_key_arn = aws_kms_key.backup_key.arn
 
   # Enable vault lock for compliance (if specified)
-  locked                 = var.enable_vault_lock
-  min_retention_days     = var.min_retention_days
-  max_retention_days     = var.max_retention_days
+  locked             = var.enable_vault_lock
+  min_retention_days = var.min_retention_days
+  max_retention_days = var.max_retention_days
 
   # Security-focused backup plans
   plans = {
@@ -173,8 +173,8 @@ resource "aws_backup_vault" "cross_region_vault" {
   # NOTE: vault lock should be configured using aws_backup_vault_lock_configuration resource
 
   tags = merge(local.common_tags, {
-    Name = "${local.vault_name}-cross-region"
-    Type = "cross-region"
+    Name   = "${local.vault_name}-cross-region"
+    Type   = "cross-region"
     Region = var.cross_region
   })
 }
