@@ -38,7 +38,20 @@
       "enabled": true,
       "schedule": [
         "before 9am on monday"
-      ]
+      ],
+      "ignoreUnstable": true
+    },
+    {
+      "matchDatasources": ["golang-version"],
+      "ignoreUnstable": true,
+      "enabled": true
+    },
+    {
+      "matchDepTypes": ["action"],
+      "matchPackageNames": ["actions/setup-go"],
+      "extractVersion": "^v(?<version>.*)$",
+      "versioning": "go-mod-directive",
+      "ignoreUnstable": true
     },
     {
       "matchDatasources": [
