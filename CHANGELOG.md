@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.0.3](https://github.com/lgallard/terraform-aws-backup/compare/1.0.2...1.0.3) (2025-08-17)
+
+
+### Bug Fixes
+
+* update Go version from 1.25 to 1.23 and configure Renovate to prevent pre-release versions ([#220](https://github.com/lgallard/terraform-aws-backup/issues/220)) ([3e62fb5](https://github.com/lgallard/terraform-aws-backup/commit/3e62fb57d138eac24d6953f5faad11b18b401d4a))
+
 ## [1.0.2](https://github.com/lgallard/terraform-aws-backup/compare/1.0.1...1.0.2) (2025-08-12)
 
 
