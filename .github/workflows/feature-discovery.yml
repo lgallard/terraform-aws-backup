@@ -12,6 +12,8 @@ on:
         required: false
         default: 'latest'
         type: string
+        # Validate semantic version format or "latest"
+        pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$'
       dry_run:
         description: 'Run analysis without creating issues'
         required: false
@@ -26,12 +28,11 @@ on:
 jobs:
   discover-backup-features:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
       issues: write
-      pull-requests: read
-      id-token: write
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -57,11 +58,24 @@ jobs:
             echo "Created initial feature tracker file"
           fi
 
+      - name: Validate inputs
+        run: |
+          # Validate provider_version format
+          PROVIDER_VERSION="${{ inputs.provider_version || 'latest' }}"
+          if [[ ! "$PROVIDER_VERSION" =~ ^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$ ]]; then
+            echo "::error::Invalid provider_version format: $PROVIDER_VERSION"
+            echo "Must be 'latest' or semantic version (e.g., '5.82.0')"
+            exit 1
+          fi
+          echo "Provider version validation passed: $PROVIDER_VERSION"
+
       - name: Run Claude Code Feature Discovery
         id: claude-discovery
         uses: anthropics/claude-code-action@beta
+        env:
+          CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
 
           # MCP Configuration for Terraform and Context7 documentation access
           mcp_config: |
@@ -238,17 +252,39 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Atomic file operations with locking
+          LOCKFILE="/tmp/feature-tracker.lock"
+          TRACKER_FILE=".github/feature-tracker/backup-features.json"
+          TEMP_FILE="${TRACKER_FILE}.tmp"
+
+          # Acquire lock with timeout
+          exec 200>"$LOCKFILE"
+          if ! flock -w 30 200; then
+            echo "::error::Failed to acquire lock for feature tracker update"
+            exit 1
+          fi
+
           # Check if there are changes to commit
           if git diff --quiet .github/feature-tracker/; then
             echo "No changes to feature tracker detected"
+            flock -u 200
             exit 0
+          fi
+
+          # Validate JSON before committing
+          if [ -f "$TRACKER_FILE" ]; then
+            if ! python3 -m json.tool "$TRACKER_FILE" > /dev/null; then
+              echo "::error::Invalid JSON in feature tracker file"
+              flock -u 200
+              exit 1
+            fi
           fi
 
           # Configure git
           git config --global user.name "AWS Backup Feature Discovery Bot"
           git config --global user.email "actions@github.com"
 
-          # Commit changes
+          # Atomic commit with validation
           git add .github/feature-tracker/
           git commit -m "chore: update AWS Backup feature discovery tracker
 
@@ -261,7 +297,10 @@ jobs:
           # Push changes
           git push origin HEAD
 
-          echo "Feature tracker updated successfully"
+          # Release lock
+          flock -u 200
+
+          echo "Feature tracker updated successfully with atomic operations"
 
       - name: Workflow Summary
         if: always()
