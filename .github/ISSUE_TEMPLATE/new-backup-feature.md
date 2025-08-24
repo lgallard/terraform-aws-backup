@@ -62,7 +62,7 @@ module "aws_backup" {
   source = "./terraform-aws-backup"
 
   vault_name = "my-backup-vault"
-  
+
   # New feature implementation
   [FEATURE_EXAMPLE]
 
