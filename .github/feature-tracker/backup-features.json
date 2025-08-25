@@ -1,0 +1,271 @@
+{
+  "metadata": {
+    "module_name": "terraform-aws-backup",
+    "last_scan": "1970-01-01T00:00:00Z",
+    "provider_version": "0.0.0",
+    "scan_count": 0
+  },
+  "scan_history": [
+    {
+      "scan_date": "1970-01-01T00:00:00Z",
+      "provider_version": "0.0.0",
+      "features_found": 0,
+      "deprecations_found": 0,
+      "fixes_found": 0,
+      "issues_created": 0
+    }
+  ],
+  "current_implementation": {
+    "resources": {
+      "aws_backup_vault": {
+        "implemented": [
+          "name",
+          "kms_key_arn",
+          "force_destroy",
+          "tags"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_vault_lock_configuration": {
+        "implemented": [
+          "backup_vault_name",
+          "changeable_for_days",
+          "max_retention_days",
+          "min_retention_days"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_vault_notifications": {
+        "implemented": [
+          "backup_vault_name",
+          "sns_topic_arn",
+          "backup_vault_events"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_vault_policy": {
+        "implemented": [
+          "backup_vault_name",
+          "policy"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_plan": {
+        "implemented": [
+          "name",
+          "rule",
+          "advanced_backup_setting",
+          "tags"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_selection": {
+        "implemented": [
+          "iam_role_arn",
+          "name",
+          "plan_id",
+          "resources",
+          "selection_tag",
+          "condition",
+          "not_resources"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_framework": {
+        "implemented": [
+          "name",
+          "description",
+          "control",
+          "tags"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_report_plan": {
+        "implemented": [
+          "name",
+          "description",
+          "destination_s3_bucket_name",
+          "report_template",
+          "report_setting",
+          "tags"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_organizations_policy": {
+        "implemented": [
+          "name",
+          "content",
+          "description",
+          "type"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_organizations_policy_attachment": {
+        "implemented": [
+          "policy_id",
+          "target_id"
+        ],
+        "pending": [],
+        "deprecated": []
+      }
+    },
+    "data_sources": {
+      "aws_backup_vault": {
+        "implemented": [
+          "name"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_plan": {
+        "implemented": [
+          "plan_id"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_framework": {
+        "implemented": [
+          "name"
+        ],
+        "pending": [],
+        "deprecated": []
+      },
+      "aws_backup_report_plan": {
+        "implemented": [
+          "name"
+        ],
+        "pending": [],
+        "deprecated": []
+      }
+    },
+    "examples": {
+      "simple_plan": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "complete_plan": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection",
+          "aws_backup_vault_notifications"
+        ]
+      },
+      "multiple_plans": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "selection_by_tags": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "selection_by_conditions": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "cross_region_backup": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "simple_plan_using_lock_configuration": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_vault_lock_configuration",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "organization_backup_policy": {
+        "resources": [
+          "aws_organizations_policy",
+          "aws_organizations_policy_attachment"
+        ]
+      },
+      "complete_audit_framework": {
+        "resources": [
+          "aws_backup_framework"
+        ]
+      },
+      "simple_audit_framework": {
+        "resources": [
+          "aws_backup_framework"
+        ]
+      },
+      "aws_recommended_audit_framework": {
+        "resources": [
+          "aws_backup_framework"
+        ]
+      },
+      "simple_plan_windows_vss_backup": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "simple_plan_with_report": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection",
+          "aws_backup_report_plan"
+        ]
+      },
+      "cost_optimized_backup": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection"
+        ]
+      },
+      "secure_backup_configuration": {
+        "resources": [
+          "aws_backup_vault",
+          "aws_backup_plan",
+          "aws_backup_selection",
+          "aws_kms_key"
+        ]
+      }
+    }
+  },
+  "discovered_features": {
+    "new_resources": {},
+    "new_arguments": {},
+    "new_data_sources": {},
+    "deprecated_items": {},
+    "bug_fixes": {}
+  },
+  "issues_created": [],
+  "statistics": {
+    "total_scans": 0,
+    "total_features_discovered": 0,
+    "total_issues_created": 0,
+    "average_features_per_scan": 0,
+    "last_feature_discovery": "never"
+  }
+}

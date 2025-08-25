@@ -358,3 +358,152 @@ error creating Backup Vault (): AccessDeniedException: status code: 403, request
 ```
 
 Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+
+## Automation & Feature Discovery
+
+### Automated Feature Discovery System
+
+This module includes an automated feature discovery system that runs weekly to identify new AWS Backup features, deprecations, and bug fixes from the AWS provider. The system uses Claude Code with MCP (Model Context Protocol) servers to analyze provider documentation and automatically create GitHub issues for new functionality.
+
+#### How It Works
+
+1. **Weekly Scanning**: Every Sunday at 00:00 UTC, the system scans the latest AWS provider documentation
+2. **MCP Integration**: Uses Terraform and Context7 MCP servers to access up-to-date provider docs
+3. **Intelligent Analysis**: Compares provider capabilities with current module implementation
+4. **Automated Issues**: Creates categorized GitHub issues for discovered items:
+   - 🚀 **New Features** - Backup resources/arguments not yet implemented
+   - ⚠️ **Deprecations** - Features being phased out requiring action
+   - 🐛 **Bug Fixes** - Important provider fixes affecting the module
+
+#### Feature Discovery Workflow
+
+The discovery process follows this workflow:
+
+```
+┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
+│                 │    │                      │    │                     │
+│  Weekly Trigger │───▶│   Claude Code CLI    │───▶│   GitHub Issues     │
+│  (GitHub Action)│    │   + MCP Servers      │    │   (Auto-created)    │
+│                 │    │                      │    │                     │
+└─────────────────┘    └──────────────────────┘    └─────────────────────┘
+                                 │
+                                 ▼
+                       ┌──────────────────────┐
+                       │                      │
+                       │  Feature Tracking    │
+                       │    Database          │
+                       │  (.github/tracker/)  │
+                       │                      │
+                       └──────────────────────┘
+```
+
+#### Manual Discovery
+
+You can manually trigger feature discovery:
+
+```bash
+# Standard discovery
+gh workflow run feature-discovery.yml
+
+# Dry run mode (analyze without creating issues)
+gh workflow run feature-discovery.yml -f dry_run=true
+
+# Specific provider version
+gh workflow run feature-discovery.yml -f provider_version=5.82.0
+
+# Force full scan
+gh workflow run feature-discovery.yml -f force_scan=true
+```
+
+#### Discovery Categories
+
+The system identifies and categorizes findings as:
+
+**New Features (`enhancement` label):**
+- New Backup resources (`aws_backup_*`)
+- New arguments on existing resources
+- New data sources (`data.aws_backup_*`)
+- New compliance and audit capabilities
+- New cross-region and disaster recovery features
+- New cost optimization and lifecycle management
+- New organization-wide backup governance
+- New VSS and Windows integration features
+
+**Deprecations (`deprecation` label):**
+- Arguments marked for removal
+- Resources being phased out
+- Backup patterns no longer recommended
+- Configuration approaches outdated
+
+**Bug Fixes (`bug` label):**
+- Provider fixes affecting module functionality
+- Data protection and security patches
+- Performance and reliability improvements
+
+#### Issue Templates
+
+Each discovery type uses a structured template:
+
+- **New Features**: Implementation checklist, examples, testing requirements
+- **Deprecations**: Migration guidance, timeline, impact assessment
+- **Bug Fixes**: Impact analysis, testing strategy, version requirements
+
+#### Feature Tracking
+
+All discoveries are tracked in `.github/feature-tracker/backup-features.json`:
+
+```json
+{
+  "metadata": {
+    "last_scan": "2025-01-21T00:00:00Z",
+    "provider_version": "5.82.0",
+    "scan_count": 42
+  },
+  "current_implementation": {
+    "resources": {
+      "aws_backup_vault": {
+        "implemented": ["name", "kms_key_arn", "force_destroy"],
+        "pending": ["backup_vault_lock_configuration"]
+      }
+    }
+  },
+  "discovered_features": {
+    "new_resources": {},
+    "deprecations": {},
+    "bug_fixes": {}
+  }
+}
+```
+
+#### MCP Server Integration
+
+The system leverages Model Context Protocol servers for real-time documentation access:
+
+- **Terraform MCP**: `@modelcontextprotocol/server-terraform@latest`
+  - AWS provider resource documentation
+  - Argument specifications and examples
+  - Version compatibility information
+
+- **Context7 MCP**: `@upstash/context7-mcp@latest`
+  - Provider changelogs and release notes
+  - Community discussions and best practices
+  - Historical change tracking
+
+#### Benefits
+
+- **Stay Current**: Never miss new AWS Backup features
+- **Proactive Maintenance**: Identify deprecations before they break
+- **Automated Tracking**: Comprehensive feature database
+- **Community Value**: Users benefit from latest AWS capabilities
+- **Reduced Manual Work**: No need for manual provider monitoring
+
+#### Contributing to Discovery
+
+The system is designed to minimize false positives, but you can help improve accuracy:
+
+1. **Review Auto-Created Issues**: Validate and prioritize discoveries
+2. **Update Tracking**: Mark features as implemented when complete
+3. **Improve Templates**: Suggest enhancements to issue templates
+4. **Report Gaps**: Let us know if the system misses important features
+
+For more details on the discovery system architecture, see `.github/scripts/discovery-prompt.md`.

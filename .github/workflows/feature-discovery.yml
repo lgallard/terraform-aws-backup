@@ -1,0 +1,346 @@
+name: AWS Backup Feature Discovery
+
+on:
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+  workflow_dispatch:
+    inputs:
+      provider_version:
+        description: 'AWS Provider version to check (default: latest)'
+        required: false
+        default: 'latest'
+        type: string
+        # Validate semantic version format or "latest"
+        pattern: '^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$'
+      dry_run:
+        description: 'Run analysis without creating issues'
+        required: false
+        default: false
+        type: boolean
+      force_scan:
+        description: 'Force full scan even if no changes detected'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  discover-backup-features:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create feature tracker directory
+        run: |
+          mkdir -p .github/feature-tracker
+
+          # Create initial tracker file if it doesn't exist
+          if [ ! -f .github/feature-tracker/backup-features.json ]; then
+            cat > .github/feature-tracker/backup-features.json << 'EOF'
+          {
+            "last_scan": "1970-01-01T00:00:00Z",
+            "provider_version": "0.0.0",
+            "scan_history": [],
+            "features": {},
+            "issues_created": []
+          }
+          EOF
+            echo "Created initial feature tracker file"
+          fi
+
+      - name: Validate inputs
+        run: |
+          # Validate provider_version format
+          PROVIDER_VERSION="${{ inputs.provider_version || 'latest' }}"
+          if [[ ! "$PROVIDER_VERSION" =~ ^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$ ]]; then
+            echo "::error::Invalid provider_version format: $PROVIDER_VERSION"
+            echo "Must be 'latest' or semantic version (e.g., '5.82.0')"
+            exit 1
+          fi
+          echo "Provider version validation passed: $PROVIDER_VERSION"
+
+      - name: Run Claude Code Feature Discovery
+        id: claude-discovery
+        uses: anthropics/claude-code-action@beta
+        env:
+          CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        with:
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
+
+          # MCP Configuration for Terraform and Context7 documentation access
+          mcp_config: |
+            {
+              "mcpServers": {
+                "terraform": {
+                  "command": "npx",
+                  "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-terraform@latest"
+                  ]
+                },
+                "context7": {
+                  "command": "npx",
+                  "args": [
+                    "-y",
+                    "@upstash/context7-mcp@latest"
+                  ]
+                }
+              }
+            }
+
+          # Allow necessary tools for feature discovery
+          allowed_tools: |
+            mcp__terraform-server__getProviderDocs
+            mcp__terraform-server__resolveProviderDocID
+            mcp__terraform-server__searchModules
+            mcp__terraform-server__moduleDetails
+            mcp__context7__resolve-library-id
+            mcp__context7__get-library-docs
+            Bash(git diff)
+            Bash(git status)
+            Bash(gh issue create)
+            Bash(gh issue list)
+            Bash(jq)
+            Bash(cat)
+            Bash(echo)
+
+          # Direct prompt for Claude Code to perform feature discovery
+          direct_prompt: |
+            # AWS Backup Feature Discovery Analysis
+
+            You are performing automated feature discovery for the terraform-aws-backup module.
+
+            ## Objective
+            Analyze the latest AWS provider Backup resources and compare them with the current module implementation to identify:
+            1. **New Features**: AWS Backup resources/arguments not yet implemented
+            2. **Deprecations**: Features marked as deprecated in the provider
+            3. **Bug Fixes**: Important fixes mentioned in provider changelogs
+
+            ## Configuration
+            - Provider Version: ${{ inputs.provider_version || 'latest' }}
+            - Dry Run Mode: ${{ inputs.dry_run }}
+            - Force Scan: ${{ inputs.force_scan }}
+
+            ## Process
+
+            ### Step 1: Load Current State
+            Read the feature tracking database:
+            ```bash
+            cat .github/feature-tracker/backup-features.json
+            ```
+
+            ### Step 2: Fetch AWS Provider Backup Documentation
+            Use the Terraform MCP server to get the latest Backup documentation:
+
+            1. Use `mcp__terraform-server__resolveProviderDocID` with:
+               - providerName: "aws"
+               - providerNamespace: "hashicorp"
+               - serviceSlug: "backup"
+               - providerVersion: "${{ inputs.provider_version || 'latest' }}"
+               - providerDataType: "resources"
+
+            2. Get documentation for all Backup resources (aws_backup_*)
+            3. Also check data sources with providerDataType: "data-sources"
+
+            ### Step 3: Analyze Current Module Implementation
+            Examine these files to understand current implementation:
+            - `main.tf` - Primary backup resources and locals
+            - `iam.tf` - IAM roles and policies
+            - `notifications.tf` - SNS and notification configurations
+            - `organizations.tf` - AWS Organizations backup policies
+            - `selection.tf` - Resource selection logic
+            - `reports.tf` - Backup reporting configurations
+            - `audit_manager.tf` - Audit framework configurations
+            - `variables.tf` - Input variables
+            - `outputs.tf` - Module outputs
+
+            Create an inventory of:
+            - Implemented resources (aws_backup_vault, aws_backup_plan, etc.)
+            - Implemented arguments/attributes on each resource
+            - Configuration patterns used in examples (16 examples available)
+
+            ### Step 4: Comparison and Analysis
+            Compare provider documentation with module implementation:
+
+            **New Features to Look For:**
+            - New `aws_backup_*` resources not in the module
+            - New arguments on existing resources (vault, plan, selection, etc.)
+            - New data sources (`data.aws_backup_*`)
+            - New backup lifecycle and retention features
+            - New compliance and audit capabilities
+            - New cross-region and cross-account features
+            - New reporting and monitoring capabilities
+            - New organization-level backup policies
+            - New VSS (Volume Shadow Copy Service) features
+
+            **Deprecations to Check:**
+            - Arguments marked as deprecated
+            - Resources marked for removal
+            - Backup patterns no longer recommended
+            - Configuration approaches that are outdated
+
+            **Bug Fixes:**
+            - Check Context7 for AWS provider changelogs
+            - Look for Backup-related fixes that might affect the module
+
+            ### Step 5: Issue Creation
+            For each significant finding:
+
+            **If NOT in dry run mode (${{ inputs.dry_run }} == false):**
+
+            Create GitHub issues using templates:
+
+            ```bash
+            # For new features
+            gh issue create --template .github/ISSUE_TEMPLATE/new-backup-feature.md \
+              --title "feat: Add support for [feature_name]" \
+              --label "enhancement,aws-provider-update,auto-discovered" \
+              --assignee "@me"
+
+            # For deprecations
+            gh issue create --template .github/ISSUE_TEMPLATE/backup-deprecation.md \
+              --title "chore: Handle deprecation of [feature_name]" \
+              --label "deprecation,breaking-change,auto-discovered" \
+              --assignee "@me"
+
+            # For bug fixes
+            gh issue create --template .github/ISSUE_TEMPLATE/backup-bug-fix.md \
+              --title "fix: Address [bug_description]" \
+              --label "bug,aws-provider-update,auto-discovered" \
+              --assignee "@me"
+            ```
+
+            ### Step 6: Update Feature Tracker
+            Update `.github/feature-tracker/backup-features.json` with:
+            - Current scan timestamp
+            - Provider version analyzed
+            - New findings
+            - Issues created
+            - Scan summary
+
+            ### Step 7: Generate Summary Report
+            Create a comprehensive summary including:
+            - Features discovered: count and details
+            - Deprecations found: count and impact
+            - Issues created: numbers and links
+            - Recommendations for next steps
+
+            ## Important Notes
+            - Skip creating issues for features already tracked as "implemented"
+            - Check existing GitHub issues to avoid duplicates
+            - Prioritize compliance, security, and data protection changes
+            - Focus on Backup-specific features (ignore general AWS provider changes)
+            - Pay special attention to vault, plan, selection, and audit configurations
+            - Consider cross-region backup and disaster recovery improvements
+            - Look for cost optimization and lifecycle management enhancements
+
+            ## Expected Output
+            Provide a detailed report of your analysis and actions taken.
+
+      - name: Commit feature tracker updates
+        if: steps.claude-discovery.conclusion == 'success'
+        run: |
+          set -euo pipefail
+
+          # Atomic file operations with locking
+          LOCKFILE="/tmp/feature-tracker.lock"
+          TRACKER_FILE=".github/feature-tracker/backup-features.json"
+          TEMP_FILE="${TRACKER_FILE}.tmp"
+
+          # Acquire lock with timeout
+          exec 200>"$LOCKFILE"
+          if ! flock -w 30 200; then
+            echo "::error::Failed to acquire lock for feature tracker update"
+            exit 1
+          fi
+
+          # Check if there are changes to commit
+          if git diff --quiet .github/feature-tracker/; then
+            echo "No changes to feature tracker detected"
+            flock -u 200
+            exit 0
+          fi
+
+          # Validate JSON before committing
+          if [ -f "$TRACKER_FILE" ]; then
+            if ! python3 -m json.tool "$TRACKER_FILE" > /dev/null; then
+              echo "::error::Invalid JSON in feature tracker file"
+              flock -u 200
+              exit 1
+            fi
+          fi
+
+          # Configure git
+          git config --global user.name "AWS Backup Feature Discovery Bot"
+          git config --global user.email "actions@github.com"
+
+          # Atomic commit with validation
+          git add .github/feature-tracker/
+          git commit -m "chore: update AWS Backup feature discovery tracker
+
+          - Updated feature tracking database
+          - Scan completed: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          - Provider version: ${{ inputs.provider_version || 'latest' }}
+
+          [skip ci]"
+
+          # Push changes
+          git push origin HEAD
+
+          # Release lock
+          flock -u 200
+
+          echo "Feature tracker updated successfully with atomic operations"
+
+      - name: Workflow Summary
+        if: always()
+        run: |
+          echo "## 🔍 AWS Backup Feature Discovery Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Configuration
+          echo "### ⚙️ Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Provider Version**: \`${{ inputs.provider_version || 'latest' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run Mode**: \`${{ inputs.dry_run }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Force Scan**: \`${{ inputs.force_scan }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered**: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # MCP Configuration
+          echo "### 🔗 MCP Servers" >> $GITHUB_STEP_SUMMARY
+          echo "- **Terraform MCP**: \`@modelcontextprotocol/server-terraform@latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Context7 MCP**: \`@upstash/context7-mcp@latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Status
+          echo "### 📊 Execution Status" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.claude-discovery.conclusion }}" = "success" ]; then
+            echo "- ✅ **Feature Discovery**: Completed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Feature Discovery**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Available Commands
+          echo "### 🚀 Manual Execution" >> $GITHUB_STEP_SUMMARY
+          echo "Run feature discovery manually:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Standard discovery" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run feature-discovery.yml" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Dry run mode" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run feature-discovery.yml -f dry_run=true" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Specific provider version" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run feature-discovery.yml -f provider_version=5.82.0" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
