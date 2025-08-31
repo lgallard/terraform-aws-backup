@@ -79,6 +79,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           mode: agent
+          github_token: ${{ secrets.TERRAFORM_AUTOMATION_TOKEN }}
 
           # MCP Configuration for Terraform and Context7 documentation access
           mcp_config: |
