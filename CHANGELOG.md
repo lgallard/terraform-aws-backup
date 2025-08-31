@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.1.0](https://github.com/lgallard/terraform-aws-backup/compare/1.0.3...1.1.0) (2025-08-31)
+
+
+### Features
+
+* Add automated AWS Backup feature discovery ([#222](https://github.com/lgallard/terraform-aws-backup/issues/222)) ([bc17645](https://github.com/lgallard/terraform-aws-backup/commit/bc17645ccb26b76253b5ff3121b33470c6b52f28))
+
+
+### Bug Fixes
+
+* add id-token write permission for OIDC authentication ([#225](https://github.com/lgallard/terraform-aws-backup/issues/225)) ([25c445a](https://github.com/lgallard/terraform-aws-backup/commit/25c445a5cae69783241a88cb3a0a09ec61e97272)), closes [#224](https://github.com/lgallard/terraform-aws-backup/issues/224)
+
 ## [1.0.3](https://github.com/lgallard/terraform-aws-backup/compare/1.0.2...1.0.3) (2025-08-17)
 
 
