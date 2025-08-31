@@ -75,6 +75,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         env:
           CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TERRAFORM_AUTOMATION_TOKEN }}
         with:
           claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           mode: agent
