@@ -1,11 +1,19 @@
 {
   "metadata": {
     "module_name": "terraform-aws-backup",
-    "last_scan": "2025-09-01T01:45:00Z",
+    "last_scan": "2025-09-01T22:24:57Z",
     "provider_version": "6.11.0",
-    "scan_count": 1
+    "scan_count": 2
   },
   "scan_history": [
+    {
+      "scan_date": "2025-09-01T22:24:57Z",
+      "provider_version": "6.11.0",
+      "features_found": 5,
+      "deprecations_found": 0,
+      "fixes_found": 0,
+      "issues_created": 0
+    },
     {
       "scan_date": "2025-09-01T01:45:00Z",
       "provider_version": "6.11.0",
@@ -297,6 +305,27 @@
         "arguments": ["name", "restore_testing_plan_name", "protected_resource_type", "iam_role_arn", "protected_resource_arns", "protected_resource_conditions", "restore_metadata_overrides", "validation_window_hours"],
         "priority": "high",
         "security_impact": "granular restore testing configuration"
+      },
+      "aws_db_instance_automated_backups_replication": {
+        "provider_doc_id": "9781858",
+        "description": "Enables replication of automated backups to a different AWS Region",
+        "arguments": ["source_db_instance_arn", "retention_period", "kms_key_id", "pre_signed_url"],
+        "priority": "medium",
+        "security_impact": "cross-region database backup replication for disaster recovery"
+      },
+      "aws_efs_backup_policy": {
+        "provider_doc_id": "9782022", 
+        "description": "Provides an Elastic File System (EFS) Backup Policy resource",
+        "arguments": ["file_system_id", "backup_policy"],
+        "priority": "medium",
+        "security_impact": "automated EFS backup policy management"
+      },
+      "aws_fsx_backup": {
+        "provider_doc_id": "9782088",
+        "description": "Manages a FSx Backup",
+        "arguments": ["file_system_id", "volume_id", "tags"],
+        "priority": "medium",
+        "security_impact": "FSx file system backup management"
       }
     },
     "new_arguments": {
@@ -304,12 +333,15 @@
         "schedule_expression_timezone": {
           "description": "The timezone in which the schedule expression is set",
           "priority": "low",
-          "implemented": false
+          "implemented": false,
+          "terraform_registry_url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan"
         },
         "opt_in_to_archive_for_supported_resources": {
           "description": "This setting will instruct your backup plan to transition supported resources to archive storage tier",
-          "priority": "medium",
-          "implemented": false
+          "priority": "medium", 
+          "implemented": false,
+          "terraform_registry_url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan",
+          "location": "rule.lifecycle block"
         }
       }
     },
@@ -355,10 +387,10 @@
     }
   ],
   "statistics": {
-    "total_scans": 1,
-    "total_features_discovered": 7,
+    "total_scans": 2,
+    "total_features_discovered": 10,
     "total_issues_created": 5,
-    "average_features_per_scan": 7,
-    "last_feature_discovery": "2025-09-01T01:45:00Z"
+    "average_features_per_scan": 6,
+    "last_feature_discovery": "2025-09-01T22:24:57Z"
   }
 }
