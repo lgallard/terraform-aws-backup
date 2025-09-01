@@ -1,11 +1,19 @@
 {
   "metadata": {
     "module_name": "terraform-aws-backup",
-    "last_scan": "1970-01-01T00:00:00Z",
-    "provider_version": "0.0.0",
-    "scan_count": 0
+    "last_scan": "2025-09-01T01:45:00Z",
+    "provider_version": "6.11.0",
+    "scan_count": 1
   },
   "scan_history": [
+    {
+      "scan_date": "2025-09-01T01:45:00Z",
+      "provider_version": "6.11.0",
+      "features_found": 7,
+      "deprecations_found": 0,
+      "fixes_found": 0,
+      "issues_created": 5
+    },
     {
       "scan_date": "1970-01-01T00:00:00Z",
       "provider_version": "0.0.0",
@@ -254,18 +262,103 @@
     }
   },
   "discovered_features": {
-    "new_resources": {},
-    "new_arguments": {},
+    "new_resources": {
+      "aws_backup_global_settings": {
+        "provider_doc_id": "9781617",
+        "description": "Provides an AWS Backup Global Settings resource",
+        "arguments": ["global_settings"],
+        "priority": "medium",
+        "security_impact": "cross-account backup enablement"
+      },
+      "aws_backup_logically_air_gapped_vault": {
+        "provider_doc_id": "9781618",
+        "description": "Terraform resource for managing an AWS Backup Logically Air Gapped Vault",
+        "arguments": ["name", "max_retention_days", "min_retention_days", "region", "tags"],
+        "priority": "high",
+        "security_impact": "enhanced backup isolation and compliance"
+      },
+      "aws_backup_region_settings": {
+        "provider_doc_id": "9781620",
+        "description": "Provides an AWS Backup Region Settings resource",
+        "arguments": ["resource_type_opt_in_preference", "resource_type_management_preference", "region"],
+        "priority": "medium",
+        "security_impact": "regional backup service configuration"
+      },
+      "aws_backup_restore_testing_plan": {
+        "provider_doc_id": "9781622",
+        "description": "Terraform resource for managing an AWS Backup Restore Testing Plan",
+        "arguments": ["name", "recovery_point_selection", "schedule_expression", "schedule_expression_timezone", "start_window_hours"],
+        "priority": "high",
+        "security_impact": "automated restore testing for compliance"
+      },
+      "aws_backup_restore_testing_selection": {
+        "provider_doc_id": "9781623",
+        "description": "Terraform resource for managing an AWS Backup Restore Testing Selection",
+        "arguments": ["name", "restore_testing_plan_name", "protected_resource_type", "iam_role_arn", "protected_resource_arns", "protected_resource_conditions", "restore_metadata_overrides", "validation_window_hours"],
+        "priority": "high",
+        "security_impact": "granular restore testing configuration"
+      }
+    },
+    "new_arguments": {
+      "aws_backup_plan": {
+        "schedule_expression_timezone": {
+          "description": "The timezone in which the schedule expression is set",
+          "priority": "low",
+          "implemented": false
+        },
+        "opt_in_to_archive_for_supported_resources": {
+          "description": "This setting will instruct your backup plan to transition supported resources to archive storage tier",
+          "priority": "medium",
+          "implemented": false
+        }
+      }
+    },
     "new_data_sources": {},
     "deprecated_items": {},
     "bug_fixes": {}
   },
-  "issues_created": [],
+  "issues_created": [
+    {
+      "resource": "aws_backup_global_settings",
+      "issue_type": "new-feature",
+      "title": "feat: Add support for aws_backup_global_settings",
+      "created_date": "2025-09-01T01:45:00Z",
+      "status": "pending_creation"
+    },
+    {
+      "resource": "aws_backup_logically_air_gapped_vault", 
+      "issue_type": "new-feature",
+      "title": "feat: Add support for aws_backup_logically_air_gapped_vault",
+      "created_date": "2025-09-01T01:45:00Z",
+      "status": "pending_creation"
+    },
+    {
+      "resource": "aws_backup_region_settings",
+      "issue_type": "new-feature", 
+      "title": "feat: Add support for aws_backup_region_settings",
+      "created_date": "2025-09-01T01:45:00Z",
+      "status": "pending_creation"
+    },
+    {
+      "resource": "aws_backup_restore_testing_plan",
+      "issue_type": "new-feature",
+      "title": "feat: Add support for aws_backup_restore_testing_plan", 
+      "created_date": "2025-09-01T01:45:00Z",
+      "status": "pending_creation"
+    },
+    {
+      "resource": "aws_backup_restore_testing_selection",
+      "issue_type": "new-feature",
+      "title": "feat: Add support for aws_backup_restore_testing_selection",
+      "created_date": "2025-09-01T01:45:00Z", 
+      "status": "pending_creation"
+    }
+  ],
   "statistics": {
-    "total_scans": 0,
-    "total_features_discovered": 0,
-    "total_issues_created": 0,
-    "average_features_per_scan": 0,
-    "last_feature_discovery": "never"
+    "total_scans": 1,
+    "total_features_discovered": 7,
+    "total_issues_created": 5,
+    "average_features_per_scan": 7,
+    "last_feature_discovery": "2025-09-01T01:45:00Z"
   }
 }
