@@ -138,10 +138,14 @@ jobs:
 
           # Allow necessary tools for feature discovery
           allowed_tools: |
-            mcp__terraform-server__getProviderDocs
-            mcp__terraform-server__resolveProviderDocID
-            mcp__terraform-server__searchModules
-            mcp__terraform-server__moduleDetails
+            mcp__terraform__search_providers
+            mcp__terraform__get_provider_details
+            mcp__terraform__get_latest_provider_version
+            mcp__terraform__search_modules
+            mcp__terraform__get_module_details
+            mcp__terraform__get_latest_module_version
+            mcp__terraform__search_policies
+            mcp__terraform__get_policy_details
             mcp__context7__resolve-library-id
             mcp__context7__get-library-docs
             Bash(git diff)
