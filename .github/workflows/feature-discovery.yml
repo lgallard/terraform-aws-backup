@@ -70,6 +70,38 @@ jobs:
           fi
           echo "Provider version validation passed: $PROVIDER_VERSION"
 
+      - name: Environment Diagnostics & Cache Clearing
+        run: |
+          echo "=== Environment Snapshot ==="
+          echo "Node.js: $(node --version)"
+          echo "NPM: $(npm --version)"
+          echo "NPX: $(npx --version)"
+          echo "Runner: $(uname -a)"
+          echo "Disk space: $(df -h /)"
+          echo "Memory: $(free -h)"
+          echo "Network test: $(curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/)"
+
+          echo "=== Cache Clearing ==="
+          echo "Clearing NPM caches..."
+          npm cache clean --force || echo "npm cache clean failed"
+          rm -rf ~/.npm/_cacache ~/.npm/_logs || echo "npm cache dir cleanup failed"
+
+          echo "Clearing NPX cache..."
+          rm -rf ~/.npm/_npx || echo "npx cache cleanup failed"
+
+          echo "=== Testing MCP Package Access ==="
+          echo "Testing Terraform MCP server package access..."
+          npm view @modelcontextprotocol/server-terraform version || echo "Package lookup failed"
+
+          echo "Testing Context7 MCP server package access..."
+          npm view @upstash/context7-mcp version || echo "Package lookup failed"
+
+          echo "=== Pre-installation Test ==="
+          echo "Testing NPX with verbose output..."
+          npx --version
+
+          echo "Environment diagnostics complete!"
+
       - name: Run Claude Code Feature Discovery
         id: claude-discovery
         uses: anthropics/claude-code-action@beta
@@ -86,10 +118,12 @@ jobs:
             {
               "mcpServers": {
                 "terraform": {
-                  "command": "npx",
+                  "command": "docker",
                   "args": [
-                    "-y",
-                    "@modelcontextprotocol/server-terraform@latest"
+                    "run",
+                    "-i",
+                    "--rm",
+                    "hashicorp/terraform-mcp-server"
                   ]
                 },
                 "context7": {
