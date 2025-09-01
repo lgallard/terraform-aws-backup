@@ -75,11 +75,11 @@ jobs:
         uses: anthropics/claude-code-action@beta
         env:
           CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.TERRAFORM_AUTOMATION_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_ISSUE_TOKEN }}
         with:
           claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           mode: agent
-          github_token: ${{ secrets.TERRAFORM_AUTOMATION_TOKEN }}
+          github_token: ${{ secrets.CLAUDE_ISSUE_TOKEN }}
 
           # MCP Configuration for Terraform and Context7 documentation access
           mcp_config: |
