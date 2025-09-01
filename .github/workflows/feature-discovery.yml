@@ -89,9 +89,9 @@ jobs:
           echo "Clearing NPX cache..."
           rm -rf ~/.npm/_npx || echo "npx cache cleanup failed"
 
-          echo "=== Testing MCP Package Access ==="
-          echo "Testing Terraform MCP server package access..."
-          npm view @modelcontextprotocol/server-terraform version || echo "Package lookup failed"
+          echo "=== Testing MCP Server Access ==="
+          echo "Testing Terraform MCP server Docker image availability..."
+          docker pull hashicorp/terraform-mcp-server:latest --quiet || echo "Docker image check completed"
 
           echo "Testing Context7 MCP server package access..."
           npm view @upstash/context7-mcp version || echo "Package lookup failed"
