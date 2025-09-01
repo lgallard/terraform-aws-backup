@@ -1,11 +1,19 @@
 {
   "metadata": {
     "module_name": "terraform-aws-backup",
-    "last_scan": "2025-09-01T01:45:00Z",
+    "last_scan": "2025-09-01T12:00:00Z",
     "provider_version": "6.11.0",
-    "scan_count": 1
+    "scan_count": 2
   },
   "scan_history": [
+    {
+      "scan_date": "2025-09-01T12:00:00Z",
+      "provider_version": "6.11.0",
+      "features_found": 7,
+      "deprecations_found": 0,
+      "fixes_found": 0,
+      "issues_created": 0
+    },
     {
       "scan_date": "2025-09-01T01:45:00Z",
       "provider_version": "6.11.0",
@@ -323,42 +331,43 @@
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_global_settings",
       "created_date": "2025-09-01T01:45:00Z",
-      "status": "pending_creation"
+      "status": "needs_manual_creation"
     },
     {
       "resource": "aws_backup_logically_air_gapped_vault", 
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_logically_air_gapped_vault",
       "created_date": "2025-09-01T01:45:00Z",
-      "status": "pending_creation"
+      "status": "needs_manual_creation"
     },
     {
       "resource": "aws_backup_region_settings",
       "issue_type": "new-feature", 
       "title": "feat: Add support for aws_backup_region_settings",
       "created_date": "2025-09-01T01:45:00Z",
-      "status": "pending_creation"
+      "status": "needs_manual_creation"
     },
     {
       "resource": "aws_backup_restore_testing_plan",
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_restore_testing_plan", 
       "created_date": "2025-09-01T01:45:00Z",
-      "status": "pending_creation"
+      "status": "needs_manual_creation"
     },
     {
       "resource": "aws_backup_restore_testing_selection",
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_restore_testing_selection",
       "created_date": "2025-09-01T01:45:00Z", 
-      "status": "pending_creation"
+      "status": "needs_manual_creation"
     }
   ],
   "statistics": {
-    "total_scans": 1,
+    "total_scans": 2,
     "total_features_discovered": 7,
-    "total_issues_created": 5,
+    "total_issues_created": 0,
     "average_features_per_scan": 7,
-    "last_feature_discovery": "2025-09-01T01:45:00Z"
+    "last_feature_discovery": "2025-09-01T12:00:00Z",
+    "note": "Issues require manual creation due to GitHub CLI permission restrictions"
   }
 }
