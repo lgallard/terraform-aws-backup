@@ -236,30 +236,79 @@ jobs:
             - Look for Backup-related fixes that might affect the module
 
             ### Step 5: Issue Creation
-            For each significant finding:
+            **CRITICAL: You MUST create actual GitHub issues when dry_run is false.**
 
-            **If NOT in dry run mode (${{ inputs.dry_run }} == false):**
+            **Current Configuration: dry_run = ${{ inputs.dry_run || 'false' }}**
 
-            Create GitHub issues using templates:
+            **If NOT in dry run mode (${{ inputs.dry_run }} == 'false' or inputs.dry_run is empty):**
 
+            For EACH new feature discovered, you MUST execute these commands:
+
+            **For new AWS Backup resources (aws_backup_*):**
             ```bash
-            # For new features
-            gh issue create --template .github/ISSUE_TEMPLATE/new-backup-feature.md \
-              --title "feat: Add support for [feature_name]" \
-              --label "enhancement,aws-provider-update,auto-discovered" \
-              --assignee "@me"
+            gh issue create --title "feat: Add support for [EXACT_RESOURCE_NAME]" \
+              --body "## Feature Request
 
-            # For deprecations
-            gh issue create --template .github/ISSUE_TEMPLATE/backup-deprecation.md \
-              --title "chore: Handle deprecation of [feature_name]" \
-              --label "deprecation,breaking-change,auto-discovered" \
-              --assignee "@me"
+            ### AWS Resource
+            **Resource:** \`[EXACT_RESOURCE_NAME]\`
+            **Provider Version:** ${{ inputs.provider_version || 'latest' }}
+            **Discovery Date:** $(date -u '+%Y-%m-%d')
 
-            # For bug fixes
-            gh issue create --template .github/ISSUE_TEMPLATE/backup-bug-fix.md \
-              --title "fix: Address [bug_description]" \
-              --label "bug,aws-provider-update,auto-discovered" \
-              --assignee "@me"
+            ### Description
+            [RESOURCE_DESCRIPTION_FROM_DOCS]
+
+            ### Arguments/Attributes
+            [LIST_OF_ARGUMENTS]
+
+            ### Implementation Priority
+            [HIGH/MEDIUM/LOW based on security_impact]
+
+            ### Security Impact
+            [SECURITY_IMPLICATIONS]
+
+            ### References
+            - AWS Provider Documentation: [DOC_LINK]
+            - Terraform Registry: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/[resource_name]
+
+            ### Auto-Discovery Metadata
+            - Discovered by: AWS Backup Feature Discovery Bot
+            - Scan ID: $(date +%s)
+            - Provider Doc ID: [PROVIDER_DOC_ID]" \
+              --label "enhancement,aws-provider-update,auto-discovered,needs-implementation" \
+              --assignee "lgallard"
+            ```
+
+            **For new arguments on existing resources:**
+            ```bash
+            gh issue create --title "feat: Add [ARGUMENT_NAME] support to [RESOURCE_NAME]" \
+              --body "## Enhancement Request
+
+            ### Resource Enhancement
+            **Resource:** \`[RESOURCE_NAME]\`
+            **New Argument:** \`[ARGUMENT_NAME]\`
+            **Provider Version:** ${{ inputs.provider_version || 'latest' }}
+
+            ### Argument Details
+            [ARGUMENT_DESCRIPTION]
+
+            ### Implementation Impact
+            [IMPACT_ON_EXISTING_MODULE]
+
+            ### Auto-Discovery Metadata
+            - Discovered by: AWS Backup Feature Discovery Bot
+            - Priority: [PRIORITY_LEVEL]" \
+              --label "enhancement,aws-provider-update,auto-discovered,argument-addition" \
+              --assignee "lgallard"
+            ```
+
+            **VERIFICATION STEP: After creating each issue, capture the issue number and update the tracker:**
+            ```bash
+            # Get the issue number from the previous command
+            ISSUE_NUMBER=$(gh issue list --limit 1 --json number --jq '.[0].number')
+            echo "Created issue #$ISSUE_NUMBER for [FEATURE_NAME]"
+            
+            # You MUST update the feature tracker to mark the issue as created (not pending_creation)
+            # This will be handled in the tracker update step
             ```
 
             ### Step 6: Update Feature Tracker
@@ -288,6 +337,100 @@ jobs:
 
             ## Expected Output
             Provide a detailed report of your analysis and actions taken.
+
+      - name: Post-process pending issue creation
+        id: create-pending-issues
+        if: steps.claude-discovery.conclusion == 'success' && inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          
+          echo "🔍 Checking for features with pending_creation status..."
+          
+          TRACKER_FILE=".github/feature-tracker/backup-features.json"
+          ISSUES_CREATED=0
+          
+          if [ ! -f "$TRACKER_FILE" ]; then
+            echo "Feature tracker file not found, skipping post-processing"
+            exit 0
+          fi
+          
+          # Extract pending creation features using jq
+          PENDING_FEATURES=$(jq -r '.issues_created[] | select(.status == "pending_creation") | @base64' "$TRACKER_FILE" 2>/dev/null || echo "")
+          
+          if [ -z "$PENDING_FEATURES" ]; then
+            echo "✅ No features with pending_creation status found"
+            exit 0
+          fi
+          
+          echo "📝 Found features requiring issue creation:"
+          
+          # Process each pending feature
+          while IFS= read -r feature_data; do
+            if [ -n "$feature_data" ]; then
+              # Decode base64 and extract fields
+              FEATURE_JSON=$(echo "$feature_data" | base64 --decode)
+              RESOURCE=$(echo "$FEATURE_JSON" | jq -r '.resource')
+              TITLE=$(echo "$FEATURE_JSON" | jq -r '.title')
+              ISSUE_TYPE=$(echo "$FEATURE_JSON" | jq -r '.issue_type')
+              
+              echo "Creating issue for: $RESOURCE"
+              
+              # Create the issue based on type
+              if [ "$ISSUE_TYPE" = "new-feature" ]; then
+                ISSUE_URL=$(gh issue create \
+                  --title "$TITLE" \
+                  --body "## AWS Backup Feature Request
+
+          ### Resource
+          **AWS Resource:** \`$RESOURCE\`
+          **Provider Version:** ${{ inputs.provider_version || 'latest' }}
+          **Discovery Date:** $(date -u '+%Y-%m-%d')
+
+          ### Auto-Discovery Details
+          This feature was automatically discovered by the AWS Backup Feature Discovery workflow.
+
+          **Discovery Metadata:**
+          - Scan Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          - Workflow Run: ${{ github.run_id }}
+          - Repository: ${{ github.repository }}
+
+          ### Next Steps
+          1. Review AWS provider documentation for this resource
+          2. Analyze integration requirements with existing module
+          3. Design implementation approach
+          4. Add comprehensive tests
+          5. Update documentation and examples
+
+          ### Implementation Priority
+          This feature requires evaluation for:
+          - Security and compliance impact
+          - Backward compatibility
+          - Module architecture integration
+
+          ---
+          *Auto-generated by AWS Backup Feature Discovery Bot*" \
+                  --label "enhancement,aws-provider-update,auto-discovered,needs-triage" \
+                  --assignee "lgallard")
+                
+                # Extract issue number from URL
+                ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+                echo "✅ Created issue #$ISSUE_NUMBER for $RESOURCE"
+                ISSUES_CREATED=$((ISSUES_CREATED + 1))
+                
+                # Update the tracker file to mark as created (using temporary approach)
+                jq --arg resource "$RESOURCE" --arg issue_num "$ISSUE_NUMBER" --arg issue_url "$ISSUE_URL" '
+                  (.issues_created[] | select(.resource == $resource)) |= (
+                    .status = "created" |
+                    .issue_number = ($issue_num | tonumber) |
+                    .issue_url = $issue_url |
+                    .actual_creation_date = now | strftime("%Y-%m-%dT%H:%M:%SZ")
+                  )' "$TRACKER_FILE" > "${TRACKER_FILE}.tmp" && mv "${TRACKER_FILE}.tmp" "$TRACKER_FILE"
+              fi
+            fi
+          done <<< "$PENDING_FEATURES"
+          
+          echo "🎯 Post-processing complete: Created $ISSUES_CREATED issues"
+          echo "issues_created=$ISSUES_CREATED" >> $GITHUB_OUTPUT
 
       - name: Commit feature tracker updates
         if: steps.claude-discovery.conclusion == 'success'
@@ -370,6 +513,22 @@ jobs:
             echo "- ✅ **Feature Discovery**: Completed successfully" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ **Feature Discovery**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Issue Creation Status
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "- 🧪 **Issue Creation**: Skipped (dry run mode)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.create-pending-issues.conclusion }}" = "success" ]; then
+            ISSUES_COUNT="${{ steps.create-pending-issues.outputs.issues_created || '0' }}"
+            if [ "$ISSUES_COUNT" -gt 0 ]; then
+              echo "- ✅ **Issue Creation**: Created $ISSUES_COUNT new issues" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ✅ **Issue Creation**: No new issues needed" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ steps.create-pending-issues.conclusion }}" = "skipped" ]; then
+            echo "- ⏭️ **Issue Creation**: Skipped (no feature discovery or dry run)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Issue Creation**: Failed or incomplete" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
 
