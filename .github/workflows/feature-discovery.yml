@@ -606,6 +606,9 @@ jobs:
           LOCKFILE="/tmp/feature-tracker.lock"
           TRACKER_FILE=".github/feature-tracker/backup-features.json"
           TEMP_FILE="${TRACKER_FILE}.tmp"
+          
+          # Get issues created count from previous step
+          ISSUES_CREATED="${{ steps.create-issues-from-json.outputs.issues_created || '0' }}"
 
           # Acquire lock with timeout
           exec 200>"$LOCKFILE"
@@ -620,6 +623,17 @@ jobs:
             flock -u 200
             exit 0
           fi
+          
+          # Only create PR if new issues were created (meaningful changes)
+          if [ "$ISSUES_CREATED" -eq 0 ]; then
+            echo "📊 Tracker updated with metadata only - skipping PR creation"
+            echo "ℹ️  Scan completed but no new features discovered"
+            echo "ℹ️  Updated metadata: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            flock -u 200
+            exit 0
+          fi
+          
+          echo "🚀 Creating PR for tracker updates with $ISSUES_CREATED new issues"
 
           # Validate JSON before committing
           if [ -f "$TRACKER_FILE" ]; then
@@ -715,6 +729,18 @@ jobs:
             echo "- ⏭️ **Issue Creation**: Skipped (no feature discovery or dry run)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ **Issue Creation**: Failed or incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Tracker Update Status
+          if [ "${{ steps.claude-discovery.conclusion }}" = "success" ]; then
+            ISSUES_COUNT="${{ steps.create-issues-from-json.outputs.issues_created || '0' }}"
+            if [ "$ISSUES_COUNT" -gt 0 ]; then
+              echo "- ✅ **Tracker Updates**: Created PR for database updates" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- 📊 **Tracker Updates**: Metadata updated (no PR needed)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⏭️ **Tracker Updates**: Skipped (discovery failed)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
 
