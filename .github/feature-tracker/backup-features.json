@@ -1,11 +1,19 @@
 {
   "metadata": {
     "module_name": "terraform-aws-backup",
-    "last_scan": "2025-09-01T01:45:00Z",
+    "last_scan": "2025-09-02T02:14:58Z",
     "provider_version": "6.11.0",
-    "scan_count": 1
+    "scan_count": 2
   },
   "scan_history": [
+    {
+      "scan_date": "2025-09-02T02:14:58Z",
+      "provider_version": "6.11.0",
+      "features_found": 2,
+      "deprecations_found": 0,
+      "fixes_found": 1,
+      "issues_created": 0
+    },
     {
       "scan_date": "2025-09-01T01:45:00Z",
       "provider_version": "6.11.0",
@@ -303,13 +311,15 @@
       "aws_backup_plan": {
         "schedule_expression_timezone": {
           "description": "The timezone in which the schedule expression is set",
-          "priority": "low",
-          "implemented": false
+          "priority": "medium",
+          "implemented": false,
+          "found_in_scan": "2025-09-02T02:14:58Z"
         },
         "opt_in_to_archive_for_supported_resources": {
           "description": "This setting will instruct your backup plan to transition supported resources to archive storage tier",
           "priority": "medium",
-          "implemented": false
+          "implemented": false,
+          "found_in_scan": "2025-09-02T02:14:58Z"
         }
       }
     },
@@ -355,10 +365,10 @@
     }
   ],
   "statistics": {
-    "total_scans": 1,
-    "total_features_discovered": 7,
+    "total_scans": 2,
+    "total_features_discovered": 9,
     "total_issues_created": 5,
-    "average_features_per_scan": 7,
-    "last_feature_discovery": "2025-09-01T01:45:00Z"
+    "average_features_per_scan": 4.5,
+    "last_feature_discovery": "2025-09-02T02:14:58Z"
   }
 }
