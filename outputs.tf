@@ -1,12 +1,33 @@
 # Vault
 output "vault_id" {
   description = "The name of the vault"
-  value       = try(aws_backup_vault.ab_vault[0].id, null)
+  value       = var.vault_type == "standard" ? try(aws_backup_vault.ab_vault[0].id, null) : try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].id, null)
 }
 
 output "vault_arn" {
   description = "The ARN of the vault"
-  value       = try(aws_backup_vault.ab_vault[0].arn, null)
+  value       = var.vault_type == "standard" ? try(aws_backup_vault.ab_vault[0].arn, null) : try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].arn, null)
+}
+
+output "vault_type" {
+  description = "The type of vault created"
+  value       = var.vault_type
+}
+
+# Air Gapped Vault specific outputs
+output "airgapped_vault_id" {
+  description = "The name of the air gapped vault"
+  value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].id, null)
+}
+
+output "airgapped_vault_arn" {
+  description = "The ARN of the air gapped vault"
+  value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].arn, null)
+}
+
+output "airgapped_vault_recovery_points" {
+  description = "The number of recovery points stored in the air gapped vault"
+  value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].recovery_points, null)
 }
 
 # Legacy Plan

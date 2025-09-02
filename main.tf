@@ -2,14 +2,20 @@
 # Organized locals for better maintainability and code clarity
 locals {
   # Resource creation conditions
-  should_create_vault       = var.enabled && var.vault_name != null
-  should_create_lock        = local.should_create_vault && var.locked
-  should_create_legacy_plan = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
+  should_create_vault            = var.enabled && var.vault_name != null
+  should_create_standard_vault   = local.should_create_vault && var.vault_type == "standard"
+  should_create_airgapped_vault  = local.should_create_vault && var.vault_type == "logically_air_gapped"
+  should_create_lock             = local.should_create_standard_vault && var.locked
+  should_create_legacy_plan      = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
 
   # Validation helpers for vault lock configuration
   vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
   retention_days_valid        = local.vault_lock_requirements_met ? var.min_retention_days <= var.max_retention_days : true
   check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
+
+  # Vault reference helpers (dynamic based on vault type)
+  vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name, null) : null
+  vault_arn  = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].arn, null) : local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].arn, null) : null
 
   # Rule processing (matching existing logic for compatibility)
   rule = var.rule_name == null ? [] : [{
@@ -65,14 +71,25 @@ locals {
   ])
 }
 
-# AWS Backup vault with optimized timeouts
+# AWS Backup vault (standard) with optimized timeouts
 resource "aws_backup_vault" "ab_vault" {
-  count = local.should_create_vault ? 1 : 0
+  count = local.should_create_standard_vault ? 1 : 0
 
   name          = var.vault_name
   kms_key_arn   = var.vault_kms_key_arn
   force_destroy = var.vault_force_destroy
   tags          = var.tags
+
+}
+
+# AWS Backup logically air gapped vault
+resource "aws_backup_logically_air_gapped_vault" "ab_airgapped_vault" {
+  count = local.should_create_airgapped_vault ? 1 : 0
+
+  name               = var.vault_name
+  min_retention_days = var.min_retention_days
+  max_retention_days = var.max_retention_days
+  tags               = var.tags
 
 }
 
@@ -103,7 +120,7 @@ resource "aws_backup_plan" "ab_plan" {
     for_each = local.rules
     content {
       rule_name                = try(rule.value.name, null)
-      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
+      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
       schedule                 = try(rule.value.schedule, null)
       start_window             = try(rule.value.start_window, null)
       completion_window        = try(rule.value.completion_window, null)
@@ -153,7 +170,7 @@ resource "aws_backup_plan" "ab_plan" {
   tags = var.tags
 
   # First create the vault if needed
-  depends_on = [aws_backup_vault.ab_vault]
+  depends_on = [aws_backup_vault.ab_vault, aws_backup_logically_air_gapped_vault.ab_airgapped_vault]
 
   lifecycle {
     precondition {
@@ -179,7 +196,7 @@ resource "aws_backup_plan" "ab_plans" {
     for_each = each.value.rules
     content {
       rule_name                = try(rule.value.name, null)
-      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? aws_backup_vault.ab_vault[0].name : "Default"
+      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
       schedule                 = try(rule.value.schedule, null)
       start_window             = try(rule.value.start_window, null)
       completion_window        = try(rule.value.completion_window, null)
@@ -229,7 +246,7 @@ resource "aws_backup_plan" "ab_plans" {
   tags = var.tags
 
   # First create the vault if needed
-  depends_on = [aws_backup_vault.ab_vault]
+  depends_on = [aws_backup_vault.ab_vault, aws_backup_logically_air_gapped_vault.ab_airgapped_vault]
 
   lifecycle {
     precondition {
