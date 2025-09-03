@@ -26,8 +26,9 @@ output "airgapped_vault_arn" {
 }
 
 output "airgapped_vault_recovery_points" {
-  description = "The number of recovery points stored in the air gapped vault"
+  description = "The number of recovery points stored in the air gapped vault (sensitive for security)"
   value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].recovery_points, null)
+  sensitive   = true
 }
 
 # Legacy Plan

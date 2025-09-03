@@ -17,7 +17,7 @@ variable "vault_name" {
 variable "min_retention_days" {
   description = "Minimum retention period that the vault retains its recovery points"
   type        = number
-  default     = 2555  # 7 years for compliance
+  default     = 7  # AWS minimum, allows for flexible compliance needs
 }
 
 variable "max_retention_days" {
