@@ -16,17 +16,17 @@ module "aws_backup_plan" {
   source = "../../"
 
   # Vault configuration - Air Gapped
-  vault_name               = var.vault_name
-  vault_type              = "logically_air_gapped"
-  min_retention_days      = var.min_retention_days
-  max_retention_days      = var.max_retention_days
+  vault_name         = var.vault_name
+  vault_type         = "logically_air_gapped"
+  min_retention_days = var.min_retention_days
+  max_retention_days = var.max_retention_days
 
   # Plan configuration
   plan_name = var.plan_name
 
   # Rule configuration
-  rule_name      = var.rule_name
-  rule_schedule  = var.rule_schedule
+  rule_name     = var.rule_name
+  rule_schedule = var.rule_schedule
 
   # Selection of resources
   selection_name      = var.selection_name

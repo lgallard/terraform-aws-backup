@@ -82,10 +82,6 @@ variable "max_retention_days" {
     error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
   }
 
-  validation {
-    condition     = var.vault_type != "logically_air_gapped" || var.max_retention_days != null
-    error_message = "max_retention_days is required when vault_type is 'logically_air_gapped'."
-  }
 }
 
 variable "min_retention_days" {
@@ -98,10 +94,6 @@ variable "min_retention_days" {
     error_message = "The min_retention_days must be between 7 and 2555 days (minimum 7 days for compliance requirements)."
   }
 
-  validation {
-    condition     = var.vault_type != "logically_air_gapped" || var.min_retention_days != null
-    error_message = "min_retention_days is required when vault_type is 'logically_air_gapped'."
-  }
 }
 
 #

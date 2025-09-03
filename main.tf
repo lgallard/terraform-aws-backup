@@ -13,9 +13,11 @@ locals {
   retention_days_valid        = local.vault_lock_requirements_met ? var.min_retention_days <= var.max_retention_days : true
   check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
 
+  # Validation for air-gapped vault requirements
+  airgapped_vault_valid = var.vault_type != "logically_air_gapped" ? true : (var.min_retention_days != null && var.max_retention_days != null)
+
   # Vault reference helpers (dynamic based on vault type)
   vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name, null) : null
-  vault_arn  = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].arn, null) : local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].arn, null) : null
 
   # Rule processing (matching existing logic for compatibility)
   rule = var.rule_name == null ? [] : [{
@@ -176,6 +178,11 @@ resource "aws_backup_plan" "ab_plan" {
     precondition {
       condition     = !var.windows_vss_backup || (length(local.selection_resources) > 0 && can(regex("(?i).*ec2.*", join(",", local.selection_resources))))
       error_message = "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
+    }
+
+    precondition {
+      condition     = local.airgapped_vault_valid
+      error_message = "When vault_type is 'logically_air_gapped', both min_retention_days and max_retention_days must be specified."
     }
 
     # Add lifecycle validations at the plan level
