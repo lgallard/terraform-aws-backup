@@ -14,13 +14,11 @@ locals {
   check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
 
   # Validation for air-gapped vault requirements (moved to lifecycle precondition)
-  airgapped_vault_valid = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
+  vault_retention_valid = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
 
   # Vault reference helpers (dynamic based on vault type)
-  vault_name = (
-    local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) :
-    local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name, null) :
-    null
+  vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : (
+    local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name, null) : null
   )
 
   # Rule processing (matching existing logic for compatibility)
@@ -185,7 +183,7 @@ resource "aws_backup_plan" "ab_plan" {
     }
 
     precondition {
-      condition     = local.airgapped_vault_valid
+      condition     = local.vault_retention_valid
       error_message = "When vault_type is 'logically_air_gapped', both min_retention_days and max_retention_days must be specified."
     }
 

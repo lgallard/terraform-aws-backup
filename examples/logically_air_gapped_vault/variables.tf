@@ -18,12 +18,27 @@ variable "min_retention_days" {
   description = "Minimum retention period that the vault retains its recovery points"
   type        = number
   default     = 7  # AWS minimum, allows for flexible compliance needs
+
+  validation {
+    condition     = var.min_retention_days >= 7 && var.min_retention_days <= 2555
+    error_message = "The min_retention_days must be between 7 and 2555 days (minimum 7 days for compliance requirements)."
+  }
 }
 
 variable "max_retention_days" {
   description = "Maximum retention period that the vault retains its recovery points"
   type        = number
-  default     = 2555  # 7 years for compliance
+  default     = 2555  # 7 years for compliance - configurable for different compliance needs
+
+  validation {
+    condition     = var.max_retention_days >= 1 && var.max_retention_days <= 2555
+    error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
+  }
+
+  validation {
+    condition     = var.min_retention_days <= var.max_retention_days
+    error_message = "The min_retention_days must be less than or equal to max_retention_days."
+  }
 }
 
 variable "plan_name" {

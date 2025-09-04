@@ -55,7 +55,7 @@ Note that this example creates resources which cost money. Run `terraform destro
 The example demonstrates a compliance-focused backup configuration:
 
 - **Vault Type**: `logically_air_gapped`
-- **Retention**: 2555 days (7 years) for both minimum and maximum
+- **Retention**: 7 days minimum, 2555 days (7 years) maximum
 - **Schedule**: Daily backups at 1:00 AM UTC
 - **Resources**: DynamoDB tables, EBS volumes, and RDS databases
 
@@ -81,8 +81,8 @@ module "compliance_backup" {
   # Air Gapped Vault Configuration
   vault_name         = "compliance-air-gapped-vault"
   vault_type         = "logically_air_gapped"
-  min_retention_days = 2555  # 7 years
-  max_retention_days = 2555  # 7 years
+  min_retention_days = 7     # AWS minimum for flexibility
+  max_retention_days = 2555  # 7 years for compliance
 
   # Backup Plan
   plan_name     = "compliance-backup-plan"
