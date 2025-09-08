@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.2.0](https://github.com/lgallard/terraform-aws-backup/compare/1.1.0...1.2.0) (2025-09-08)
+
+
+### Features
+
+* enhance AWS Backup feature discovery with issue creation ([#234](https://github.com/lgallard/terraform-aws-backup/issues/234)) ([f19c275](https://github.com/lgallard/terraform-aws-backup/commit/f19c27593f381628736125d9d40aa3c6dd2d97e1))
+* implement smart PR creation for feature tracker updates ([#256](https://github.com/lgallard/terraform-aws-backup/issues/256)) ([10d2586](https://github.com/lgallard/terraform-aws-backup/commit/10d258623576c8a19f27ed84ba78dcbc8cb75507))
+
+
+### Bug Fixes
+
+* Add proper GitHub token environment to pre-verification and issue creation steps ([#241](https://github.com/lgallard/terraform-aws-backup/issues/241)) ([e3afa37](https://github.com/lgallard/terraform-aws-backup/commit/e3afa372c4563522330b2fee22b8ffb29eb9d779))
+* add pull-requests write permission for automated PR creation ([#252](https://github.com/lgallard/terraform-aws-backup/issues/252)) ([3764756](https://github.com/lgallard/terraform-aws-backup/commit/3764756898db17b61793c5f57d58e2480f5210b8))
+* complete workflow fixes for Claude Code action on master ([#227](https://github.com/lgallard/terraform-aws-backup/issues/227)) ([619bacc](https://github.com/lgallard/terraform-aws-backup/commit/619bacccdd09806f914d0b17b2fc5ce0a7117a76)), closes [#224](https://github.com/lgallard/terraform-aws-backup/issues/224)
+* Deploy enhanced GitHub issue creation workflow to master ([#240](https://github.com/lgallard/terraform-aws-backup/issues/240)) ([b4b35c1](https://github.com/lgallard/terraform-aws-backup/commit/b4b35c13521f5894dc68ceb6c07e422356bb80be))
+* replace non-existent labels with valid repository labels ([#243](https://github.com/lgallard/terraform-aws-backup/issues/243)) ([1afb0da](https://github.com/lgallard/terraform-aws-backup/commit/1afb0daa73fff5529bc739bc1b2ec86d4282d7ce))
+* Replace non-existent npm package check with Docker image validation ([#242](https://github.com/lgallard/terraform-aws-backup/issues/242)) ([5eecdd0](https://github.com/lgallard/terraform-aws-backup/commit/5eecdd04b8d8349c660079ca4b4d663ea2cdee82))
+* replace TERRAFORM_AUTOMATION_TOKEN with CLAUDE_ISSUE_TOKEN ([#229](https://github.com/lgallard/terraform-aws-backup/issues/229)) ([74508e9](https://github.com/lgallard/terraform-aws-backup/commit/74508e9a72c9e439c80b5d1be3d0d0a1dbf75ea2))
+* resolve git permissions for feature discovery workflow ([#233](https://github.com/lgallard/terraform-aws-backup/issues/233)) ([1211fea](https://github.com/lgallard/terraform-aws-backup/commit/1211fea0a0a1bb290fad52209399316ebd7df6b0))
+* update ARN validation to support wildcards and gov cloud partitions ([#262](https://github.com/lgallard/terraform-aws-backup/issues/262)) ([c70b5ce](https://github.com/lgallard/terraform-aws-backup/commit/c70b5ceb30a0045e762f380558b5f214cd586c6d))
+* Update Terraform MCP server tool permissions ([#232](https://github.com/lgallard/terraform-aws-backup/issues/232)) ([f86ae31](https://github.com/lgallard/terraform-aws-backup/commit/f86ae319c8fe6ec9c6db03f0524272b8c0961da7)), closes [#224](https://github.com/lgallard/terraform-aws-backup/issues/224)
+* Use official HashiCorp Terraform MCP server ([#231](https://github.com/lgallard/terraform-aws-backup/issues/231)) ([8c9ff3b](https://github.com/lgallard/terraform-aws-backup/commit/8c9ff3bfd9c3fc286f0bc5a00f74e6c4f2298e97)), closes [#224](https://github.com/lgallard/terraform-aws-backup/issues/224)
+* use pull requests for feature tracker updates instead of direct push ([#246](https://github.com/lgallard/terraform-aws-backup/issues/246)) ([1239c76](https://github.com/lgallard/terraform-aws-backup/commit/1239c765bd7f951226da0f5f445c5f6e5d38fff9))
+
 ## [1.1.0](https://github.com/lgallard/terraform-aws-backup/compare/1.0.3...1.1.0) (2025-08-31)
 
 
