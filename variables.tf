@@ -569,16 +569,16 @@ variable "backup_selections" {
       for selection in var.backup_selections : selection.resources == null || alltrue([
         for resource in selection.resources :
         can(regex("^\\*$", resource)) ||
-        can(regex("^arn:aws:dynamodb:[a-z0-9-]+:[0-9]+:table/[a-zA-Z0-9._-]+$", resource)) ||
-        can(regex("^arn:aws:ec2:[a-z0-9-]+:[0-9]+:(volume|instance)/[a-zA-Z0-9-]+$", resource)) ||
-        can(regex("^arn:aws:rds:[a-z0-9-]+:[0-9]+:(db|cluster):[a-zA-Z0-9-]+$", resource)) ||
-        can(regex("^arn:aws:elasticfilesystem:[a-z0-9-]+:[0-9]+:file-system/fs-[a-zA-Z0-9]+$", resource)) ||
-        can(regex("^arn:aws:fsx:[a-z0-9-]+:[0-9]+:file-system/fs-[a-zA-Z0-9]+$", resource)) ||
-        can(regex("^arn:aws:s3:::[a-zA-Z0-9.-]+$", resource)) ||
-        can(regex("^arn:aws:storagegateway:[a-z0-9-]+:[0-9]+:gateway/[a-zA-Z0-9-]+$", resource))
+        can(regex("^arn:aws(-[a-z-]+)?:dynamodb:([a-z0-9-]+|\\*):([0-9]+|\\*):table/([a-zA-Z0-9._-]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:ec2:([a-z0-9-]+|\\*):([0-9]+|\\*):(volume|instance)/([a-zA-Z0-9-]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:rds:([a-z0-9-]+|\\*):([0-9]+|\\*):(db|cluster):([a-zA-Z0-9-]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:elasticfilesystem:([a-z0-9-]+|\\*):([0-9]+|\\*):file-system/(fs-[a-zA-Z0-9]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:fsx:([a-z0-9-]+|\\*):([0-9]+|\\*):file-system/(fs-[a-zA-Z0-9]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:s3:::([a-zA-Z0-9.-]+|\\*)$", resource)) ||
+        can(regex("^arn:aws(-[a-z-]+)?:storagegateway:([a-z0-9-]+|\\*):([0-9]+|\\*):gateway/([a-zA-Z0-9-]+|\\*)$", resource))
       ])
     ])
-    error_message = "Resources must be valid ARNs for supported services (DynamoDB, EC2, RDS, EFS, FSx, S3, Storage Gateway) or wildcards ('*'). Examples: 'arn:aws:dynamodb:us-east-1:123456789012:table/MyTable', 'arn:aws:ec2:us-east-1:123456789012:volume/vol-1234567890abcdef0'."
+    error_message = "Resources must be valid ARNs for supported services (DynamoDB, EC2, RDS, EFS, FSx, S3, Storage Gateway) or wildcards ('*'). Wildcards are allowed in any ARN component. Examples: 'arn:aws:dynamodb:us-east-1:123456789012:table/MyTable', 'arn:aws:ec2:*:*:instance/*', 'arn:aws-us-gov:s3:::*'."
   }
 }
 
