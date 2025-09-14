@@ -13,8 +13,11 @@ locals {
   retention_days_valid        = local.vault_lock_requirements_met ? var.min_retention_days <= var.max_retention_days : true
   check_retention_days        = var.locked ? (local.vault_lock_requirements_met && local.retention_days_valid) : true
 
-  # Validation for air-gapped vault requirements (moved to lifecycle precondition)
-  vault_retention_valid = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
+  # Validation for air-gapped vault requirements
+  airgapped_vault_requirements_met = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
+  
+  # Cross-validation for retention days (moved from variable validation)
+  retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) ? true : var.min_retention_days <= var.max_retention_days
 
   # Vault reference helpers (dynamic based on vault type)
   vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : (
@@ -173,8 +176,11 @@ resource "aws_backup_plan" "ab_plan" {
   # Tags
   tags = var.tags
 
-  # First create the vault if needed
-  depends_on = [aws_backup_vault.ab_vault, aws_backup_logically_air_gapped_vault.ab_airgapped_vault]
+  # First create the vault if needed (only depend on the vault type being used)
+  depends_on = compact([
+    local.should_create_standard_vault ? aws_backup_vault.ab_vault[0].name : null,
+    local.should_create_airgapped_vault ? aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name : null
+  ])
 
   lifecycle {
     precondition {
@@ -183,8 +189,13 @@ resource "aws_backup_plan" "ab_plan" {
     }
 
     precondition {
-      condition     = local.vault_retention_valid
+      condition     = local.airgapped_vault_requirements_met
       error_message = "When vault_type is 'logically_air_gapped', both min_retention_days and max_retention_days must be specified."
+    }
+
+    precondition {
+      condition     = local.retention_days_cross_valid
+      error_message = "The min_retention_days must be less than or equal to max_retention_days."
     }
 
     # Add lifecycle validations at the plan level
@@ -254,8 +265,11 @@ resource "aws_backup_plan" "ab_plans" {
   # Tags
   tags = var.tags
 
-  # First create the vault if needed
-  depends_on = [aws_backup_vault.ab_vault, aws_backup_logically_air_gapped_vault.ab_airgapped_vault]
+  # First create the vault if needed (only depend on the vault type being used)
+  depends_on = compact([
+    local.should_create_standard_vault ? aws_backup_vault.ab_vault[0].name : null,
+    local.should_create_airgapped_vault ? aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name : null
+  ])
 
   lifecycle {
     precondition {

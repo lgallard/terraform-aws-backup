@@ -112,6 +112,7 @@ module "compliance_backup" {
 2. **AWS Provider Version**: Requires AWS provider version >= 6.11.0 for air gapped vault support
 3. **Cost Implications**: Air gapped vaults may have different pricing than standard vaults
 4. **Recovery Process**: Recovery from air gapped vaults follows enhanced security procedures
+5. **Destruction Limitations**: Air gapped vaults do not support `force_destroy` - vaults with recovery points cannot be destroyed until retention periods expire
 
 ## Outputs
 
@@ -130,3 +131,10 @@ module "compliance_backup" {
 - Retention policies are immutable once set
 - Access patterns are logged for compliance auditing
 - Recovery operations require additional authentication steps
+
+## AWS Limitations for Air Gapped Vaults
+
+- **No KMS Support**: Custom KMS encryption keys are not supported (AWS-managed encryption only)
+- **No Force Destroy**: Cannot use `force_destroy` parameter - vaults must be manually emptied before deletion
+- **Limited Parameters**: Only supports `name`, `min_retention_days`, `max_retention_days`, `tags`, and `region`
+- **API Constraints**: Some AWS Backup APIs may have throttling limitations for air gapped operations
