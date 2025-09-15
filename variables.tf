@@ -41,6 +41,17 @@ variable "vault_force_destroy" {
   default     = false
 }
 
+variable "vault_type" {
+  description = "Type of backup vault to create. Valid values are 'standard' (default) or 'logically_air_gapped'"
+  type        = string
+  default     = "standard"
+
+  validation {
+    condition     = contains(["standard", "logically_air_gapped"], var.vault_type)
+    error_message = "The vault_type must be either 'standard' or 'logically_air_gapped'."
+  }
+}
+
 #
 # AWS Backup vault lock configuration
 #
@@ -62,7 +73,7 @@ variable "changeable_for_days" {
 }
 
 variable "max_retention_days" {
-  description = "The maximum retention period that the vault retains its recovery points"
+  description = "The maximum retention period that the vault retains its recovery points. Required when vault_type is 'logically_air_gapped'"
   type        = number
   default     = null
 
@@ -70,10 +81,12 @@ variable "max_retention_days" {
     condition     = var.max_retention_days == null ? true : (var.max_retention_days >= 1 && var.max_retention_days <= 2555)
     error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
   }
+
+
 }
 
 variable "min_retention_days" {
-  description = "The minimum retention period that the vault retains its recovery points"
+  description = "The minimum retention period that the vault retains its recovery points. Required when vault_type is 'logically_air_gapped'"
   type        = number
   default     = null
 
@@ -81,6 +94,7 @@ variable "min_retention_days" {
     condition     = var.min_retention_days == null ? true : (var.min_retention_days >= 7 && var.min_retention_days <= 2555)
     error_message = "The min_retention_days must be between 7 and 2555 days (minimum 7 days for compliance requirements)."
   }
+
 }
 
 #

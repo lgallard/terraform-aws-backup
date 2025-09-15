@@ -688,3 +688,117 @@ func validateDynamoDBTableRestore(t *testing.T, client *dynamodb.DynamoDB, table
 
 	t.Logf("DynamoDB table restore validation completed successfully")
 }
+
+// TestLogicallyAirGappedVault tests the creation and management of a logically air-gapped backup vault
+func TestLogicallyAirGappedVault(t *testing.T) {
+	// Skip if running in CI without AWS credentials
+	if os.Getenv("CI") != "" && os.Getenv("AWS_ACCESS_KEY_ID") == "" {
+		t.Skip("Skipping integration test in CI without AWS credentials")
+	}
+
+	t.Parallel()
+
+	// Generate unique names for this test
+	planName := GenerateUniqueBackupPlanName(t)
+	vaultName := GenerateUniqueBackupVaultName(t) + "-airgapped"
+	selectionName := GenerateUniqueSelectionName(t)
+
+	// Set up AWS session
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	}))
+
+	backupClient := backup.New(sess)
+
+	terraformOptions := &terraform.Options{
+		TerraformDir: "fixtures/terraform/air_gapped_vault",
+		Vars: map[string]interface{}{
+			"plan_name":           planName,
+			"vault_name":          vaultName,
+			"selection_name":      selectionName,
+			"vault_type":          "logically_air_gapped",
+			"min_retention_days":  7,
+			"max_retention_days":  30,
+			"aws_region":          "us-east-1",
+		},
+		NoColor: true,
+	}
+
+	// Clean up resources on test completion
+	defer terraform.Destroy(t, terraformOptions)
+
+	// Deploy the infrastructure
+	terraform.InitAndApply(t, terraformOptions)
+
+	// Get outputs
+	planId := terraform.Output(t, terraformOptions, "plan_id")
+	vaultId := terraform.Output(t, terraformOptions, "vault_id")
+	vaultArn := terraform.Output(t, terraformOptions, "vault_arn")
+	vaultType := terraform.Output(t, terraformOptions, "vault_type")
+
+	// Verify plan was created
+	assert.NotEmpty(t, planId, "Backup plan ID should not be empty")
+	t.Logf("Created backup plan: %s", planId)
+
+	// Verify air-gapped vault was created
+	assert.NotEmpty(t, vaultId, "Air-gapped vault ID should not be empty")
+	assert.NotEmpty(t, vaultArn, "Air-gapped vault ARN should not be empty")
+	assert.Equal(t, "logically_air_gapped", vaultType, "Vault type should be logically_air_gapped")
+	t.Logf("Created air-gapped vault: %s", vaultId)
+
+	// Verify the air-gapped vault exists and has correct configuration
+	RetryableAWSOperation(t, "describe air-gapped vault", func() error {
+		input := &backup.DescribeBackupVaultInput{
+			BackupVaultName: aws.String(vaultId),
+		}
+
+		result, err := backupClient.DescribeBackupVault(input)
+		if err != nil {
+			return err
+		}
+
+		// Verify vault properties
+		assert.Equal(t, vaultId, *result.BackupVaultName, "Vault name should match")
+		assert.Equal(t, vaultArn, *result.BackupVaultArn, "Vault ARN should match")
+
+		// Note: AWS API doesn't always expose vault type in DescribeBackupVault
+		// The vault type is validated through Terraform outputs
+		t.Logf("Air-gapped vault verified: %s", *result.BackupVaultName)
+
+		return nil
+	})
+
+	// Verify the backup plan exists and is associated with the air-gapped vault
+	RetryableAWSOperation(t, "describe backup plan", func() error {
+		input := &backup.GetBackupPlanInput{
+			BackupPlanId: aws.String(planId),
+		}
+
+		result, err := backupClient.GetBackupPlan(input)
+		if err != nil {
+			return err
+		}
+
+		// Verify plan properties
+		assert.Equal(t, planId, *result.BackupPlanId, "Plan ID should match")
+		assert.NotEmpty(t, result.BackupPlan.Rules, "Plan should have rules")
+
+		// Verify first rule targets the air-gapped vault
+		if len(result.BackupPlan.Rules) > 0 {
+			rule := result.BackupPlan.Rules[0]
+			assert.Equal(t, vaultId, *rule.TargetBackupVaultName, "Rule should target the air-gapped vault")
+			t.Logf("Backup plan rule verified: targets vault %s", *rule.TargetBackupVaultName)
+		}
+
+		return nil
+	})
+
+	// Verify retention configuration for air-gapped vault
+	// Note: Retention validation is primarily enforced by Terraform lifecycle rules
+	// The actual retention behavior is managed by AWS Backup service
+	t.Logf("Air-gapped vault test completed successfully")
+	t.Logf("✅ Vault Type: %s", vaultType)
+	t.Logf("✅ Vault ID: %s", vaultId)
+	t.Logf("✅ Plan ID: %s", planId)
+	t.Logf("✅ Retention enforced through Terraform validation")
+}

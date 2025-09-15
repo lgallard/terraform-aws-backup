@@ -336,7 +336,7 @@
       "status": "pending_creation"
     },
     {
-      "resource": "aws_backup_logically_air_gapped_vault", 
+      "resource": "aws_backup_logically_air_gapped_vault",
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_logically_air_gapped_vault",
       "created_date": "2025-09-01T01:45:00Z",
@@ -344,7 +344,7 @@
     },
     {
       "resource": "aws_backup_region_settings",
-      "issue_type": "new-feature", 
+      "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_region_settings",
       "created_date": "2025-09-01T01:45:00Z",
       "status": "pending_creation"
@@ -352,7 +352,7 @@
     {
       "resource": "aws_backup_restore_testing_plan",
       "issue_type": "new-feature",
-      "title": "feat: Add support for aws_backup_restore_testing_plan", 
+      "title": "feat: Add support for aws_backup_restore_testing_plan",
       "created_date": "2025-09-01T01:45:00Z",
       "status": "pending_creation"
     },
@@ -360,7 +360,7 @@
       "resource": "aws_backup_restore_testing_selection",
       "issue_type": "new-feature",
       "title": "feat: Add support for aws_backup_restore_testing_selection",
-      "created_date": "2025-09-01T01:45:00Z", 
+      "created_date": "2025-09-01T01:45:00Z",
       "status": "pending_creation"
     }
   ],
