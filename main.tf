@@ -16,8 +16,8 @@ locals {
   # Validation for air-gapped vault requirements
   airgapped_vault_requirements_met = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
   
-  # Cross-validation for retention days (moved from variable validation)
-  retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) ? true : var.min_retention_days <= var.max_retention_days
+  # Cross-validation for retention days (unified validation approach)
+  retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) || var.min_retention_days <= var.max_retention_days
 
   # Vault reference helpers (dynamic based on vault type)
   vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : (
@@ -177,10 +177,9 @@ resource "aws_backup_plan" "ab_plan" {
   tags = var.tags
 
   # First create the vault if needed (only depend on the vault type being used)
-  depends_on = compact([
-    local.should_create_standard_vault ? aws_backup_vault.ab_vault[0].name : null,
-    local.should_create_airgapped_vault ? aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name : null
-  ])
+  depends_on = local.should_create_standard_vault ? [aws_backup_vault.ab_vault[0]] : (
+    local.should_create_airgapped_vault ? [aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0]] : null
+  )
 
   lifecycle {
     precondition {
@@ -266,10 +265,9 @@ resource "aws_backup_plan" "ab_plans" {
   tags = var.tags
 
   # First create the vault if needed (only depend on the vault type being used)
-  depends_on = compact([
-    local.should_create_standard_vault ? aws_backup_vault.ab_vault[0].name : null,
-    local.should_create_airgapped_vault ? aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name : null
-  ])
+  depends_on = local.should_create_standard_vault ? [aws_backup_vault.ab_vault[0]] : (
+    local.should_create_airgapped_vault ? [aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0]] : null
+  )
 
   lifecycle {
     precondition {

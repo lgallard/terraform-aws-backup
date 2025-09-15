@@ -35,10 +35,6 @@ variable "max_retention_days" {
     error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
   }
 
-  validation {
-    condition     = var.min_retention_days <= var.max_retention_days
-    error_message = "The min_retention_days must be less than or equal to max_retention_days."
-  }
 }
 
 variable "plan_name" {

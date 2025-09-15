@@ -5,10 +5,11 @@
 provider "aws" {
   region = var.aws_region
 
-  # Make it faster by skipping something
-  skip_metadata_api_check     = true
-  skip_region_validation      = true
-  skip_credentials_validation = true
+  # Note: The following settings are for development/testing only
+  # Remove these in production to ensure proper validation
+  # skip_metadata_api_check     = true
+  # skip_region_validation      = true 
+  # skip_credentials_validation = true
 }
 
 # Simple plan
