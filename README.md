@@ -62,12 +62,14 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.13.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 
 ## Modules
 
@@ -81,6 +83,8 @@ No modules.
 | [aws_backup_plan.ab_plan](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_plan.ab_plans](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_report_plan.ab_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_report_plan) | resource |
+| [aws_backup_restore_testing_plan.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_restore_testing_plan) | resource |
+| [aws_backup_restore_testing_selection.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_restore_testing_selection) | resource |
 | [aws_backup_selection.ab_selection](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
 | [aws_backup_selection.ab_selections](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
 | [aws_backup_selection.plan_selections](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
@@ -88,15 +92,22 @@ No modules.
 | [aws_backup_vault_lock_configuration.ab_vault_lock_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_lock_configuration) | resource |
 | [aws_backup_vault_notifications.backup_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_notifications) | resource |
 | [aws_iam_policy.ab_tag_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.restore_testing_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.ab_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.restore_testing_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.ab_managed_policies](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.ab_tag_policy_attach](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.restore_testing_managed_policies](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.restore_testing_policy_attach](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_organizations_policy.backup_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/organizations_policy) | resource |
 | [aws_organizations_policy_attachment.backup_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/organizations_policy_attachment) | resource |
 | [aws_sns_topic_policy.backup_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_policy) | resource |
+| [random_string.restore_testing_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_iam_policy_document.ab_role_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.ab_tag_policy_document](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.backup_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.restore_testing_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.restore_testing_policy_document](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 
 ## Inputs
@@ -126,6 +137,9 @@ No modules.
 | <a name="input_plan_name"></a> [plan\_name](#input\_plan\_name) | The display name of a backup plan | `string` | `null` | no |
 | <a name="input_plans"></a> [plans](#input\_plans) | A map of backup plans to create. Each key is the plan name and each value is a map of plan configuration. | <pre>map(object({<br/>    name = optional(string)<br/>    rules = list(object({<br/>      name                     = string<br/>      target_vault_name        = optional(string)<br/>      schedule                 = optional(string)<br/>      start_window             = optional(number)<br/>      completion_window        = optional(number)<br/>      enable_continuous_backup = optional(bool)<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>      recovery_point_tags = optional(map(string))<br/>      copy_actions = optional(list(object({<br/>        destination_vault_arn = string<br/>        lifecycle = optional(object({<br/>          cold_storage_after = optional(number)<br/>          delete_after       = number<br/>        }))<br/>      })), [])<br/>    }))<br/>    selections = optional(map(object({<br/>      resources     = optional(list(string))<br/>      not_resources = optional(list(string))<br/>      conditions = optional(object({<br/>        string_equals     = optional(map(string))<br/>        string_not_equals = optional(map(string))<br/>        string_like       = optional(map(string))<br/>        string_not_like   = optional(map(string))<br/>      }))<br/>      selection_tags = optional(list(object({<br/>        type  = string<br/>        key   = string<br/>        value = string<br/>      })))<br/>    })), {})<br/>  }))</pre> | `{}` | no |
 | <a name="input_reports"></a> [reports](#input\_reports) | The default cache behavior for this distribution. | <pre>list(object({<br/>    name               = string<br/>    description        = optional(string, null)<br/>    formats            = optional(list(string), null)<br/>    s3_bucket_name     = string<br/>    s3_key_prefix      = optional(string, null)<br/>    report_template    = string<br/>    accounts           = optional(list(string), null)<br/>    organization_units = optional(list(string), null)<br/>    regions            = optional(list(string), null)<br/>    framework_arns     = optional(list(string), [])<br/>  }))</pre> | `[]` | no |
+| <a name="input_restore_testing_iam_role_arn"></a> [restore\_testing\_iam\_role\_arn](#input\_restore\_testing\_iam\_role\_arn) | The ARN of an existing IAM role for restore testing operations. If not provided, a new role will be created. | `string` | `null` | no |
+| <a name="input_restore_testing_plans"></a> [restore\_testing\_plans](#input\_restore\_testing\_plans) | Map of restore testing plans to create. Each plan defines automated testing schedule and recovery point selection criteria. | <pre>map(object({<br/>    name                         = string<br/>    schedule_expression          = string<br/>    schedule_expression_timezone = optional(string)<br/>    start_window_hours           = optional(number)<br/>    recovery_point_selection = object({<br/>      algorithm             = string<br/>      include_vaults        = list(string)<br/>      recovery_point_types  = list(string)<br/>      exclude_vaults        = optional(list(string))<br/>      selection_window_days = optional(number)<br/>    })<br/>  }))</pre> | `{}` | no |
+| <a name="input_restore_testing_selections"></a> [restore\_testing\_selections](#input\_restore\_testing\_selections) | Map of restore testing selections to create. Each selection defines which resources to test within a restore testing plan. | <pre>map(object({<br/>    name                      = string<br/>    restore_testing_plan_name = string<br/>    protected_resource_type   = string<br/>    iam_role_arn              = optional(string)<br/>    protected_resource_arns   = optional(list(string))<br/>    protected_resource_conditions = optional(object({<br/>      string_equals = optional(list(object({<br/>        key   = string<br/>        value = string<br/>      })))<br/>      string_not_equals = optional(list(object({<br/>        key   = string<br/>        value = string<br/>      })))<br/>    }))<br/>    restore_metadata_overrides = optional(map(string))<br/>    validation_window_hours    = optional(number)<br/>  }))</pre> | `{}` | no |
 | <a name="input_rule_completion_window"></a> [rule\_completion\_window](#input\_rule\_completion\_window) | The amount of time AWS Backup attempts a backup before canceling the job and returning an error | `number` | `null` | no |
 | <a name="input_rule_enable_continuous_backup"></a> [rule\_enable\_continuous\_backup](#input\_rule\_enable\_continuous\_backup) | Enable continuous backups for supported resources. | `bool` | `false` | no |
 | <a name="input_rule_lifecycle_cold_storage_after"></a> [rule\_lifecycle\_cold\_storage\_after](#input\_rule\_lifecycle\_cold\_storage\_after) | Specifies the number of days after creation that a recovery point is moved to cold storage | `number` | `null` | no |
@@ -160,8 +174,58 @@ No modules.
 | <a name="output_plan_role"></a> [plan\_role](#output\_plan\_role) | The service role of the backup plan |
 | <a name="output_plan_version"></a> [plan\_version](#output\_plan\_version) | Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan |
 | <a name="output_plans"></a> [plans](#output\_plans) | Map of plans created and their attributes |
+| <a name="output_restore_testing_plans"></a> [restore\_testing\_plans](#output\_restore\_testing\_plans) | Map of restore testing plans created and their attributes |
+| <a name="output_restore_testing_role_arn"></a> [restore\_testing\_role\_arn](#output\_restore\_testing\_role\_arn) | The ARN of the restore testing IAM role |
+| <a name="output_restore_testing_role_name"></a> [restore\_testing\_role\_name](#output\_restore\_testing\_role\_name) | The name of the restore testing IAM role |
+| <a name="output_restore_testing_selections"></a> [restore\_testing\_selections](#output\_restore\_testing\_selections) | Map of restore testing selections created and their attributes |
+| <a name="output_restore_testing_summary"></a> [restore\_testing\_summary](#output\_restore\_testing\_summary) | Summary of restore testing configuration and quick reference |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues

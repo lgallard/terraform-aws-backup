@@ -688,3 +688,349 @@ func validateDynamoDBTableRestore(t *testing.T, client *dynamodb.DynamoDB, table
 
 	t.Logf("DynamoDB table restore validation completed successfully")
 }
+
+// TestRestoreTestingPlan tests the creation and configuration of restore testing plans
+func TestRestoreTestingPlan(t *testing.T) {
+	// Skip if running in CI without AWS credentials
+	if os.Getenv("CI") != "" && os.Getenv("AWS_ACCESS_KEY_ID") == "" {
+		t.Skip("Skipping integration test in CI without AWS credentials")
+	}
+
+	t.Parallel()
+
+	// Generate unique names for this test
+	planName := GenerateUniqueBackupPlanName(t)
+	vaultName := GenerateUniqueBackupVaultName(t)
+	selectionName := GenerateUniqueSelectionName(t)
+	restoreTestingPlanName := fmt.Sprintf("restore-test-plan-%s", random.UniqueId())
+	restoreTestingSelectionName := fmt.Sprintf("restore-test-selection-%s", random.UniqueId())
+
+	// Set up AWS session
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	}))
+
+	terraformOptions := &terraform.Options{
+		TerraformDir: "fixtures/terraform/restore_testing",
+		Vars: map[string]interface{}{
+			"plan_name":                        planName,
+			"vault_name":                       vaultName,
+			"selection_name":                   selectionName,
+			"restore_testing_plan_name":        restoreTestingPlanName,
+			"restore_testing_selection_name":   restoreTestingSelectionName,
+			"restore_testing_schedule":         "cron(0 6 ? * SUN *)",
+			"aws_region":                       "us-east-1",
+		},
+		NoColor: true,
+	}
+
+	defer terraform.Destroy(t, terraformOptions)
+
+	// Deploy the configuration with retry logic
+	RetryableInitAndApply(t, terraformOptions)
+
+	// Validate outputs
+	validateRestoreTestingOutputs(t, terraformOptions, restoreTestingPlanName, restoreTestingSelectionName)
+
+	// Test AWS resources
+	validateRestoreTestingResources(t, sess, restoreTestingPlanName, restoreTestingSelectionName)
+}
+
+// validateRestoreTestingOutputs validates Terraform outputs for restore testing
+func validateRestoreTestingOutputs(t *testing.T, options *terraform.Options, planName, selectionName string) {
+	t.Log("Validating restore testing Terraform outputs...")
+
+	// Check vault outputs
+	vaultArn := terraform.Output(t, options, "vault_arn")
+	assert.NotEmpty(t, vaultArn, "Vault ARN should not be empty")
+	assert.Contains(t, vaultArn, "arn:aws:backup:", "Vault ARN should be a valid backup vault ARN")
+
+	vaultId := terraform.Output(t, options, "vault_id")
+	assert.NotEmpty(t, vaultId, "Vault ID should not be empty")
+
+	// Check restore testing plan outputs
+	restoreTestingPlansOutput := terraform.Output(t, options, "restore_testing_plans")
+	assert.NotEmpty(t, restoreTestingPlansOutput, "Restore testing plans output should not be empty")
+
+	// Check restore testing selection outputs
+	restoreTestingSelectionsOutput := terraform.Output(t, options, "restore_testing_selections")
+	assert.NotEmpty(t, restoreTestingSelectionsOutput, "Restore testing selections output should not be empty")
+
+	// Check IAM role outputs
+	restoreTestingRoleArn := terraform.Output(t, options, "restore_testing_role_arn")
+	assert.NotEmpty(t, restoreTestingRoleArn, "Restore testing role ARN should not be empty")
+	assert.Contains(t, restoreTestingRoleArn, "arn:aws:iam:", "Role ARN should be a valid IAM role ARN")
+
+	restoreTestingRoleName := terraform.Output(t, options, "restore_testing_role_name")
+	assert.NotEmpty(t, restoreTestingRoleName, "Restore testing role name should not be empty")
+
+	// Check summary output
+	summaryOutput := terraform.Output(t, options, "restore_testing_summary")
+	assert.NotEmpty(t, summaryOutput, "Restore testing summary should not be empty")
+
+	t.Log("Restore testing Terraform outputs validation completed successfully")
+}
+
+// validateRestoreTestingResources validates AWS restore testing resources
+func validateRestoreTestingResources(t *testing.T, sess *session.Session, planName, selectionName string) {
+	t.Log("Validating AWS restore testing resources...")
+
+	backupClient := backup.New(sess)
+
+	// Validate restore testing plan
+	validateRestoreTestingPlan(t, backupClient, planName)
+
+	// Validate restore testing selection
+	validateRestoreTestingSelection(t, backupClient, planName, selectionName)
+
+	t.Log("AWS restore testing resources validation completed successfully")
+}
+
+// validateRestoreTestingPlan validates restore testing plan in AWS
+func validateRestoreTestingPlan(t *testing.T, client *backup.Backup, planName string) {
+	var plan *backup.DescribeRestoreTestingPlanOutput
+
+	RetryableAWSOperation(t, "describe restore testing plan", func() error {
+		input := &backup.DescribeRestoreTestingPlanInput{
+			RestoreTestingPlanName: aws.String(planName),
+		}
+
+		var err error
+		plan, err = client.DescribeRestoreTestingPlan(input)
+		return err
+	})
+
+	// Validate plan properties
+	assert.Equal(t, planName, *plan.RestoreTestingPlan.RestoreTestingPlanName, "Plan name should match")
+	assert.Equal(t, "cron(0 6 ? * SUN *)", *plan.RestoreTestingPlan.ScheduleExpression, "Schedule expression should match")
+	assert.Equal(t, "UTC", *plan.RestoreTestingPlan.ScheduleExpressionTimezone, "Timezone should be UTC")
+	assert.Equal(t, int64(2), *plan.RestoreTestingPlan.StartWindowHours, "Start window should be 2 hours")
+
+	// Validate recovery point selection
+	rps := plan.RestoreTestingPlan.RecoveryPointSelection
+	assert.Equal(t, "LATEST_WITHIN_WINDOW", *rps.Algorithm, "Algorithm should be LATEST_WITHIN_WINDOW")
+	assert.Contains(t, rps.IncludeVaults, aws.String("*"), "Include vaults should contain '*'")
+	assert.Contains(t, rps.RecoveryPointTypes, aws.String("SNAPSHOT"), "Recovery point types should contain SNAPSHOT")
+	assert.Equal(t, int64(7), *rps.SelectionWindowDays, "Selection window should be 7 days")
+
+	t.Logf("Restore testing plan validation completed successfully: %s", planName)
+}
+
+// validateRestoreTestingSelection validates restore testing selection in AWS
+func validateRestoreTestingSelection(t *testing.T, client *backup.Backup, planName, selectionName string) {
+	var selection *backup.DescribeRestoreTestingSelectionOutput
+
+	RetryableAWSOperation(t, "describe restore testing selection", func() error {
+		input := &backup.DescribeRestoreTestingSelectionInput{
+			RestoreTestingPlanName:      aws.String(planName),
+			RestoreTestingSelectionName: aws.String(selectionName),
+		}
+
+		var err error
+		selection, err = client.DescribeRestoreTestingSelection(input)
+		return err
+	})
+
+	// Validate selection properties
+	sel := selection.RestoreTestingSelection
+	assert.Equal(t, selectionName, *sel.RestoreTestingSelectionName, "Selection name should match")
+	assert.Equal(t, planName, *sel.RestoreTestingPlanName, "Plan name should match")
+	assert.Equal(t, "EC2", *sel.ProtectedResourceType, "Protected resource type should be EC2")
+	assert.Equal(t, int64(24), *sel.ValidationWindowHours, "Validation window should be 24 hours")
+
+	// Validate IAM role
+	assert.NotEmpty(t, *sel.IamRoleArn, "IAM role ARN should not be empty")
+	assert.Contains(t, *sel.IamRoleArn, "arn:aws:iam:", "IAM role ARN should be valid")
+
+	// Validate protected resource conditions
+	assert.NotNil(t, sel.ProtectedResourceConditions, "Protected resource conditions should be set")
+	if sel.ProtectedResourceConditions.StringEquals != nil {
+		assert.Greater(t, len(sel.ProtectedResourceConditions.StringEquals), 0, "Should have at least one string equals condition")
+
+		// Check for Environment=test condition
+		foundEnvCondition := false
+		for _, condition := range sel.ProtectedResourceConditions.StringEquals {
+			if *condition.Key == "aws:ResourceTag/Environment" && *condition.Value == "test" {
+				foundEnvCondition = true
+				break
+			}
+		}
+		assert.True(t, foundEnvCondition, "Should have Environment=test condition")
+	}
+
+	// Validate restore metadata overrides
+	assert.NotNil(t, sel.RestoreMetadataOverrides, "Restore metadata overrides should be set")
+	if sel.RestoreMetadataOverrides != nil {
+		instanceType, exists := sel.RestoreMetadataOverrides["InstanceType"]
+		assert.True(t, exists, "Should have InstanceType override")
+		if exists {
+			assert.Equal(t, "t3.nano", *instanceType, "Instance type should be t3.nano")
+		}
+	}
+
+	t.Logf("Restore testing selection validation completed successfully: %s", selectionName)
+}
+
+// TestRestoreTestingPlanWithCustomIAMRole tests restore testing with a custom IAM role
+func TestRestoreTestingPlanWithCustomIAMRole(t *testing.T) {
+	// Skip if running in CI without AWS credentials
+	if os.Getenv("CI") != "" && os.Getenv("AWS_ACCESS_KEY_ID") == "" {
+		t.Skip("Skipping integration test in CI without AWS credentials")
+	}
+
+	t.Parallel()
+
+	// Generate unique names
+	planName := GenerateUniqueBackupPlanName(t)
+	vaultName := GenerateUniqueBackupVaultName(t)
+	selectionName := GenerateUniqueSelectionName(t)
+	restoreTestingPlanName := fmt.Sprintf("restore-test-plan-custom-%s", random.UniqueId())
+	restoreTestingSelectionName := fmt.Sprintf("restore-test-selection-custom-%s", random.UniqueId())
+	customRoleName := fmt.Sprintf("custom-restore-testing-role-%s", random.UniqueId())
+
+	// Set up AWS session
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	}))
+
+	// Create custom IAM role
+	iamClient := iam.New(sess)
+	customRoleArn := createCustomRestoreTestingRole(t, iamClient, customRoleName)
+
+	terraformOptions := &terraform.Options{
+		TerraformDir: "fixtures/terraform/restore_testing",
+		Vars: map[string]interface{}{
+			"plan_name":                        planName,
+			"vault_name":                       vaultName,
+			"selection_name":                   selectionName,
+			"restore_testing_plan_name":        restoreTestingPlanName,
+			"restore_testing_selection_name":   restoreTestingSelectionName,
+			"restore_testing_schedule":         "cron(0 8 ? * MON *)", // Different schedule
+			"aws_region":                       "us-east-1",
+		},
+		NoColor: true,
+	}
+
+	defer func() {
+		terraform.Destroy(t, terraformOptions)
+		// Clean up custom IAM role
+		cleanupCustomRestoreTestingRole(t, iamClient, customRoleName)
+	}()
+
+	// Deploy the configuration
+	RetryableInitAndApply(t, terraformOptions)
+
+	// Validate that custom role is used
+	validateCustomRoleUsage(t, sess, restoreTestingPlanName, restoreTestingSelectionName, customRoleArn)
+}
+
+// createCustomRestoreTestingRole creates a custom IAM role for testing
+func createCustomRestoreTestingRole(t *testing.T, client *iam.IAM, roleName string) string {
+	trustPolicy := `{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {
+					"Service": "backup.amazonaws.com"
+				},
+				"Action": "sts:AssumeRole"
+			}
+		]
+	}`
+
+	var roleArn string
+
+	RetryableAWSOperation(t, "create custom restore testing role", func() error {
+		input := &iam.CreateRoleInput{
+			RoleName:                 aws.String(roleName),
+			AssumeRolePolicyDocument: aws.String(trustPolicy),
+			Description:              aws.String("Custom role for restore testing integration test"),
+		}
+
+		result, err := client.CreateRole(input)
+		if err != nil {
+			return err
+		}
+
+		roleArn = *result.Role.Arn
+		return nil
+	})
+
+	// Attach necessary policies
+	policies := []string{
+		"arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+		"arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore",
+	}
+
+	for _, policyArn := range policies {
+		RetryableAWSOperation(t, fmt.Sprintf("attach policy %s", policyArn), func() error {
+			input := &iam.AttachRolePolicyInput{
+				RoleName:  aws.String(roleName),
+				PolicyArn: aws.String(policyArn),
+			}
+
+			_, err := client.AttachRolePolicy(input)
+			return err
+		})
+	}
+
+	t.Logf("Created custom restore testing role: %s (ARN: %s)", roleName, roleArn)
+	return roleArn
+}
+
+// cleanupCustomRestoreTestingRole removes the custom IAM role
+func cleanupCustomRestoreTestingRole(t *testing.T, client *iam.IAM, roleName string) {
+	// Detach policies first
+	policies := []string{
+		"arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+		"arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore",
+	}
+
+	for _, policyArn := range policies {
+		RetryableAWSOperation(t, fmt.Sprintf("detach policy %s", policyArn), func() error {
+			input := &iam.DetachRolePolicyInput{
+				RoleName:  aws.String(roleName),
+				PolicyArn: aws.String(policyArn),
+			}
+
+			_, err := client.DetachRolePolicy(input)
+			// Ignore errors for policy detachment as role might not exist
+			return nil
+		})
+	}
+
+	// Delete the role
+	RetryableAWSOperation(t, "delete custom restore testing role", func() error {
+		input := &iam.DeleteRoleInput{
+			RoleName: aws.String(roleName),
+		}
+
+		_, err := client.DeleteRole(input)
+		// Ignore errors for role deletion as it might not exist
+		return nil
+	})
+
+	t.Logf("Cleaned up custom restore testing role: %s", roleName)
+}
+
+// validateCustomRoleUsage validates that custom role is properly used
+func validateCustomRoleUsage(t *testing.T, sess *session.Session, planName, selectionName, expectedRoleArn string) {
+	backupClient := backup.New(sess)
+
+	var selection *backup.DescribeRestoreTestingSelectionOutput
+
+	RetryableAWSOperation(t, "describe restore testing selection for custom role validation", func() error {
+		input := &backup.DescribeRestoreTestingSelectionInput{
+			RestoreTestingPlanName:      aws.String(planName),
+			RestoreTestingSelectionName: aws.String(selectionName),
+		}
+
+		var err error
+		selection, err = backupClient.DescribeRestoreTestingSelection(input)
+		return err
+	})
+
+	assert.Equal(t, expectedRoleArn, *selection.RestoreTestingSelection.IamRoleArn, "Should use custom IAM role")
+	t.Logf("Custom IAM role validation completed successfully")
+}
