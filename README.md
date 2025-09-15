@@ -55,32 +55,6 @@ See [examples/organization_backup_policy/main.tf](examples/organization_backup_p
 
 See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
 
-### Logically Air Gapped Vault
-
-This module supports AWS Backup Logically Air Gapped Vaults for enhanced security and compliance requirements. Air-gapped vaults provide isolated storage with immutable retention policies.
-
-See [examples/logically_air_gapped_vault/main.tf](examples/logically_air_gapped_vault/main.tf) for air-gapped vault configuration.
-
-**Key Features:**
-- **Enhanced Security**: Logical isolation from standard backup infrastructure
-- **Immutable Retention**: Mandatory min/max retention policies that cannot be bypassed
-- **Compliance Ready**: Supports SOX, PCI-DSS, HIPAA, and other regulatory requirements
-- **AWS-Managed Encryption**: Built-in encryption (custom KMS keys not supported)
-
-**Usage:**
-```hcl
-module "compliance_backup" {
-  source = "lgallard/backup/aws"
-
-  vault_name         = "compliance-vault"
-  vault_type         = "logically_air_gapped"
-  min_retention_days = 7
-  max_retention_days = 2555  # 7 years for compliance
-
-  # ... other configuration
-}
-```
-
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -93,7 +67,7 @@ module "compliance_backup" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.13.0 |
 
 ## Modules
 
@@ -181,7 +155,6 @@ No modules.
 |------|-------------|
 | <a name="output_airgapped_vault_arn"></a> [airgapped\_vault\_arn](#output\_airgapped\_vault\_arn) | The ARN of the air gapped vault |
 | <a name="output_airgapped_vault_id"></a> [airgapped\_vault\_id](#output\_airgapped\_vault\_id) | The name of the air gapped vault |
-| <a name="output_airgapped_vault_recovery_points"></a> [airgapped\_vault\_recovery\_points](#output\_airgapped\_vault\_recovery\_points) | The number of recovery points stored in the air gapped vault (sensitive for security) |
 | <a name="output_framework_arn"></a> [framework\_arn](#output\_framework\_arn) | The ARN of the backup framework |
 | <a name="output_framework_creation_time"></a> [framework\_creation\_time](#output\_framework\_creation\_time) | The date and time that the backup framework was created |
 | <a name="output_framework_id"></a> [framework\_id](#output\_framework\_id) | The unique identifier of the backup framework |
@@ -194,6 +167,21 @@ No modules.
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues
