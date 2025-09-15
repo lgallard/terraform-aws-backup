@@ -61,7 +61,7 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.11.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1 |
 
 ## Providers
@@ -186,6 +186,21 @@ No modules.
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues
