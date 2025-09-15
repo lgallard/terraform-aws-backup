@@ -393,6 +393,7 @@ jobs:
 
           DISCOVERED_FILE="/tmp/discovered-features.json"
           TRACKER_FILE=".github/feature-tracker/backup-features.json"
+
           TOTAL_ISSUES_CREATED=0
 
           # Check if structured output exists
@@ -467,7 +468,9 @@ jobs:
                 # Extract issue number from URL
                 ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
                 echo "✅ Created issue #$ISSUE_NUMBER for $RESOURCE: $ISSUE_URL"
+
                 TOTAL_ISSUES_CREATED=$((TOTAL_ISSUES_CREATED + 1))
+
 
                 # Update the tracker file to mark as created
                 jq --arg resource "$RESOURCE" --arg issue_num "$ISSUE_NUMBER" --arg issue_url "$ISSUE_URL" '
@@ -480,8 +483,10 @@ jobs:
               fi
             done <<< "$PENDING_FEATURES"
 
+
             echo "🎯 Fallback processing complete: Created $TOTAL_ISSUES_CREATED issues"
             echo "issues_created=$TOTAL_ISSUES_CREATED" >> $GITHUB_OUTPUT
+
             exit 0
           fi
 
@@ -500,6 +505,7 @@ jobs:
           FEATURE_COUNT=$(jq '.discovered_features | length' "$DISCOVERED_FILE")
 
           echo "Scan metadata: $SCAN_DATE, Provider: $PROVIDER_VERSION, Features: $FEATURE_COUNT"
+
 
           # Initialize issue counter (will accumulate from both structured and fallback paths)
           TOTAL_ISSUES_CREATED=0
@@ -590,6 +596,7 @@ jobs:
               TOTAL_ISSUES_CREATED=$((TOTAL_ISSUES_CREATED + 1))
             fi
           done
+
 
           echo "🎯 Issue creation complete: Created $TOTAL_ISSUES_CREATED issues"
           echo "issues_created=$TOTAL_ISSUES_CREATED" >> $GITHUB_OUTPUT

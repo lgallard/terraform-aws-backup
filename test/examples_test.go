@@ -27,6 +27,7 @@ func TestExamplesValidation(t *testing.T) {
 		"aws_recommended_audit_framework",
 		"complete_audit_framework",
 		"simple_audit_framework",
+		"logically_air_gapped_vault",
 	}
 
 	for _, example := range examples {
