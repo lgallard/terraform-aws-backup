@@ -1,4 +1,36 @@
 [default.extend-words]
-# HashiCorp is the correct company name, not a typo
+# Company names
 HashiCorp = "HashiCorp"
 Hashi = "Hashi"
+
+# Common misspellings of "available"
+avaialble = "available"
+availabel = "available"
+avalable = "available"
+avilable = "available"
+availble = "available"
+availabe = "available"
+
+# Common misspellings of "availability"
+availabilty = "availability"
+availabiliy = "availability"
+availabiltiy = "availability"
+
+# AWS and Infrastructure terms
+backpu = "backup"
+backups = "backups"
+terrafrom = "terraform"
+terrafrm = "terraform"
+resurce = "resource"
+resrouce = "resource"
+resouce = "resource"
+configuraton = "configuration"
+confguration = "configuration"
+
+# Technical terms
+enviroment = "environment"
+enviromental = "environmental"
+perfomance = "performance"
+performace = "performance"
+implmentation = "implementation"
+implementaion = "implementation"
