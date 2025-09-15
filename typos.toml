@@ -1,0 +1,4 @@
+[default.extend-words]
+# HashiCorp is the correct company name, not a typo
+HashiCorp = "HashiCorp"
+Hashi = "Hashi"

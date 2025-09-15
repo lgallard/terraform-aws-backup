@@ -43,3 +43,4 @@ test_formatting.tf
 *test_formatting.tf
 *_test.tf
 test_*.tf
+_typos.toml
