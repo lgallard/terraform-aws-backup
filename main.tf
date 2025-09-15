@@ -2,11 +2,11 @@
 # Organized locals for better maintainability and code clarity
 locals {
   # Resource creation conditions
-  should_create_vault            = var.enabled && var.vault_name != null
-  should_create_standard_vault   = local.should_create_vault && var.vault_type == "standard"
-  should_create_airgapped_vault  = local.should_create_vault && var.vault_type == "logically_air_gapped"
-  should_create_lock             = local.should_create_standard_vault && var.locked
-  should_create_legacy_plan      = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
+  should_create_vault           = var.enabled && var.vault_name != null
+  should_create_standard_vault  = local.should_create_vault && var.vault_type == "standard"
+  should_create_airgapped_vault = local.should_create_vault && var.vault_type == "logically_air_gapped"
+  should_create_lock            = local.should_create_standard_vault && var.locked
+  should_create_legacy_plan     = var.enabled && length(var.plans) == 0 && length(local.rules) > 0
 
   # Validation helpers for vault lock configuration
   vault_lock_requirements_met = var.min_retention_days != null && var.max_retention_days != null
@@ -15,7 +15,7 @@ locals {
 
   # Validation for air-gapped vault requirements
   airgapped_vault_requirements_met = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
-  
+
   # Cross-validation for retention days (unified validation approach)
   retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) || var.min_retention_days <= var.max_retention_days
 
@@ -176,10 +176,11 @@ resource "aws_backup_plan" "ab_plan" {
   # Tags
   tags = var.tags
 
-  # First create the vault if needed (only depend on the vault type being used)
-  depends_on = local.should_create_standard_vault ? [aws_backup_vault.ab_vault[0]] : (
-    local.should_create_airgapped_vault ? [aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0]] : null
-  )
+  # First create the vault if needed
+  depends_on = [
+    aws_backup_vault.ab_vault,
+    aws_backup_logically_air_gapped_vault.ab_airgapped_vault
+  ]
 
   lifecycle {
     precondition {
@@ -264,10 +265,11 @@ resource "aws_backup_plan" "ab_plans" {
   # Tags
   tags = var.tags
 
-  # First create the vault if needed (only depend on the vault type being used)
-  depends_on = local.should_create_standard_vault ? [aws_backup_vault.ab_vault[0]] : (
-    local.should_create_airgapped_vault ? [aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0]] : null
-  )
+  # First create the vault if needed
+  depends_on = [
+    aws_backup_vault.ab_vault,
+    aws_backup_logically_air_gapped_vault.ab_airgapped_vault
+  ]
 
   lifecycle {
     precondition {

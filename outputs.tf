@@ -25,11 +25,12 @@ output "airgapped_vault_arn" {
   value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].arn, null)
 }
 
-output "airgapped_vault_recovery_points" {
-  description = "The number of recovery points stored in the air gapped vault (sensitive for security)"
-  value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].recovery_points, null)
-  sensitive   = true
-}
+# Note: recovery_points attribute may not be available in all provider versions
+# output "airgapped_vault_recovery_points" {
+#   description = "The number of recovery points stored in the air gapped vault (sensitive for security)"
+#   value       = try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].recovery_points, null)
+#   sensitive   = true
+# }
 
 # Legacy Plan
 output "plan_id" {

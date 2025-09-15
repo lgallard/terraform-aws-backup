@@ -55,13 +55,39 @@ See [examples/organization_backup_policy/main.tf](examples/organization_backup_p
 
 See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
 
+### Logically Air Gapped Vault
+
+This module supports AWS Backup Logically Air Gapped Vaults for enhanced security and compliance requirements. Air-gapped vaults provide isolated storage with immutable retention policies.
+
+See [examples/logically_air_gapped_vault/main.tf](examples/logically_air_gapped_vault/main.tf) for air-gapped vault configuration.
+
+**Key Features:**
+- **Enhanced Security**: Logical isolation from standard backup infrastructure
+- **Immutable Retention**: Mandatory min/max retention policies that cannot be bypassed
+- **Compliance Ready**: Supports SOX, PCI-DSS, HIPAA, and other regulatory requirements
+- **AWS-Managed Encryption**: Built-in encryption (custom KMS keys not supported)
+
+**Usage:**
+```hcl
+module "compliance_backup" {
+  source = "lgallard/backup/aws"
+
+  vault_name         = "compliance-vault"
+  vault_type         = "logically_air_gapped"
+  min_retention_days = 7
+  max_retention_days = 2555  # 7 years for compliance
+
+  # ... other configuration
+}
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.11.0 |
 
 ## Providers
 
@@ -78,6 +104,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_backup_framework.ab_framework](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_framework) | resource |
+| [aws_backup_logically_air_gapped_vault.ab_airgapped_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_logically_air_gapped_vault) | resource |
 | [aws_backup_plan.ab_plan](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_plan.ab_plans](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_report_plan.ab_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_report_plan) | resource |
@@ -116,8 +143,8 @@ No modules.
 | <a name="input_iam_role_arn"></a> [iam\_role\_arn](#input\_iam\_role\_arn) | If configured, the module will attach this role to selections, instead of creating IAM resources by itself | `string` | `null` | no |
 | <a name="input_iam_role_name"></a> [iam\_role\_name](#input\_iam\_role\_name) | Allow to set IAM role name, otherwise use predefined default | `string` | `""` | no |
 | <a name="input_locked"></a> [locked](#input\_locked) | Change to true to add a lock configuration for the backup vault | `bool` | `false` | no |
-| <a name="input_max_retention_days"></a> [max\_retention\_days](#input\_max\_retention\_days) | The maximum retention period that the vault retains its recovery points | `number` | `null` | no |
-| <a name="input_min_retention_days"></a> [min\_retention\_days](#input\_min\_retention\_days) | The minimum retention period that the vault retains its recovery points | `number` | `null` | no |
+| <a name="input_max_retention_days"></a> [max\_retention\_days](#input\_max\_retention\_days) | The maximum retention period that the vault retains its recovery points. Required when vault\_type is 'logically\_air\_gapped' | `number` | `null` | no |
+| <a name="input_min_retention_days"></a> [min\_retention\_days](#input\_min\_retention\_days) | The minimum retention period that the vault retains its recovery points. Required when vault\_type is 'logically\_air\_gapped' | `number` | `null` | no |
 | <a name="input_notifications"></a> [notifications](#input\_notifications) | Notification block which defines backup vault events and the SNS Topic ARN to send AWS Backup notifications to. Leave it empty to disable notifications | `any` | `{}` | no |
 | <a name="input_notifications_disable_sns_policy"></a> [notifications\_disable\_sns\_policy](#input\_notifications\_disable\_sns\_policy) | Disable the creation of the SNS policy. Enable if you need to manage the policy elsewhere. | `bool` | `false` | no |
 | <a name="input_org_policy_description"></a> [org\_policy\_description](#input\_org\_policy\_description) | Description of the AWS Organizations backup policy | `string` | `"AWS Organizations backup policy"` | no |
@@ -145,12 +172,16 @@ No modules.
 | <a name="input_vault_force_destroy"></a> [vault\_force\_destroy](#input\_vault\_force\_destroy) | A boolean that indicates that all recovery points stored in the vault are deleted so that the vault can be destroyed without error | `bool` | `false` | no |
 | <a name="input_vault_kms_key_arn"></a> [vault\_kms\_key\_arn](#input\_vault\_kms\_key\_arn) | The server-side encryption key that is used to protect your backups | `string` | `null` | no |
 | <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create. If not given, AWS use default | `string` | `null` | no |
+| <a name="input_vault_type"></a> [vault\_type](#input\_vault\_type) | Type of backup vault to create. Valid values are 'standard' (default) or 'logically\_air\_gapped' | `string` | `"standard"` | no |
 | <a name="input_windows_vss_backup"></a> [windows\_vss\_backup](#input\_windows\_vss\_backup) | Enable Windows VSS backup option and create a VSS Windows backup | `bool` | `false` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
+| <a name="output_airgapped_vault_arn"></a> [airgapped\_vault\_arn](#output\_airgapped\_vault\_arn) | The ARN of the air gapped vault |
+| <a name="output_airgapped_vault_id"></a> [airgapped\_vault\_id](#output\_airgapped\_vault\_id) | The name of the air gapped vault |
+| <a name="output_airgapped_vault_recovery_points"></a> [airgapped\_vault\_recovery\_points](#output\_airgapped\_vault\_recovery\_points) | The number of recovery points stored in the air gapped vault (sensitive for security) |
 | <a name="output_framework_arn"></a> [framework\_arn](#output\_framework\_arn) | The ARN of the backup framework |
 | <a name="output_framework_creation_time"></a> [framework\_creation\_time](#output\_framework\_creation\_time) | The date and time that the backup framework was created |
 | <a name="output_framework_id"></a> [framework\_id](#output\_framework\_id) | The unique identifier of the backup framework |
@@ -162,6 +193,22 @@ No modules.
 | <a name="output_plans"></a> [plans](#output\_plans) | Map of plans created and their attributes |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
+| <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues

@@ -500,7 +500,7 @@ FIXES:
 ENHANCEMENTS:
 
 * Allows attaching an already created IAM role to the Plan (thanks @samcre)
-* Update README to include Terraform rsources used
+* Update README to include Terraform resources used
 
 ## 0.7.0 (February 28, 2021)
 
@@ -539,7 +539,7 @@ FIXES:
 ENHANCEMENTS:
 
 * Add option to define selections by tags only, without resource definition
-* Now you can define selections with just resources, tags or boths. No need to define empty values.
+* Now you can define selections with just resources, tags or both. No need to define empty values.
 * Add README to examples
 
 UPDATES:

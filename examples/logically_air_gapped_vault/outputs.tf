@@ -27,11 +27,12 @@ output "airgapped_vault_arn" {
   value       = module.aws_backup_plan.airgapped_vault_arn
 }
 
-output "airgapped_vault_recovery_points" {
-  description = "The number of recovery points stored in the air gapped vault (sensitive for security)"
-  value       = module.aws_backup_plan.airgapped_vault_recovery_points
-  sensitive   = true
-}
+# Note: recovery_points attribute may not be available in all provider versions
+# output "airgapped_vault_recovery_points" {
+#   description = "The number of recovery points stored in the air gapped vault (sensitive for security)"
+#   value       = module.aws_backup_plan.airgapped_vault_recovery_points
+#   sensitive   = true
+# }
 
 output "plan_id" {
   description = "The id of the backup plan"
