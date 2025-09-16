@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.3.0](https://github.com/lgallard/terraform-aws-backup/compare/1.2.0...1.3.0) (2025-09-16)
+
+
+### Features
+
+* Add AWS Backup restore testing support ([#238](https://github.com/lgallard/terraform-aws-backup/issues/238), [#239](https://github.com/lgallard/terraform-aws-backup/issues/239)) ([#266](https://github.com/lgallard/terraform-aws-backup/issues/266)) ([3ac824b](https://github.com/lgallard/terraform-aws-backup/commit/3ac824b89b5ffa2ede4b32de60adabfdf8b616f2))
+* Add support for aws_backup_logically_air_gapped_vault ([#260](https://github.com/lgallard/terraform-aws-backup/issues/260)) ([3225464](https://github.com/lgallard/terraform-aws-backup/commit/32254645c63b49d270cf90d9010668cb5e575aaa))
+
 ## [1.2.0](https://github.com/lgallard/terraform-aws-backup/compare/1.1.0...1.2.0) (2025-09-08)
 
 
