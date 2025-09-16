@@ -95,9 +95,9 @@ jobs:
       - name: Run pre-commit on all files (push to master)
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
-          # Temporarily skip typos hook in CI until cache issues are resolved
-          # Typos hook still works locally via enhanced typos.toml configuration
-          SKIP=typos pre-commit run --all-files
+          # Re-enabling typos hook with fresh cache invalidation
+          # Enhanced typos.toml configuration should handle all spelling issues
+          pre-commit run --all-files
 
       - name: Run pre-commit on changed files (pull request)
         if: github.event_name == 'pull_request'
@@ -109,9 +109,9 @@ jobs:
           if [ -n "$CHANGED_FILES" ]; then
             echo "Running pre-commit on changed files:"
             echo "$CHANGED_FILES"
-            # Temporarily skip typos hook in CI until cache issues are resolved
-            # Typos hook still works locally via enhanced typos.toml configuration
-            SKIP=typos pre-commit run --files $CHANGED_FILES
+            # Re-enabling typos hook with fresh cache invalidation
+            # Enhanced typos.toml configuration should handle all spelling issues
+            pre-commit run --files $CHANGED_FILES
           else
             echo "No relevant files changed, skipping pre-commit checks"
           fi
