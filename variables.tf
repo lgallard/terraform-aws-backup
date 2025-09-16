@@ -632,3 +632,141 @@ variable "default_lifecycle_cold_storage_after_days" {
     error_message = "The default_lifecycle_cold_storage_after_days must be 0 (disabled) or at least 30 days (AWS minimum requirement). To disable cold storage by default, set to 0."
   }
 }
+
+#
+# AWS Backup Restore Testing Plans
+#
+variable "restore_testing_plans" {
+  description = "Map of restore testing plans to create. Each plan defines automated testing schedule and recovery point selection criteria."
+  type = map(object({
+    name                         = string
+    schedule_expression          = string
+    schedule_expression_timezone = optional(string)
+    start_window_hours           = optional(number)
+    recovery_point_selection = object({
+      algorithm             = string
+      include_vaults        = list(string)
+      recovery_point_types  = list(string)
+      exclude_vaults        = optional(list(string))
+      selection_window_days = optional(number)
+    })
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for plan_key, plan in var.restore_testing_plans : (
+        can(regex("^[0-9A-Za-z-_]{1,50}$", plan.name)) &&
+        can(regex("^cron\\(", plan.schedule_expression)) &&
+        contains(["RANDOM_WITHIN_WINDOW", "LATEST_WITHIN_WINDOW"], plan.recovery_point_selection.algorithm) &&
+        length(plan.recovery_point_selection.include_vaults) > 0 &&
+        alltrue([for rpt in plan.recovery_point_selection.recovery_point_types : contains(["CONTINUOUS", "SNAPSHOT"], rpt)])
+      )
+    ])
+    error_message = "Invalid restore testing plan configuration. Plan names must be 1-50 characters (alphanumeric, hyphens, underscores). Schedule expressions must be valid cron format. Algorithm must be RANDOM_WITHIN_WINDOW or LATEST_WITHIN_WINDOW. Must include at least one vault. Recovery point types must be CONTINUOUS or SNAPSHOT."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_key, plan in var.restore_testing_plans : (
+        plan.start_window_hours == null || (plan.start_window_hours >= 1 && plan.start_window_hours <= 168)
+      )
+    ])
+    error_message = "The start_window_hours must be between 1 and 168 hours when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for plan_key, plan in var.restore_testing_plans : (
+        plan.recovery_point_selection.selection_window_days == null ||
+        (plan.recovery_point_selection.selection_window_days >= 1 && plan.recovery_point_selection.selection_window_days <= 365)
+      )
+    ])
+    error_message = "The selection_window_days must be between 1 and 365 days when specified."
+  }
+}
+
+#
+# AWS Backup Restore Testing Selections
+#
+variable "restore_testing_selections" {
+  description = "Map of restore testing selections to create. Each selection defines which resources to test within a restore testing plan."
+  type = map(object({
+    name                      = string
+    restore_testing_plan_name = string
+    protected_resource_type   = string
+    iam_role_arn              = optional(string)
+    protected_resource_arns   = optional(list(string))
+    protected_resource_conditions = optional(object({
+      string_equals = optional(list(object({
+        key   = string
+        value = string
+      })))
+      string_not_equals = optional(list(object({
+        key   = string
+        value = string
+      })))
+    }))
+    restore_metadata_overrides = optional(map(string))
+    validation_window_hours    = optional(number)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for selection_key, selection in var.restore_testing_selections : (
+        can(regex("^[0-9A-Za-z-_]{1,50}$", selection.name)) &&
+        length(selection.protected_resource_type) > 0
+      )
+    ])
+    error_message = "Selection names must be 1-50 characters (alphanumeric, hyphens, underscores). Protected resource type cannot be empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for selection_key, selection in var.restore_testing_selections : (
+        selection.validation_window_hours == null ||
+        (selection.validation_window_hours >= 1 && selection.validation_window_hours <= 168)
+      )
+    ])
+    error_message = "The validation_window_hours must be between 1 and 168 hours when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for selection_key, selection in var.restore_testing_selections : (
+        selection.iam_role_arn == null ||
+        can(regex("^arn:aws:iam::[0-9]{12}:role/", selection.iam_role_arn))
+      )
+    ])
+    error_message = "The iam_role_arn must be a valid IAM role ARN format when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for selection_key, selection in var.restore_testing_selections : (
+        selection.protected_resource_conditions == null ||
+        (selection.protected_resource_conditions.string_equals != null && length(selection.protected_resource_conditions.string_equals) > 0) ||
+        (selection.protected_resource_conditions.string_not_equals != null && length(selection.protected_resource_conditions.string_not_equals) > 0)
+      )
+    ])
+    error_message = "When protected_resource_conditions are specified, at least one condition (string_equals or string_not_equals) must be provided."
+  }
+}
+
+#
+# AWS Backup Restore Testing IAM Configuration
+#
+variable "restore_testing_iam_role_arn" {
+  description = "The ARN of an existing IAM role for restore testing operations. If not provided, a new role will be created."
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.restore_testing_iam_role_arn == null ? true : (
+      can(regex("^arn:aws:iam::[0-9]{12}:role/", var.restore_testing_iam_role_arn)) &&
+      !can(regex("(?i)(test|temp|delete|remove)", var.restore_testing_iam_role_arn))
+    )
+    error_message = "The restore_testing_iam_role_arn must be a valid IAM role ARN. Avoid using 'test', 'temp', 'delete', or 'remove' in role names for security reasons."
+  }
+}

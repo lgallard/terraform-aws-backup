@@ -57,5 +57,6 @@ repos:
     rev: v1.16.23
     hooks:
       - id: typos
-        types: [markdown]
-        args: ['--format', 'brief']
+        types: [markdown, text]
+        args: ['--format', 'long', '--config', 'typos.toml']
+        exclude: '^test_.*\.md$|.*test_formatting.*'
