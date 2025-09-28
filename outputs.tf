@@ -185,3 +185,55 @@ output "restore_testing_summary" {
     }
   } : null
 }
+
+#
+# Global Settings
+#
+output "global_settings_id" {
+  description = "AWS Account ID where global settings are applied"
+  value       = try(aws_backup_global_settings.ab_global_settings[0].id, null)
+}
+
+output "global_settings" {
+  description = "AWS Backup global settings configuration"
+  value       = try(aws_backup_global_settings.ab_global_settings[0].global_settings, null)
+}
+
+output "cross_account_backup_enabled" {
+  description = "Whether cross-account backup is enabled for centralized governance"
+  value = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], null) == "true"
+}
+
+#
+# Global Settings Summary
+#
+output "global_settings_summary" {
+  description = "Summary of global settings configuration and governance capabilities"
+  value = var.enable_global_settings ? {
+    enabled                         = true
+    cross_account_backup_enabled    = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
+    account_id                      = try(aws_backup_global_settings.ab_global_settings[0].id, null)
+    configured_settings             = var.global_settings
+
+    # Governance and compliance information
+    governance_impact = {
+      "cross_account_backup" = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true" ? "Enabled - centralized backup governance active" : "Disabled - account-level backup management"
+      "enterprise_ready"     = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
+    }
+
+    # Next steps and recommendations
+    next_steps = {
+      "1" = "Configure AWS Organizations backup policies for centralized governance"
+      "2" = "Set up cross-account IAM roles for backup operations"
+      "3" = "Implement backup compliance frameworks across accounts"
+      "4" = "Monitor backup activities through AWS CloudTrail and CloudWatch"
+    }
+
+    # CLI commands for management
+    management_commands = {
+      describe_settings    = "aws backup describe-global-settings"
+      list_backup_policies = "aws organizations list-policies --filter BACKUP_POLICY"
+      check_compliance     = "aws backup list-backup-jobs --by-account-id ${try(aws_backup_global_settings.ab_global_settings[0].id, "ACCOUNT_ID")}"
+    }
+  } : null
+}
