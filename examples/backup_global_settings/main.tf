@@ -12,11 +12,11 @@ module "aws_backup_global_settings" {
 
   # Configure global settings for cross-account backup governance
   global_settings = {
-    "isCrossAccountBackupEnabled" = "true"
+    "isCrossAccountBackupEnabled" = tostring(var.enable_cross_account_backup)
   }
 
   # Basic vault configuration
-  vault_name = "centralized-backup-vault"
+  vault_name = var.vault_name
 
   # Basic plan for demonstration
   plan_name = "global-settings-plan"
@@ -25,11 +25,11 @@ module "aws_backup_global_settings" {
   rules = [
     {
       name              = "daily-backup"
-      schedule          = "cron(0 2 * * ? *)" # Daily at 2 AM
+      schedule          = var.backup_schedule
       start_window      = 120
       completion_window = 360
       lifecycle = {
-        delete_after = 30
+        delete_after = var.backup_retention_days
       }
       copy_actions = []
       recovery_point_tags = {
@@ -63,10 +63,5 @@ module "aws_backup_global_settings" {
     }
   ]
 
-  tags = {
-    Owner            = "backup-team"
-    Environment      = "production"
-    BackupGovernance = "centralized"
-    Terraform        = true
-  }
+  tags = var.tags
 }

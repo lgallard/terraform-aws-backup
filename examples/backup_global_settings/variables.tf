@@ -15,7 +15,7 @@ variable "enable_cross_account_backup" {
 variable "backup_schedule" {
   description = "Cron expression for backup schedule"
   type        = string
-  default     = "cron(0 2 * * ? *)"  # Daily at 2 AM
+  default     = "cron(0 2 * * ? *)" # Daily at 2 AM
 }
 
 variable "backup_retention_days" {

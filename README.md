@@ -80,6 +80,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_backup_framework.ab_framework](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_framework) | resource |
+| [aws_backup_global_settings.ab_global_settings](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_global_settings) | resource |
 | [aws_backup_logically_air_gapped_vault.ab_airgapped_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_logically_air_gapped_vault) | resource |
 | [aws_backup_plan.ab_plan](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
 | [aws_backup_plan.ab_plans](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
@@ -123,8 +124,10 @@ No modules.
 | <a name="input_changeable_for_days"></a> [changeable\_for\_days](#input\_changeable\_for\_days) | The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create a vault lock in compliance mode | `number` | `null` | no |
 | <a name="input_default_lifecycle_cold_storage_after_days"></a> [default\_lifecycle\_cold\_storage\_after\_days](#input\_default\_lifecycle\_cold\_storage\_after\_days) | Default number of days after creation that a recovery point is moved to cold storage. Used when cold\_storage\_after is not specified in lifecycle configuration. | `number` | `0` | no |
 | <a name="input_default_lifecycle_delete_after_days"></a> [default\_lifecycle\_delete\_after\_days](#input\_default\_lifecycle\_delete\_after\_days) | Default number of days after creation that a recovery point is deleted. Used when delete\_after is not specified in lifecycle configuration. | `number` | `90` | no |
+| <a name="input_enable_global_settings"></a> [enable\_global\_settings](#input\_enable\_global\_settings) | Whether to manage AWS Backup global settings. Enable this to configure account-level backup settings. | `bool` | `false` | no |
 | <a name="input_enable_org_policy"></a> [enable\_org\_policy](#input\_enable\_org\_policy) | Enable AWS Organizations backup policy | `bool` | `false` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Change to false to avoid deploying any AWS Backup resources | `bool` | `true` | no |
+| <a name="input_global_settings"></a> [global\_settings](#input\_global\_settings) | Global settings for AWS Backup. Currently supports isCrossAccountBackupEnabled for centralized cross-account backup governance. | `map(string)` | <pre>{<br/>  "isCrossAccountBackupEnabled": "false"<br/>}</pre> | no |
 | <a name="input_iam_role_arn"></a> [iam\_role\_arn](#input\_iam\_role\_arn) | If configured, the module will attach this role to selections, instead of creating IAM resources by itself | `string` | `null` | no |
 | <a name="input_iam_role_name"></a> [iam\_role\_name](#input\_iam\_role\_name) | Allow to set IAM role name, otherwise use predefined default | `string` | `""` | no |
 | <a name="input_locked"></a> [locked](#input\_locked) | Change to true to add a lock configuration for the backup vault | `bool` | `false` | no |
@@ -169,10 +172,14 @@ No modules.
 |------|-------------|
 | <a name="output_airgapped_vault_arn"></a> [airgapped\_vault\_arn](#output\_airgapped\_vault\_arn) | The ARN of the air gapped vault |
 | <a name="output_airgapped_vault_id"></a> [airgapped\_vault\_id](#output\_airgapped\_vault\_id) | The name of the air gapped vault |
+| <a name="output_cross_account_backup_enabled"></a> [cross\_account\_backup\_enabled](#output\_cross\_account\_backup\_enabled) | Whether cross-account backup is enabled for centralized governance |
 | <a name="output_framework_arn"></a> [framework\_arn](#output\_framework\_arn) | The ARN of the backup framework |
 | <a name="output_framework_creation_time"></a> [framework\_creation\_time](#output\_framework\_creation\_time) | The date and time that the backup framework was created |
 | <a name="output_framework_id"></a> [framework\_id](#output\_framework\_id) | The unique identifier of the backup framework |
 | <a name="output_framework_status"></a> [framework\_status](#output\_framework\_status) | The deployment status of the backup framework |
+| <a name="output_global_settings"></a> [global\_settings](#output\_global\_settings) | AWS Backup global settings configuration |
+| <a name="output_global_settings_id"></a> [global\_settings\_id](#output\_global\_settings\_id) | AWS Account ID where global settings are applied |
+| <a name="output_global_settings_summary"></a> [global\_settings\_summary](#output\_global\_settings\_summary) | Summary of global settings configuration and governance capabilities |
 | <a name="output_plan_arn"></a> [plan\_arn](#output\_plan\_arn) | The ARN of the backup plan |
 | <a name="output_plan_id"></a> [plan\_id](#output\_plan\_id) | The id of the backup plan |
 | <a name="output_plan_role"></a> [plan\_role](#output\_plan\_role) | The service role of the backup plan |
@@ -186,6 +193,21 @@ No modules.
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues

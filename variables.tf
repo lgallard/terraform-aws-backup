@@ -788,7 +788,7 @@ variable "global_settings" {
   }
 
   validation {
-    condition = can(var.global_settings["isCrossAccountBackupEnabled"]) ? contains(["true", "false"], var.global_settings["isCrossAccountBackupEnabled"]) : true
+    condition     = can(var.global_settings["isCrossAccountBackupEnabled"]) ? contains(["true", "false"], var.global_settings["isCrossAccountBackupEnabled"]) : true
     error_message = "isCrossAccountBackupEnabled must be either 'true' or 'false' as a string (not boolean). This setting controls cross-account backup capabilities for enterprise governance."
   }
 

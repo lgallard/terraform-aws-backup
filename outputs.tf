@@ -201,7 +201,7 @@ output "global_settings" {
 
 output "cross_account_backup_enabled" {
   description = "Whether cross-account backup is enabled for centralized governance"
-  value = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], null) == "true"
+  value       = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], null) == "true"
 }
 
 #
@@ -210,10 +210,10 @@ output "cross_account_backup_enabled" {
 output "global_settings_summary" {
   description = "Summary of global settings configuration and governance capabilities"
   value = var.enable_global_settings ? {
-    enabled                         = true
-    cross_account_backup_enabled    = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
-    account_id                      = try(aws_backup_global_settings.ab_global_settings[0].id, null)
-    configured_settings             = var.global_settings
+    enabled                      = true
+    cross_account_backup_enabled = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
+    account_id                   = try(aws_backup_global_settings.ab_global_settings[0].id, null)
+    configured_settings          = var.global_settings
 
     # Governance and compliance information
     governance_impact = {
