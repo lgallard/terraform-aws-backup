@@ -17,7 +17,7 @@ locals {
   airgapped_vault_requirements_met = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
 
   # Cross-validation for retention days (unified validation approach)
-  retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) || var.min_retention_days <= var.max_retention_days
+  retention_days_cross_valid = (var.min_retention_days == null || var.max_retention_days == null) ? true : var.min_retention_days <= var.max_retention_days
 
   # Vault reference helpers (dynamic based on vault type)
   vault_name = local.should_create_standard_vault ? try(aws_backup_vault.ab_vault[0].name, null) : (
