@@ -770,3 +770,39 @@ variable "restore_testing_iam_role_arn" {
     error_message = "The restore_testing_iam_role_arn must be a valid IAM role ARN. Avoid using 'test', 'temp', 'delete', or 'remove' in role names for security reasons."
   }
 }
+
+#
+# AWS Backup Global Settings
+#
+variable "enable_global_settings" {
+  description = "Whether to manage AWS Backup global settings. Enable this to configure account-level backup settings."
+  type        = bool
+  default     = false
+}
+
+variable "global_settings" {
+  description = "Global settings for AWS Backup. Currently supports isCrossAccountBackupEnabled for centralized cross-account backup governance."
+  type        = map(string)
+  default = {
+    "isCrossAccountBackupEnabled" = "false"
+  }
+
+  validation {
+    condition     = can(var.global_settings["isCrossAccountBackupEnabled"]) ? contains(["true", "false"], var.global_settings["isCrossAccountBackupEnabled"]) : true
+    error_message = "isCrossAccountBackupEnabled must be either 'true' or 'false' as a string (not boolean). This setting controls cross-account backup capabilities for enterprise governance."
+  }
+
+  validation {
+    condition = alltrue([
+      for key, value in var.global_settings : can(regex("^[a-zA-Z][a-zA-Z0-9]*$", key))
+    ])
+    error_message = "Global setting keys must start with a letter and contain only alphanumeric characters. Currently supported: 'isCrossAccountBackupEnabled'."
+  }
+
+  validation {
+    condition = alltrue([
+      for key, value in var.global_settings : length(value) > 0
+    ])
+    error_message = "Global setting values cannot be empty strings. Use 'true' or 'false' for boolean settings."
+  }
+}
