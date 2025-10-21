@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.4.0](https://github.com/lgallard/terraform-aws-backup/compare/1.3.0...1.4.0) (2025-10-21)
+
+
+### Features
+
+* add support for aws_backup_global_settings ([#277](https://github.com/lgallard/terraform-aws-backup/issues/277)) ([44e99e3](https://github.com/lgallard/terraform-aws-backup/commit/44e99e3fd1800ab8ca6b147c36323b81c59e6e2c))
+
 ## [1.3.0](https://github.com/lgallard/terraform-aws-backup/compare/1.2.0...1.3.0) (2025-09-16)
 
 
