@@ -17,6 +17,9 @@ locals {
   airgapped_vault_requirements_met = var.vault_type != "logically_air_gapped" || (var.min_retention_days != null && var.max_retention_days != null)
 
   # Cross-validation for retention days (unified validation approach)
+  # Uses positive logic form (both not null) instead of negative (either null) for clarity.
+  # Logically equivalent to: (min == null || max == null) ? true : (min <= max)
+  # This form is clearer: "if both exist, compare them; otherwise, it's valid"
   retention_days_cross_valid = (var.min_retention_days != null && var.max_retention_days != null) ? (var.min_retention_days <= var.max_retention_days) : true
 
   # Vault reference helpers (dynamic based on vault type)
