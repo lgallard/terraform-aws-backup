@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.4.0](https://github.com/lgallard/terraform-aws-backup/compare/1.3.0...1.4.0) (2025-11-03)
+
+
+### Features
+
+* add support for aws_backup_global_settings ([#277](https://github.com/lgallard/terraform-aws-backup/issues/277)) ([44e99e3](https://github.com/lgallard/terraform-aws-backup/commit/44e99e3fd1800ab8ca6b147c36323b81c59e6e2c))
+* add vault_name_validation_bypass variable to relax validation ([#297](https://github.com/lgallard/terraform-aws-backup/issues/297)) ([f4d3ae8](https://github.com/lgallard/terraform-aws-backup/commit/f4d3ae859bae20fbd6cc5a16164ac0aa186ac026))
+
+
+### Bug Fixes
+
+* retention_days validation logic for backward compatibility ([#283](https://github.com/lgallard/terraform-aws-backup/issues/283)) ([1ef4913](https://github.com/lgallard/terraform-aws-backup/commit/1ef49133c12f45ba4a6c85603c35d7b27b2e72e8))
+
 ## [1.3.0](https://github.com/lgallard/terraform-aws-backup/compare/1.2.0...1.3.0) (2025-09-16)
 
 
