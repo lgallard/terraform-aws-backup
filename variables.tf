@@ -9,10 +9,16 @@ variable "vault_name" {
   validation {
     condition = var.vault_name == null ? true : (
       can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name)) &&
-      !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name)) # Prevent insecure naming patterns
+      (var.vault_name_validation_bypass || !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name))) # Prevent insecure naming patterns unless bypassed
     )
-    error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores. Avoid using 'test', 'temp', 'delete', 'remove', or 'default' in names for security reasons."
+    error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores. Avoid using 'test', 'temp', 'delete', 'remove', or 'default' in names for security reasons. Set vault_name_validation_bypass = true to disable this word validation for existing vaults."
   }
+}
+
+variable "vault_name_validation_bypass" {
+  description = "Bypass the vault name word validation (test, temp, delete, remove, default). Set to true for existing vaults with these words. Only disables word validation, format validation remains active."
+  type        = bool
+  default     = false
 }
 
 variable "vault_kms_key_arn" {
