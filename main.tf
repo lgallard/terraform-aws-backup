@@ -1,8 +1,12 @@
 
 # Organized locals for better maintainability and code clarity
 locals {
+  # Vault name validation (moved from variables.tf to support bypass logic)
+  vault_name_has_restricted_words = var.vault_name != null ? can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name)) : false
+  vault_name_validation_failed    = local.vault_name_has_restricted_words && !var.vault_name_validation_bypass
+  
   # Resource creation conditions
-  should_create_vault           = var.enabled && var.vault_name != null
+  should_create_vault           = var.enabled && var.vault_name != null && !local.vault_name_validation_failed
   should_create_standard_vault  = local.should_create_vault && var.vault_type == "standard"
   should_create_airgapped_vault = local.should_create_vault && var.vault_type == "logically_air_gapped"
   should_create_lock            = local.should_create_standard_vault && var.locked
@@ -79,6 +83,29 @@ locals {
       )
     ])
   ])
+}
+
+# Validation check for vault name with restricted words (moved from variables.tf to enable bypass functionality)
+resource "null_resource" "vault_name_validation" {
+  count = local.vault_name_validation_failed ? 1 : 0
+
+  provisioner "local-exec" {
+    command = <<-EOF
+      echo "ERROR: Vault name validation failed!"
+      echo "The vault name '${var.vault_name}' contains restricted words (test, temp, delete, remove, default)."
+      echo "These words are not recommended for security reasons."
+      echo ""
+      echo "Solutions:"
+      echo "1. Change the vault name to avoid these words"
+      echo "2. For existing vaults, set: vault_name_validation_bypass = true"
+      echo ""
+      exit 1
+    EOF
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # AWS Backup vault (standard) with optimized timeouts
