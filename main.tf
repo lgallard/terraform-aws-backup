@@ -4,7 +4,7 @@ locals {
   # Vault name validation (moved from variables.tf to support bypass logic)
   vault_name_has_restricted_words = var.vault_name != null ? can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name)) : false
   vault_name_validation_failed    = local.vault_name_has_restricted_words && !var.vault_name_validation_bypass
-  
+
   # Resource creation conditions
   should_create_vault           = var.enabled && var.vault_name != null && !local.vault_name_validation_failed
   should_create_standard_vault  = local.should_create_vault && var.vault_type == "standard"
