@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.4.1](https://github.com/lgallard/terraform-aws-backup/compare/1.4.0...1.4.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* resolve Terraform variable validation cross-reference error ([#304](https://github.com/lgallard/terraform-aws-backup/issues/304)) ([474fa11](https://github.com/lgallard/terraform-aws-backup/commit/474fa11d162000afa6d7b0f88727c6904dbd2fb7))
+
 ## [1.4.0](https://github.com/lgallard/terraform-aws-backup/compare/1.3.0...1.4.0) (2025-11-03)
 
 
