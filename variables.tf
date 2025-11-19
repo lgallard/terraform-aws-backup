@@ -7,11 +7,8 @@ variable "vault_name" {
   default     = null
 
   validation {
-    condition = var.vault_name == null ? true : (
-      can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name)) &&
-      (var.vault_name_validation_bypass || !can(regex("(?i)(test|temp|delete|remove|default)", var.vault_name))) # Prevent insecure naming patterns unless bypassed
-    )
-    error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores. Avoid using 'test', 'temp', 'delete', 'remove', or 'default' in names for security reasons. Set vault_name_validation_bypass = true to disable this word validation for existing vaults."
+    condition     = var.vault_name == null ? true : can(regex("^[0-9A-Za-z-_]{2,50}$", var.vault_name))
+    error_message = "The vault_name must be between 2 and 50 characters, contain only alphanumeric characters, hyphens, and underscores."
   }
 }
 
