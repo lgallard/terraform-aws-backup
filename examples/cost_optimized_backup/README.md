@@ -19,7 +19,7 @@ This example showcases two powerful cost optimization features:
 ## Use Case
 
 Cost-optimized backup strategies provide:
-- **Archive Tier Storage**: 90% reduction in storage costs for long-term backups
+- **Archive Tier Storage**: Up to 80-90% reduction in storage costs for long-term backups
 - **Tiered Protection**: Different backup frequencies and retention periods based on data criticality
 - **Intelligent Storage Transitions**: Automatic movement to cold and archive storage
 - **Timezone Optimization**: Schedule backups during optimal windows for each region
@@ -40,7 +40,7 @@ Cost-optimized backup strategies provide:
 │ • 90d Retention    │    │ • 90d Retention    │    │ • Production DB    │
 │ • 💰 ~$0.48/GB/mo  │    │ • 💰 ~$0.65/GB/mo  │    │ • 💰 ~$0.35/GB/mo  │
 └────────────────────┘    └────────────────────┘    └────────────────────┘
-                          (90% cost savings with archive tier!)
+                          (up to 80-90% cost savings with archive tier!)
 ```
 
 ## Cost Optimization Strategy
@@ -49,7 +49,7 @@ Cost-optimized backup strategies provide:
 - **Frequency**: Every 6 hours for maximum protection
 - **Timezone**: America/New_York (adjusts for DST automatically)
 - **Storage**: 30-day transition to cold storage
-- **Archive**: ✅ **Enabled** - Transitions to archive tier for 90% cost savings
+- **Archive**: ✅ **Enabled** - Transitions to archive tier for up to 80-90% cost savings
 - **Retention**: 90-day retention balancing protection with cost
 - **Cost**: ~$0.48/GB/month (vs ~$5.00/GB without archive)
 - **Use Case**: Production databases, critical application data

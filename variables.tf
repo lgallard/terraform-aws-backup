@@ -228,8 +228,8 @@ variable "rule_schedule_expression_timezone" {
   default     = null
 
   validation {
-    condition     = var.rule_schedule_expression_timezone == null ? true : can(regex("^[A-Za-z]+/[A-Za-z_]+$", var.rule_schedule_expression_timezone))
-    error_message = "The schedule_expression_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London')."
+    condition     = var.rule_schedule_expression_timezone == null ? true : can(regex("^[A-Za-z_]+(/[A-Za-z0-9_+-]+)+$", var.rule_schedule_expression_timezone))
+    error_message = "The schedule_expression_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London', 'America/Argentina/Buenos_Aires')."
   }
 }
 
@@ -285,7 +285,7 @@ variable "rule_lifecycle_delete_after" {
 }
 
 variable "rule_lifecycle_opt_in_to_archive" {
-  description = "Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 90%."
+  description = "Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 80-90%."
   type        = bool
   default     = null
 }

@@ -1,4 +1,3 @@
-<!-- BEGIN_TF_DOCS -->
 ![Terraform](https://lgallardo.com/images/terraform.jpg)
 
 # terraform-aws-backup
@@ -56,6 +55,62 @@ See [examples/organization_backup_policy/main.tf](examples/organization_backup_p
 See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
 
 <!-- BEGIN_TF_DOCS -->
+![Terraform](https://lgallardo.com/images/terraform.jpg)
+
+# terraform-aws-backup
+
+Terraform module to create AWS Backup plans. AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services (EBS volumes, RDS databases, DynamoDB tables, EFS file systems, and Storage Gateway volumes).
+
+## Features
+
+* Flexible backup plan customization
+* Comprehensive backup management:
+  - Rules and selections
+  - Copy actions and lifecycle policies
+  - Retention periods and windows
+  - Resource tagging
+* Advanced capabilities:
+  - IAM role management
+  - Multi-region support
+  - Vault management
+  - Framework integration
+  - Organization policies
+* Enterprise features:
+  - Notifications system
+  - Audit Manager integration
+  - Cross-account backups
+  - Compliance controls
+
+## Usage
+
+You can use this module to create a simple plan using the module's `rule_*` variables. You can also use the `rules` and `selections` list of maps variables to build a more complete plan by defining several rules and selections at once. For multiple backup plans, you can use the `plans` variable to create several plans with their own rules and selections.
+
+Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
+
+### Simple plan
+
+See [examples/simple_plan/main.tf](examples/simple_plan/main.tf) for a basic backup plan configuration.
+
+### Simple plan using variables
+
+See [examples/simple_plan_using_variables/main.tf](examples/simple_plan_using_variables/main.tf) for a backup plan using variables.
+
+### Complete plan
+
+See [examples/complete_plan/main.tf](examples/complete_plan/main.tf) for a comprehensive backup plan setup.
+
+### Multiple backup plans
+
+See [examples/multiple_plans/main.tf](examples/multiple_plans/main.tf) for managing multiple backup plans.
+
+### Simple plan using AWS Organizations backup policies
+
+See [examples/organization_backup_policy/main.tf](examples/organization_backup_policy/main.tf) for organization-wide backup policies.
+
+### AWS Backup Audit Manager Framework
+
+See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/main.tf) for audit framework configuration.
+
 ## Requirements
 
 | Name | Version |
@@ -69,7 +124,7 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.13.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.22.1 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 
@@ -151,7 +206,7 @@ No modules.
 | <a name="input_rule_enable_continuous_backup"></a> [rule\_enable\_continuous\_backup](#input\_rule\_enable\_continuous\_backup) | Enable continuous backups for supported resources. | `bool` | `false` | no |
 | <a name="input_rule_lifecycle_cold_storage_after"></a> [rule\_lifecycle\_cold\_storage\_after](#input\_rule\_lifecycle\_cold\_storage\_after) | Specifies the number of days after creation that a recovery point is moved to cold storage | `number` | `null` | no |
 | <a name="input_rule_lifecycle_delete_after"></a> [rule\_lifecycle\_delete\_after](#input\_rule\_lifecycle\_delete\_after) | Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after` | `number` | `null` | no |
-| <a name="input_rule_lifecycle_opt_in_to_archive"></a> [rule\_lifecycle\_opt\_in\_to\_archive](#input\_rule\_lifecycle\_opt\_in\_to\_archive) | Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 90%. | `bool` | `null` | no |
+| <a name="input_rule_lifecycle_opt_in_to_archive"></a> [rule\_lifecycle\_opt\_in\_to\_archive](#input\_rule\_lifecycle\_opt\_in\_to\_archive) | Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 80-90%. | `bool` | `null` | no |
 | <a name="input_rule_name"></a> [rule\_name](#input\_rule\_name) | An display name for a backup rule | `string` | `null` | no |
 | <a name="input_rule_recovery_point_tags"></a> [rule\_recovery\_point\_tags](#input\_rule\_recovery\_point\_tags) | Metadata that you can assign to help organize the resources that you create | `map(string)` | `{}` | no |
 | <a name="input_rule_schedule"></a> [rule\_schedule](#input\_rule\_schedule) | A CRON expression specifying when AWS Backup initiates a backup job | `string` | `null` | no |
@@ -199,231 +254,6 @@ No modules.
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
-<!-- END_TF_DOCS -->
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues
@@ -560,20 +390,6 @@ For detailed troubleshooting steps:
    aws backup list-backup-vaults
    aws backup list-backup-plans
    ```
-
-## Known Issues
-
-During the development of the module, the following issues were found:
-
-### Error creating Backup Vault
-
-In case you get an error message similar to this one:
-
-```
-error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
-```
-
-Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 
 ## Automation & Feature Discovery
 
