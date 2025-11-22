@@ -114,22 +114,25 @@ variable "plans" {
   type = map(object({
     name = optional(string)
     rules = list(object({
-      name                     = string
-      target_vault_name        = optional(string)
-      schedule                 = optional(string)
-      start_window             = optional(number)
-      completion_window        = optional(number)
-      enable_continuous_backup = optional(bool)
+      name                         = string
+      target_vault_name            = optional(string)
+      schedule                     = optional(string)
+      schedule_expression_timezone = optional(string)
+      start_window                 = optional(number)
+      completion_window            = optional(number)
+      enable_continuous_backup     = optional(bool)
       lifecycle = optional(object({
-        cold_storage_after = optional(number)
-        delete_after       = number
+        cold_storage_after                        = optional(number)
+        delete_after                              = number
+        opt_in_to_archive_for_supported_resources = optional(bool)
       }))
       recovery_point_tags = optional(map(string))
       copy_actions = optional(list(object({
         destination_vault_arn = string
         lifecycle = optional(object({
-          cold_storage_after = optional(number)
-          delete_after       = number
+          cold_storage_after                        = optional(number)
+          delete_after                              = number
+          opt_in_to_archive_for_supported_resources = optional(bool)
         }))
       })), [])
     }))
@@ -219,6 +222,17 @@ variable "rule_schedule" {
   }
 }
 
+variable "rule_schedule_expression_timezone" {
+  description = "The timezone in which the schedule expression is set for the backup rule. Default is 'Etc/UTC'. Valid values are IANA timezone strings (e.g., 'America/New_York', 'Europe/London', 'Asia/Tokyo')."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.rule_schedule_expression_timezone == null ? true : can(regex("^[A-Za-z]+/[A-Za-z_]+$", var.rule_schedule_expression_timezone))
+    error_message = "The schedule_expression_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London')."
+  }
+}
+
 variable "rule_start_window" {
   description = "The amount of time in minutes before beginning a backup"
   type        = number
@@ -270,6 +284,12 @@ variable "rule_lifecycle_delete_after" {
   }
 }
 
+variable "rule_lifecycle_opt_in_to_archive" {
+  description = "Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 90%."
+  type        = bool
+  default     = null
+}
+
 variable "rule_enable_continuous_backup" {
   description = "Enable continuous backups for supported resources."
   type        = bool
@@ -280,22 +300,25 @@ variable "rule_enable_continuous_backup" {
 variable "rules" {
   description = "A list of rule maps"
   type = list(object({
-    name                     = string
-    target_vault_name        = optional(string)
-    schedule                 = optional(string)
-    start_window             = optional(number)
-    completion_window        = optional(number)
-    enable_continuous_backup = optional(bool)
+    name                         = string
+    target_vault_name            = optional(string)
+    schedule                     = optional(string)
+    schedule_expression_timezone = optional(string)
+    start_window                 = optional(number)
+    completion_window            = optional(number)
+    enable_continuous_backup     = optional(bool)
     lifecycle = optional(object({
-      cold_storage_after = optional(number)
-      delete_after       = number
+      cold_storage_after                        = optional(number)
+      delete_after                              = number
+      opt_in_to_archive_for_supported_resources = optional(bool)
     }))
     recovery_point_tags = optional(map(string))
     copy_actions = optional(list(object({
       destination_vault_arn = string
       lifecycle = optional(object({
-        cold_storage_after = optional(number)
-        delete_after       = number
+        cold_storage_after                        = optional(number)
+        delete_after                              = number
+        opt_in_to_archive_for_supported_resources = optional(bool)
       }))
     })), [])
   }))

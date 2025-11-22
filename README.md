@@ -142,7 +142,7 @@ No modules.
 | <a name="input_org_policy_name"></a> [org\_policy\_name](#input\_org\_policy\_name) | Name of the AWS Organizations backup policy | `string` | `"backup-policy"` | no |
 | <a name="input_org_policy_target_id"></a> [org\_policy\_target\_id](#input\_org\_policy\_target\_id) | Target ID (Root/OU/Account) for the backup policy | `string` | `null` | no |
 | <a name="input_plan_name"></a> [plan\_name](#input\_plan\_name) | The display name of a backup plan | `string` | `null` | no |
-| <a name="input_plans"></a> [plans](#input\_plans) | A map of backup plans to create. Each key is the plan name and each value is a map of plan configuration. | <pre>map(object({<br/>    name = optional(string)<br/>    rules = list(object({<br/>      name                     = string<br/>      target_vault_name        = optional(string)<br/>      schedule                 = optional(string)<br/>      start_window             = optional(number)<br/>      completion_window        = optional(number)<br/>      enable_continuous_backup = optional(bool)<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>      recovery_point_tags = optional(map(string))<br/>      copy_actions = optional(list(object({<br/>        destination_vault_arn = string<br/>        lifecycle = optional(object({<br/>          cold_storage_after = optional(number)<br/>          delete_after       = number<br/>        }))<br/>      })), [])<br/>    }))<br/>    selections = optional(map(object({<br/>      resources     = optional(list(string))<br/>      not_resources = optional(list(string))<br/>      conditions = optional(object({<br/>        string_equals     = optional(map(string))<br/>        string_not_equals = optional(map(string))<br/>        string_like       = optional(map(string))<br/>        string_not_like   = optional(map(string))<br/>      }))<br/>      selection_tags = optional(list(object({<br/>        type  = string<br/>        key   = string<br/>        value = string<br/>      })))<br/>    })), {})<br/>  }))</pre> | `{}` | no |
+| <a name="input_plans"></a> [plans](#input\_plans) | A map of backup plans to create. Each key is the plan name and each value is a map of plan configuration. | <pre>map(object({<br/>    name = optional(string)<br/>    rules = list(object({<br/>      name                         = string<br/>      target_vault_name            = optional(string)<br/>      schedule                     = optional(string)<br/>      schedule_expression_timezone = optional(string)<br/>      start_window                 = optional(number)<br/>      completion_window            = optional(number)<br/>      enable_continuous_backup     = optional(bool)<br/>      lifecycle = optional(object({<br/>        cold_storage_after                        = optional(number)<br/>        delete_after                              = number<br/>        opt_in_to_archive_for_supported_resources = optional(bool)<br/>      }))<br/>      recovery_point_tags = optional(map(string))<br/>      copy_actions = optional(list(object({<br/>        destination_vault_arn = string<br/>        lifecycle = optional(object({<br/>          cold_storage_after                        = optional(number)<br/>          delete_after                              = number<br/>          opt_in_to_archive_for_supported_resources = optional(bool)<br/>        }))<br/>      })), [])<br/>    }))<br/>    selections = optional(map(object({<br/>      resources     = optional(list(string))<br/>      not_resources = optional(list(string))<br/>      conditions = optional(object({<br/>        string_equals     = optional(map(string))<br/>        string_not_equals = optional(map(string))<br/>        string_like       = optional(map(string))<br/>        string_not_like   = optional(map(string))<br/>      }))<br/>      selection_tags = optional(list(object({<br/>        type  = string<br/>        key   = string<br/>        value = string<br/>      })))<br/>    })), {})<br/>  }))</pre> | `{}` | no |
 | <a name="input_reports"></a> [reports](#input\_reports) | The default cache behavior for this distribution. | <pre>list(object({<br/>    name               = string<br/>    description        = optional(string, null)<br/>    formats            = optional(list(string), null)<br/>    s3_bucket_name     = string<br/>    s3_key_prefix      = optional(string, null)<br/>    report_template    = string<br/>    accounts           = optional(list(string), null)<br/>    organization_units = optional(list(string), null)<br/>    regions            = optional(list(string), null)<br/>    framework_arns     = optional(list(string), [])<br/>  }))</pre> | `[]` | no |
 | <a name="input_restore_testing_iam_role_arn"></a> [restore\_testing\_iam\_role\_arn](#input\_restore\_testing\_iam\_role\_arn) | The ARN of an existing IAM role for restore testing operations. If not provided, a new role will be created. | `string` | `null` | no |
 | <a name="input_restore_testing_plans"></a> [restore\_testing\_plans](#input\_restore\_testing\_plans) | Map of restore testing plans to create. Each plan defines automated testing schedule and recovery point selection criteria. | <pre>map(object({<br/>    name                         = string<br/>    schedule_expression          = string<br/>    schedule_expression_timezone = optional(string)<br/>    start_window_hours           = optional(number)<br/>    recovery_point_selection = object({<br/>      algorithm             = string<br/>      include_vaults        = list(string)<br/>      recovery_point_types  = list(string)<br/>      exclude_vaults        = optional(list(string))<br/>      selection_window_days = optional(number)<br/>    })<br/>  }))</pre> | `{}` | no |
@@ -151,11 +151,13 @@ No modules.
 | <a name="input_rule_enable_continuous_backup"></a> [rule\_enable\_continuous\_backup](#input\_rule\_enable\_continuous\_backup) | Enable continuous backups for supported resources. | `bool` | `false` | no |
 | <a name="input_rule_lifecycle_cold_storage_after"></a> [rule\_lifecycle\_cold\_storage\_after](#input\_rule\_lifecycle\_cold\_storage\_after) | Specifies the number of days after creation that a recovery point is moved to cold storage | `number` | `null` | no |
 | <a name="input_rule_lifecycle_delete_after"></a> [rule\_lifecycle\_delete\_after](#input\_rule\_lifecycle\_delete\_after) | Specifies the number of days after creation that a recovery point is deleted. Must be 90 days greater than `cold_storage_after` | `number` | `null` | no |
+| <a name="input_rule_lifecycle_opt_in_to_archive"></a> [rule\_lifecycle\_opt\_in\_to\_archive](#input\_rule\_lifecycle\_opt\_in\_to\_archive) | Enable automatic archive tier transitioning for supported resources according to lifecycle settings. This reduces storage costs for long-term retention by up to 90%. | `bool` | `null` | no |
 | <a name="input_rule_name"></a> [rule\_name](#input\_rule\_name) | An display name for a backup rule | `string` | `null` | no |
 | <a name="input_rule_recovery_point_tags"></a> [rule\_recovery\_point\_tags](#input\_rule\_recovery\_point\_tags) | Metadata that you can assign to help organize the resources that you create | `map(string)` | `{}` | no |
 | <a name="input_rule_schedule"></a> [rule\_schedule](#input\_rule\_schedule) | A CRON expression specifying when AWS Backup initiates a backup job | `string` | `null` | no |
+| <a name="input_rule_schedule_expression_timezone"></a> [rule\_schedule\_expression\_timezone](#input\_rule\_schedule\_expression\_timezone) | The timezone in which the schedule expression is set for the backup rule. Default is 'Etc/UTC'. Valid values are IANA timezone strings (e.g., 'America/New\_York', 'Europe/London', 'Asia/Tokyo'). | `string` | `null` | no |
 | <a name="input_rule_start_window"></a> [rule\_start\_window](#input\_rule\_start\_window) | The amount of time in minutes before beginning a backup | `number` | `null` | no |
-| <a name="input_rules"></a> [rules](#input\_rules) | A list of rule maps | <pre>list(object({<br/>    name                     = string<br/>    target_vault_name        = optional(string)<br/>    schedule                 = optional(string)<br/>    start_window             = optional(number)<br/>    completion_window        = optional(number)<br/>    enable_continuous_backup = optional(bool)<br/>    lifecycle = optional(object({<br/>      cold_storage_after = optional(number)<br/>      delete_after       = number<br/>    }))<br/>    recovery_point_tags = optional(map(string))<br/>    copy_actions = optional(list(object({<br/>      destination_vault_arn = string<br/>      lifecycle = optional(object({<br/>        cold_storage_after = optional(number)<br/>        delete_after       = number<br/>      }))<br/>    })), [])<br/>  }))</pre> | `[]` | no |
+| <a name="input_rules"></a> [rules](#input\_rules) | A list of rule maps | <pre>list(object({<br/>    name                         = string<br/>    target_vault_name            = optional(string)<br/>    schedule                     = optional(string)<br/>    schedule_expression_timezone = optional(string)<br/>    start_window                 = optional(number)<br/>    completion_window            = optional(number)<br/>    enable_continuous_backup     = optional(bool)<br/>    lifecycle = optional(object({<br/>      cold_storage_after                        = optional(number)<br/>      delete_after                              = number<br/>      opt_in_to_archive_for_supported_resources = optional(bool)<br/>    }))<br/>    recovery_point_tags = optional(map(string))<br/>    copy_actions = optional(list(object({<br/>      destination_vault_arn = string<br/>      lifecycle = optional(object({<br/>        cold_storage_after                        = optional(number)<br/>        delete_after                              = number<br/>        opt_in_to_archive_for_supported_resources = optional(bool)<br/>      }))<br/>    })), [])<br/>  }))</pre> | `[]` | no |
 | <a name="input_selection_conditions"></a> [selection\_conditions](#input\_selection\_conditions) | A map of conditions that you define to assign resources to your backup plans using tags. | <pre>object({<br/>    string_equals     = optional(map(string))<br/>    string_not_equals = optional(map(string))<br/>    string_like       = optional(map(string))<br/>    string_not_like   = optional(map(string))<br/>  })</pre> | `{}` | no |
 | <a name="input_selection_name"></a> [selection\_name](#input\_selection\_name) | The display name of a resource selection document | `string` | `null` | no |
 | <a name="input_selection_not_resources"></a> [selection\_not\_resources](#input\_selection\_not\_resources) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to exclude from a backup plan. | `list(any)` | `[]` | no |
@@ -197,6 +199,81 @@ No modules.
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
+<!-- END_TF_DOCS -->
+
+## Known Issues
+
+During the development of the module, the following issues were found:
+
+### Error creating Backup Vault
+
+In case you get an error message similar to this one:
+
+```
+error creating Backup Vault (): AccessDeniedException: status code: 403, request id: 8e7e577e-5b74-4d4d-95d0-bf63e0b2cc2e,
+```
+
+Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 <!-- END_TF_DOCS -->
 
 ## Known Issues
