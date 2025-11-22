@@ -35,8 +35,8 @@ variable "backup_timezone" {
   default     = "America/New_York"
 
   validation {
-    condition     = can(regex("^[A-Za-z]+/[A-Za-z_]+$", var.backup_timezone))
-    error_message = "The backup_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London')."
+    condition     = can(regex("^[A-Za-z_]+(/[A-Za-z0-9_+-]+)+$", var.backup_timezone))
+    error_message = "The backup_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London', 'America/Argentina/Buenos_Aires')."
   }
 }
 
