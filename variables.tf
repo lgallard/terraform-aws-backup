@@ -863,11 +863,11 @@ variable "region_settings" {
       for resource_type, enabled in var.region_settings.resource_type_opt_in_preference :
       contains([
         "Aurora", "CloudFormation", "DocumentDB", "DSQL", "DynamoDB", "EBS", "EC2",
-        "EFS", "FSx", "Neptune", "Redshift", "RDS", "S3", "SAP HANA on Amazon EC2",
-        "Storage Gateway", "VirtualMachine"
+        "EFS", "FSx", "Neptune", "Redshift", "Redshift Serverless", "RDS", "S3",
+        "SAP HANA on Amazon EC2", "Storage Gateway", "VirtualMachine"
       ], resource_type)
     ])
-    error_message = "Invalid resource type in resource_type_opt_in_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
+    error_message = "Invalid resource type in resource_type_opt_in_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, Redshift Serverless, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
   }
 
   validation {
@@ -875,10 +875,10 @@ variable "region_settings" {
       for resource_type, enabled in var.region_settings.resource_type_management_preference :
       contains([
         "Aurora", "CloudFormation", "DocumentDB", "DSQL", "DynamoDB", "EBS", "EC2",
-        "EFS", "FSx", "Neptune", "Redshift", "RDS", "S3", "SAP HANA on Amazon EC2",
-        "Storage Gateway", "VirtualMachine"
+        "EFS", "FSx", "Neptune", "Redshift", "Redshift Serverless", "RDS", "S3",
+        "SAP HANA on Amazon EC2", "Storage Gateway", "VirtualMachine"
       ], resource_type)
     ])
-    error_message = "Invalid resource type in resource_type_management_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
+    error_message = "Invalid resource type in resource_type_management_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, Redshift Serverless, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
   }
 }

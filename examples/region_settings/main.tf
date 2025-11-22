@@ -45,6 +45,7 @@ module "region_settings" {
       "VirtualMachine"         = false # VMware VMs (disabled for this example)
       "DSQL"                   = false # DSQL databases (disabled for this example)
       "Redshift"               = false # Redshift clusters (disabled for this example)
+      "Redshift Serverless"    = false # Redshift Serverless (disabled for this example)
     }
 
     # Optional: Configure resource type management preferences

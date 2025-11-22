@@ -104,6 +104,7 @@ These services are disabled to demonstrate selective enablement:
 | **VirtualMachine** | VMware integration not enabled |
 | **DSQL** | DSQL not in use |
 | **Redshift** | Data warehouse in different region |
+| **Redshift Serverless** | Serverless data warehouse not deployed |
 
 ### Management Preferences
 
