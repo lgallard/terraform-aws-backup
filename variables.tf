@@ -832,3 +832,53 @@ variable "global_settings" {
     error_message = "Global setting values cannot be empty strings. Use 'true' or 'false' for boolean settings."
   }
 }
+
+#
+# AWS Backup Region Settings
+#
+variable "enable_region_settings" {
+  description = "Whether to manage AWS Backup region settings. Enable this to configure resource type opt-in preferences and management at the region level."
+  type        = bool
+  default     = false
+}
+
+variable "region_settings" {
+  description = "Configuration for AWS Backup region settings. Manages opt-in preferences and resource type management at the region level."
+  type = object({
+    resource_type_opt_in_preference     = map(bool)
+    resource_type_management_preference = optional(map(bool))
+  })
+  default = null
+
+  validation {
+    condition = var.region_settings == null ? true : (
+      var.region_settings.resource_type_opt_in_preference != null &&
+      length(var.region_settings.resource_type_opt_in_preference) > 0
+    )
+    error_message = "When region_settings is specified, resource_type_opt_in_preference must be provided and cannot be empty. This defines which AWS services are enabled for backup in this region."
+  }
+
+  validation {
+    condition = var.region_settings == null ? true : alltrue([
+      for resource_type, enabled in var.region_settings.resource_type_opt_in_preference :
+      contains([
+        "Aurora", "CloudFormation", "DocumentDB", "DSQL", "DynamoDB", "EBS", "EC2",
+        "EFS", "FSx", "Neptune", "Redshift", "RDS", "S3", "SAP HANA on Amazon EC2",
+        "Storage Gateway", "VirtualMachine"
+      ], resource_type)
+    ])
+    error_message = "Invalid resource type in resource_type_opt_in_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
+  }
+
+  validation {
+    condition = var.region_settings == null || var.region_settings.resource_type_management_preference == null ? true : alltrue([
+      for resource_type, enabled in var.region_settings.resource_type_management_preference :
+      contains([
+        "Aurora", "CloudFormation", "DocumentDB", "DSQL", "DynamoDB", "EBS", "EC2",
+        "EFS", "FSx", "Neptune", "Redshift", "RDS", "S3", "SAP HANA on Amazon EC2",
+        "Storage Gateway", "VirtualMachine"
+      ], resource_type)
+    ])
+    error_message = "Invalid resource type in resource_type_management_preference. Valid types are: Aurora, CloudFormation, DocumentDB, DSQL, DynamoDB, EBS, EC2, EFS, FSx, Neptune, Redshift, RDS, S3, SAP HANA on Amazon EC2, Storage Gateway, VirtualMachine."
+  }
+}

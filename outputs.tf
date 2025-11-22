@@ -237,3 +237,82 @@ output "global_settings_summary" {
     }
   } : null
 }
+
+#
+# Region Settings
+#
+output "region_settings_id" {
+  description = "AWS Region where region settings are applied (same as AWS account ID)"
+  value       = try(aws_backup_region_settings.this[0].id, null)
+}
+
+output "region_settings_resource_type_opt_in_preference" {
+  description = "Resource types enabled for backup in this region"
+  value       = try(aws_backup_region_settings.this[0].resource_type_opt_in_preference, null)
+}
+
+output "region_settings_resource_type_management_preference" {
+  description = "Resource type management preferences configured for this region"
+  value       = try(aws_backup_region_settings.this[0].resource_type_management_preference, null)
+}
+
+#
+# Region Settings Summary
+#
+output "region_settings_summary" {
+  description = "Summary of region settings configuration and enabled services"
+  value = var.enable_region_settings && var.region_settings != null ? {
+    enabled                = true
+    region_id              = try(aws_backup_region_settings.this[0].id, null)
+    configured_preferences = var.region_settings
+
+    # Enabled services summary
+    enabled_services = [
+      for service, enabled in var.region_settings.resource_type_opt_in_preference :
+      service if enabled
+    ]
+
+    disabled_services = [
+      for service, enabled in var.region_settings.resource_type_opt_in_preference :
+      service if !enabled
+    ]
+
+    # Management configuration
+    management_enabled_services = var.region_settings.resource_type_management_preference != null ? [
+      for service, enabled in var.region_settings.resource_type_management_preference :
+      service if enabled
+    ] : []
+
+    # Configuration insights
+    service_count = {
+      total_configured = length(var.region_settings.resource_type_opt_in_preference)
+      enabled          = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if enabled])
+      disabled         = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if !enabled])
+      managed          = var.region_settings.resource_type_management_preference != null ? length([for service, enabled in var.region_settings.resource_type_management_preference : service if enabled]) : 0
+    }
+
+    # Next steps and recommendations
+    next_steps = {
+      "1" = "Verify backup plans are configured for enabled resource types"
+      "2" = "Test backup operations for newly enabled services"
+      "3" = "Configure selection criteria for automatic resource discovery"
+      "4" = "Review AWS Backup documentation for service-specific requirements"
+    }
+
+    # CLI commands for management
+    management_commands = {
+      describe_settings         = "aws backup describe-region-settings"
+      list_supported_types      = "aws backup get-supported-resource-types"
+      verify_backup_selections  = "aws backup list-backup-selections --backup-plan-id PLAN_ID"
+      check_protected_resources = "aws backup list-protected-resources"
+    }
+
+    # Important notes
+    notes = {
+      scope               = "Region-level configuration - applies to current AWS region only"
+      multi_region_setup  = "For multi-region deployments, configure region settings in each region separately using provider aliases"
+      service_enablement  = "Enabling a service type allows AWS Backup to discover and protect resources of that type"
+      management_vs_optin = "resource_type_opt_in_preference enables backup, resource_type_management_preference enables advanced management features"
+    }
+  } : null
+}
