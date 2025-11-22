@@ -29,6 +29,17 @@ variable "environment" {
   }
 }
 
+variable "backup_timezone" {
+  description = "Timezone for backup schedules (IANA timezone format)"
+  type        = string
+  default     = "America/New_York"
+
+  validation {
+    condition     = can(regex("^[A-Za-z]+/[A-Za-z_]+$", var.backup_timezone))
+    error_message = "The backup_timezone must be a valid IANA timezone string (e.g., 'America/New_York', 'Europe/London')."
+  }
+}
+
 variable "critical_resources" {
   description = "List of critical resource ARNs to backup with high frequency"
   type        = list(string)

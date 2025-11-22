@@ -33,14 +33,16 @@ locals {
 
   # Rule processing (matching existing logic for compatibility)
   rule = var.rule_name == null ? [] : [{
-    name              = var.rule_name
-    target_vault_name = var.vault_name != null ? var.vault_name : "Default"
-    schedule          = var.rule_schedule
-    start_window      = var.rule_start_window
-    completion_window = var.rule_completion_window
+    name                         = var.rule_name
+    target_vault_name            = var.vault_name != null ? var.vault_name : "Default"
+    schedule                     = var.rule_schedule
+    schedule_expression_timezone = var.rule_schedule_expression_timezone
+    start_window                 = var.rule_start_window
+    completion_window            = var.rule_completion_window
     lifecycle = var.rule_lifecycle_cold_storage_after == null ? {} : {
-      cold_storage_after = var.rule_lifecycle_cold_storage_after
-      delete_after       = var.rule_lifecycle_delete_after
+      cold_storage_after                        = var.rule_lifecycle_cold_storage_after
+      delete_after                              = var.rule_lifecycle_delete_after
+      opt_in_to_archive_for_supported_resources = var.rule_lifecycle_opt_in_to_archive
     }
     enable_continuous_backup = var.rule_enable_continuous_backup
     recovery_point_tags      = var.rule_recovery_point_tags
@@ -156,20 +158,22 @@ resource "aws_backup_plan" "ab_plan" {
   dynamic "rule" {
     for_each = local.rules
     content {
-      rule_name                = try(rule.value.name, null)
-      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
-      schedule                 = try(rule.value.schedule, null)
-      start_window             = try(rule.value.start_window, null)
-      completion_window        = try(rule.value.completion_window, null)
-      enable_continuous_backup = try(rule.value.enable_continuous_backup, null)
-      recovery_point_tags      = coalesce(rule.value.recovery_point_tags, var.tags)
+      rule_name                    = try(rule.value.name, null)
+      target_vault_name            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
+      schedule                     = try(rule.value.schedule, null)
+      schedule_expression_timezone = try(rule.value.schedule_expression_timezone, null)
+      start_window                 = try(rule.value.start_window, null)
+      completion_window            = try(rule.value.completion_window, null)
+      enable_continuous_backup     = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags          = coalesce(rule.value.recovery_point_tags, var.tags)
 
       # Lifecycle
       dynamic "lifecycle" {
         for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
         content {
-          cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
-          delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+          cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+          delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+          opt_in_to_archive_for_supported_resources = try(lifecycle.value.opt_in_to_archive_for_supported_resources, null)
         }
       }
 
@@ -183,8 +187,9 @@ resource "aws_backup_plan" "ab_plan" {
           dynamic "lifecycle" {
             for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
             content {
-              cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
-              delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+              cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+              delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+              opt_in_to_archive_for_supported_resources = try(lifecycle.value.opt_in_to_archive_for_supported_resources, null)
             }
           }
         }
@@ -259,20 +264,22 @@ resource "aws_backup_plan" "ab_plans" {
   dynamic "rule" {
     for_each = each.value.rules
     content {
-      rule_name                = try(rule.value.name, null)
-      target_vault_name        = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
-      schedule                 = try(rule.value.schedule, null)
-      start_window             = try(rule.value.start_window, null)
-      completion_window        = try(rule.value.completion_window, null)
-      enable_continuous_backup = try(rule.value.enable_continuous_backup, null)
-      recovery_point_tags      = coalesce(rule.value.recovery_point_tags, var.tags)
+      rule_name                    = try(rule.value.name, null)
+      target_vault_name            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
+      schedule                     = try(rule.value.schedule, null)
+      schedule_expression_timezone = try(rule.value.schedule_expression_timezone, null)
+      start_window                 = try(rule.value.start_window, null)
+      completion_window            = try(rule.value.completion_window, null)
+      enable_continuous_backup     = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags          = coalesce(rule.value.recovery_point_tags, var.tags)
 
       # Lifecycle
       dynamic "lifecycle" {
         for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
         content {
-          cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
-          delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+          cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+          delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+          opt_in_to_archive_for_supported_resources = try(lifecycle.value.opt_in_to_archive_for_supported_resources, null)
         }
       }
 
@@ -286,8 +293,9 @@ resource "aws_backup_plan" "ab_plans" {
           dynamic "lifecycle" {
             for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
             content {
-              cold_storage_after = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
-              delete_after       = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+              cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
+              delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
+              opt_in_to_archive_for_supported_resources = try(lifecycle.value.opt_in_to_archive_for_supported_resources, null)
             }
           }
         }
