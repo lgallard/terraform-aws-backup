@@ -269,6 +269,12 @@ No modules.
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
 <!-- END_TF_DOCS -->
 
+## Additional Documentation
+
+- **[Data Sources Guide](docs/DATA_SOURCES.md)** - Using AWS Backup data sources to query existing backup resources
+- **[Testing Guide](docs/TESTING.md)** - Comprehensive testing documentation
+- **[Examples](examples/)** - 16+ example configurations for various use cases
+
 ## Known Issues
 
 During the development of the module, the following issues were found:
