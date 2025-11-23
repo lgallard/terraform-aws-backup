@@ -1,4 +1,40 @@
+#
+# Locals for efficient data processing
+#
+locals {
+  # Single-pass analysis of region settings (avoids redundant loops in outputs)
+  region_settings_analysis = var.enable_region_settings && var.region_settings != null ? {
+    # Process enabled services list once
+    enabled_services = [
+      for service, enabled in var.region_settings.resource_type_opt_in_preference :
+      service if enabled
+    ]
+
+    # Process disabled services list once
+    disabled_services = [
+      for service, enabled in var.region_settings.resource_type_opt_in_preference :
+      service if !enabled
+    ]
+
+    # Process managed services list once
+    managed_services = var.region_settings.resource_type_management_preference != null ? [
+      for service, enabled in var.region_settings.resource_type_management_preference :
+      service if enabled
+    ] : []
+
+    # Pre-compute all service counts in a single pass
+    service_counts = {
+      total    = length(var.region_settings.resource_type_opt_in_preference)
+      enabled  = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if enabled])
+      disabled = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if !enabled])
+      managed  = var.region_settings.resource_type_management_preference != null ? length([for service, enabled in var.region_settings.resource_type_management_preference : service if enabled]) : 0
+    }
+  } : null
+}
+
+#
 # Vault
+#
 output "vault_id" {
   description = "The name of the vault"
   value       = var.vault_type == "standard" ? try(aws_backup_vault.ab_vault[0].id, null) : try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].id, null)
@@ -257,39 +293,21 @@ output "region_settings_resource_type_management_preference" {
 }
 
 #
-# Region Settings Summary
+# Region Settings Summary (Non-Sensitive)
 #
 output "region_settings_summary" {
-  description = "Summary of region settings configuration and enabled services"
+  description = "Summary of region settings configuration and enabled services (non-sensitive aggregate data)"
   value = var.enable_region_settings && var.region_settings != null ? {
-    enabled                = true
-    region_id              = try(aws_backup_region_settings.this[0].id, null)
-    configured_preferences = var.region_settings
+    enabled   = true
+    region_id = try(aws_backup_region_settings.this[0].id, null)
 
-    # Enabled services summary
-    enabled_services = [
-      for service, enabled in var.region_settings.resource_type_opt_in_preference :
-      service if enabled
-    ]
+    # Use pre-computed lists from locals (single-pass processing)
+    enabled_services  = local.region_settings_analysis.enabled_services
+    disabled_services = local.region_settings_analysis.disabled_services
+    managed_services  = local.region_settings_analysis.managed_services
 
-    disabled_services = [
-      for service, enabled in var.region_settings.resource_type_opt_in_preference :
-      service if !enabled
-    ]
-
-    # Management configuration
-    management_enabled_services = var.region_settings.resource_type_management_preference != null ? [
-      for service, enabled in var.region_settings.resource_type_management_preference :
-      service if enabled
-    ] : []
-
-    # Configuration insights
-    service_count = {
-      total_configured = length(var.region_settings.resource_type_opt_in_preference)
-      enabled          = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if enabled])
-      disabled         = length([for service, enabled in var.region_settings.resource_type_opt_in_preference : service if !enabled])
-      managed          = var.region_settings.resource_type_management_preference != null ? length([for service, enabled in var.region_settings.resource_type_management_preference : service if enabled]) : 0
-    }
+    # Use pre-computed counts from locals
+    service_count = local.region_settings_analysis.service_counts
 
     # Next steps and recommendations
     next_steps = {
@@ -314,5 +332,43 @@ output "region_settings_summary" {
       service_enablement  = "Enabling a service type allows AWS Backup to discover and protect resources of that type"
       management_vs_optin = "resource_type_opt_in_preference enables backup, resource_type_management_preference enables advanced management features"
     }
+  } : null
+}
+
+#
+# Region Settings Details (Sensitive)
+#
+output "region_settings_details" {
+  description = "Detailed region settings configuration including full preferences (sensitive - use terraform output -json to view)"
+  sensitive   = true
+  value = var.enable_region_settings && var.region_settings != null ? {
+    configured_preferences = var.region_settings
+    enabled_services       = local.region_settings_analysis.enabled_services
+    disabled_services      = local.region_settings_analysis.disabled_services
+    managed_services       = local.region_settings_analysis.managed_services
+    service_count          = local.region_settings_analysis.service_counts
+  } : null
+}
+
+#
+# Region Settings Configuration Hash
+#
+output "region_settings_hash" {
+  description = "SHA256 hash of region settings configuration for change tracking and integrity verification"
+  value       = var.enable_region_settings && var.region_settings != null ? sha256(jsonencode(var.region_settings)) : null
+}
+
+#
+# Configuration Health Check
+#
+output "configuration_health_check" {
+  description = "Configuration health check and validation status for region settings"
+  value = var.enable_region_settings ? {
+    provider_region     = try(data.aws_region.current[0].id, "unknown")
+    expected_region     = var.expected_region
+    strict_validation   = var.enable_strict_region_validation
+    is_region_validated = var.expected_region == null ? null : try(data.aws_region.current[0].id, "") == var.expected_region
+    validation_status   = var.expected_region == null ? "No expected region configured - validation skipped" : (try(data.aws_region.current[0].id, "") == var.expected_region ? "✓ Region validated successfully" : "⚠ WARNING: Region mismatch detected")
+    recommendation      = var.expected_region == null ? "Consider setting expected_region for multi-region deployments" : (try(data.aws_region.current[0].id, "") == var.expected_region ? "Configuration is correctly applied to the expected region" : "ATTENTION: Settings may be applied to the wrong region. Review your provider configuration or enable strict validation.")
   } : null
 }

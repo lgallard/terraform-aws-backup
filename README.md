@@ -170,6 +170,7 @@ No modules.
 | [aws_iam_policy_document.restore_testing_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.restore_testing_policy_document](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
 
@@ -186,7 +187,9 @@ No modules.
 | <a name="input_enable_global_settings"></a> [enable\_global\_settings](#input\_enable\_global\_settings) | Whether to manage AWS Backup global settings. Enable this to configure account-level backup settings. | `bool` | `false` | no |
 | <a name="input_enable_org_policy"></a> [enable\_org\_policy](#input\_enable\_org\_policy) | Enable AWS Organizations backup policy | `bool` | `false` | no |
 | <a name="input_enable_region_settings"></a> [enable\_region\_settings](#input\_enable\_region\_settings) | Whether to manage AWS Backup region settings. Enable this to configure resource type opt-in preferences and management at the region level. | `bool` | `false` | no |
+| <a name="input_enable_strict_region_validation"></a> [enable\_strict\_region\_validation](#input\_enable\_strict\_region\_validation) | Enable strict validation that region settings apply to the expected region. Requires expected\_region to be set. When enabled, Terraform will fail if the provider region doesn't match expected\_region, preventing accidental misconfiguration in multi-region setups. | `bool` | `false` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Change to false to avoid deploying any AWS Backup resources | `bool` | `true` | no |
+| <a name="input_expected_region"></a> [expected\_region](#input\_expected\_region) | Expected AWS region for region settings deployment. Used with enable\_strict\_region\_validation to prevent applying settings to the wrong region in multi-provider configurations. If null, no region validation is performed. | `string` | `null` | no |
 | <a name="input_global_settings"></a> [global\_settings](#input\_global\_settings) | Global settings for AWS Backup. Currently supports isCrossAccountBackupEnabled for centralized cross-account backup governance. | `map(string)` | <pre>{<br/>  "isCrossAccountBackupEnabled": "false"<br/>}</pre> | no |
 | <a name="input_iam_role_arn"></a> [iam\_role\_arn](#input\_iam\_role\_arn) | If configured, the module will attach this role to selections, instead of creating IAM resources by itself | `string` | `null` | no |
 | <a name="input_iam_role_name"></a> [iam\_role\_name](#input\_iam\_role\_name) | Allow to set IAM role name, otherwise use predefined default | `string` | `""` | no |
@@ -236,6 +239,7 @@ No modules.
 |------|-------------|
 | <a name="output_airgapped_vault_arn"></a> [airgapped\_vault\_arn](#output\_airgapped\_vault\_arn) | The ARN of the air gapped vault |
 | <a name="output_airgapped_vault_id"></a> [airgapped\_vault\_id](#output\_airgapped\_vault\_id) | The name of the air gapped vault |
+| <a name="output_configuration_health_check"></a> [configuration\_health\_check](#output\_configuration\_health\_check) | Configuration health check and validation status for region settings |
 | <a name="output_cross_account_backup_enabled"></a> [cross\_account\_backup\_enabled](#output\_cross\_account\_backup\_enabled) | Whether cross-account backup is enabled for centralized governance |
 | <a name="output_framework_arn"></a> [framework\_arn](#output\_framework\_arn) | The ARN of the backup framework |
 | <a name="output_framework_creation_time"></a> [framework\_creation\_time](#output\_framework\_creation\_time) | The date and time that the backup framework was created |
@@ -249,10 +253,12 @@ No modules.
 | <a name="output_plan_role"></a> [plan\_role](#output\_plan\_role) | The service role of the backup plan |
 | <a name="output_plan_version"></a> [plan\_version](#output\_plan\_version) | Unique, randomly generated, Unicode, UTF-8 encoded string that serves as the version ID of the backup plan |
 | <a name="output_plans"></a> [plans](#output\_plans) | Map of plans created and their attributes |
+| <a name="output_region_settings_details"></a> [region\_settings\_details](#output\_region\_settings\_details) | Detailed region settings configuration including full preferences (sensitive - use terraform output -json to view) |
+| <a name="output_region_settings_hash"></a> [region\_settings\_hash](#output\_region\_settings\_hash) | SHA256 hash of region settings configuration for change tracking and integrity verification |
 | <a name="output_region_settings_id"></a> [region\_settings\_id](#output\_region\_settings\_id) | AWS Region where region settings are applied (same as AWS account ID) |
 | <a name="output_region_settings_resource_type_management_preference"></a> [region\_settings\_resource\_type\_management\_preference](#output\_region\_settings\_resource\_type\_management\_preference) | Resource type management preferences configured for this region |
 | <a name="output_region_settings_resource_type_opt_in_preference"></a> [region\_settings\_resource\_type\_opt\_in\_preference](#output\_region\_settings\_resource\_type\_opt\_in\_preference) | Resource types enabled for backup in this region |
-| <a name="output_region_settings_summary"></a> [region\_settings\_summary](#output\_region\_settings\_summary) | Summary of region settings configuration and enabled services |
+| <a name="output_region_settings_summary"></a> [region\_settings\_summary](#output\_region\_settings\_summary) | Summary of region settings configuration and enabled services (non-sensitive aggregate data) |
 | <a name="output_restore_testing_plans"></a> [restore\_testing\_plans](#output\_restore\_testing\_plans) | Map of restore testing plans created and their attributes |
 | <a name="output_restore_testing_role_arn"></a> [restore\_testing\_role\_arn](#output\_restore\_testing\_role\_arn) | The ARN of the restore testing IAM role |
 | <a name="output_restore_testing_role_name"></a> [restore\_testing\_role\_name](#output\_restore\_testing\_role\_name) | The name of the restore testing IAM role |

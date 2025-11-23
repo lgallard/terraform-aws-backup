@@ -21,6 +21,19 @@ output "service_count" {
 }
 
 output "region_settings_summary" {
-  description = "Complete summary of region settings configuration"
+  description = "Complete summary of region settings configuration (non-sensitive)"
   value       = module.region_settings.region_settings_summary
 }
+
+output "region_settings_hash" {
+  description = "SHA256 hash of configuration for change tracking"
+  value       = module.region_settings.region_settings_hash
+}
+
+output "configuration_health_check" {
+  description = "Health check and region validation status"
+  value       = module.region_settings.configuration_health_check
+}
+
+# Note: region_settings_details is marked as sensitive and won't appear in terraform output
+# To view: terraform output -json region_settings_details
