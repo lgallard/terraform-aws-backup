@@ -83,27 +83,56 @@ This creates:
 
 ### Step 2: Get Selection IDs
 
-After the backup plan is created, retrieve selection IDs:
+After the backup plan is created, use the helper outputs to easily retrieve selection IDs:
+
+#### Option A: Use Helper Outputs (Recommended)
+
+The example provides ready-to-run commands. Simply copy and execute them:
+
+```bash
+# View the quick start guide
+terraform output usage_instructions
+
+# Option 1: Get selections as a formatted table (easiest to read)
+$(terraform output -raw cli_list_selections_table)
+
+# Option 2: Get selections with jq (best for scripting)
+$(terraform output -raw cli_extract_ids_jq)
+
+# Option 3: Save and run the helper script
+terraform output -raw helper_script > get_selections.sh
+chmod +x get_selections.sh
+./get_selections.sh
+```
+
+#### Option B: Manual AWS CLI
 
 ```bash
 # Get the plan ID from Terraform output
 PLAN_ID=$(terraform output -raw backup_plan_id)
 
-# List all selections for this plan
-aws backup list-backup-selections --backup-plan-id $PLAN_ID
+# List all selections for this plan (table format)
+aws backup list-backup-selections --backup-plan-id $PLAN_ID \
+  --query 'BackupSelectionsList[*].[SelectionId,SelectionName,IamRoleArn]' \
+  --output table
 
-# Example output:
-# {
-#     "BackupSelectionsList": [
-#         {
-#             "SelectionId": "sel-abc123",
-#             "SelectionName": "ec2_instances",
-#             "BackupPlanId": "plan-xyz789",
-#             "CreationDate": "2025-11-23T10:00:00Z",
-#             "IamRoleArn": "arn:aws:iam::123456789012:role/..."
-#         }
-#     ]
-# }
+# Or get as JSON with jq for parsing
+aws backup list-backup-selections --backup-plan-id $PLAN_ID \
+  | jq -r '.BackupSelectionsList[] | "\(.SelectionName): \(.SelectionId)"'
+
+# Raw JSON output:
+aws backup list-backup-selections --backup-plan-id $PLAN_ID
+```
+
+**Example output:**
+```
+-------------------------------------------------------------------
+|                    ListBackupSelections                          |
++----------------+-------------------+------------------------------+
+|  sel-abc123    |  ec2_instances    |  arn:aws:iam::123...:role/...|
+|  sel-def456    |  rds_databases    |  arn:aws:iam::123...:role/...|
+|  sel-ghi789    |  dynamodb_tables  |  arn:aws:iam::123...:role/...|
++----------------+-------------------+------------------------------+
 ```
 
 ### Step 3: Query Selection Using Data Source
