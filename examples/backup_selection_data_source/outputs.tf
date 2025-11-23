@@ -88,13 +88,13 @@ output "usage_instructions" {
     STEP 1: Get Selection IDs (choose one method)
 
     Option A - Table Format (recommended for viewing):
-      ${self.cli_list_selections_table}
+      Copy and run: terraform output -raw cli_list_selections_table | bash
 
     Option B - JSON with jq (best for scripting):
-      ${self.cli_extract_ids_jq}
+      Copy and run: terraform output -raw cli_extract_ids_jq | bash
 
     Option C - Raw JSON:
-      ${self.cli_list_selections}
+      Copy and run: terraform output -raw cli_list_selections | bash
 
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -104,7 +104,7 @@ output "usage_instructions" {
 
     data "aws_backup_selection" "ec2_selection" {
       plan_id      = "${module.backup_with_selections.plans["production"].id}"
-      selection_id = "YOUR-SELECTION-ID-FROM-STEP-1"
+      selection_id = "sel-xxxxxxxxx"  # Replace with actual ID from Step 1 (e.g., sel-abc123def)
     }
 
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

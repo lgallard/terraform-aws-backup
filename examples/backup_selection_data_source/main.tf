@@ -6,7 +6,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0.0"
+      version = ">= 6.11.0"
     }
   }
   required_version = ">= 1.3.0"
@@ -100,11 +100,11 @@ module "backup_with_selections" {
 #
 
 # Example: Query a specific backup selection
-# Uncomment and provide the actual selection_id to use this:
+# Uncomment and replace sel-xxxxxxxxx with actual selection_id from AWS:
 #
 # data "aws_backup_selection" "ec2_selection" {
 #   plan_id      = module.backup_with_selections.plans["production"].id
-#   selection_id = "your-selection-id-from-aws"
+#   selection_id = "sel-xxxxxxxxx"  # Replace with actual selection ID (e.g., sel-abc123def)
 # }
 #
 # Access the selection details:
@@ -123,5 +123,5 @@ module "backup_with_selections" {
 #
 # data "aws_backup_selection" "existing_selection" {
 #   plan_id      = data.aws_backup_plan.existing_plan.id
-#   selection_id = var.existing_selection_id
+#   selection_id = var.existing_selection_id  # e.g., "sel-abc123def"
 # }
