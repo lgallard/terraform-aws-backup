@@ -38,7 +38,7 @@ jobs:
 
     - name: Run tfsec
       run: |
-        tfsec . --format sarif --out tfsec-results.sarif --exclude-path test/
+        tfsec . --format sarif --out tfsec-results.sarif
       continue-on-error: true
 
     - name: Upload checkov results to GitHub Security tab
@@ -54,27 +54,6 @@ jobs:
       with:
         sarif_file: tfsec-results.sarif
         category: tfsec
-
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.23'
-
-    - name: Run Go vulnerability scan
-      run: |
-        cd test
-        go install golang.org/x/vuln/cmd/govulncheck@latest
-        govulncheck ./...
-      continue-on-error: true
-
-    - name: Run Go module security audit
-      run: |
-        cd test
-        go mod verify
-        go list -m all | grep -v "^$(go list -m)$" | sort | uniq > deps.txt
-        echo "Checking dependencies for known vulnerabilities..."
-        cat deps.txt
-      continue-on-error: true
 
   security-scan-examples:
     name: Security Scan Examples
