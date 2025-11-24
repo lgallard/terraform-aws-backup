@@ -272,7 +272,7 @@ No modules.
 ## Additional Documentation
 
 - **[Data Sources Guide](docs/DATA_SOURCES.md)** - Using AWS Backup data sources to query existing backup resources
-- **[Testing Guide](docs/TESTING.md)** - Comprehensive testing documentation
+- **[Development Guidelines](CLAUDE.md)** - AI-powered validation and development best practices
 - **[Examples](examples/)** - 16+ example configurations for various use cases
 
 ## Known Issues
@@ -289,41 +289,60 @@ error creating Backup Vault (): AccessDeniedException: status code: 403, request
 
 Add the [required IAM permissions mentioned in the CreateBackupVault row](https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control.html#backup-api-permissions-ref) to the role or user creating the Vault (the one running Terraform CLI). In particular make sure `kms` and `backup-storage` permissions are added.
 
-## Testing
+## Quality Assurance & Validation
 
-This module includes comprehensive testing to ensure reliability and prevent regressions.
+This module uses AI-powered validation to ensure reliability, security, and best practices compliance.
 
-### Test Structure
+### Validation Approach
 
-- **Validation Tests**: Terraform format, syntax, and basic validation across multiple Terraform and AWS provider versions
-- **Security Scanning**: Static analysis using `checkov` and `tfsec` to identify security issues
-- **Example Tests**: Automated validation of all example configurations
-- **Integration Tests**: Real AWS resource creation/destruction testing using Terratest
+Instead of traditional automated tests, this module employs **Claude AI with specialized subagents** for comprehensive analysis:
 
-### Running Tests Locally
+- **Semantic Analysis**: Validates code semantically, not just syntactically
+- **Best Practices Enforcement**: Ensures AWS and Terraform patterns are followed
+- **Security Analysis**: Identifies potential security vulnerabilities
+- **Documentation Consistency**: Validates that examples match documentation
+- **Performance Optimization**: Suggests improvements based on AWS Backup patterns
 
-#### Prerequisites
+### Automated Quality Checks
 
-1. Install Go 1.21+
-2. Install Terraform 1.0+
-3. Configure AWS credentials
+The module includes automated quality checks through GitHub Actions:
 
-#### Example Validation Tests
+- **Validate Workflow**: Runs on every push/PR - Terraform validation and format checking
+- **Security Workflow**: Runs on every push/PR and weekly - Security scanning with checkov/tfsec
+- **Feature Discovery**: Weekly automated discovery of new AWS Backup features
 
+### AI Validation Examples
+
+For detailed validation workflows, see [CLAUDE.md](CLAUDE.md). Quick examples:
+
+#### Validating New Features
 ```bash
-cd test
-go test -v -timeout 10m -run TestExamples
+# Explore existing patterns
+Task Agent (Explore - medium): "Analyze all aws_backup_plan resources and their rule configurations across examples"
+
+# Validate implementation
+Task Agent (general-purpose): "Validate continuous backup implementation:
+1. Check aws_backup_plan syntax for enable_continuous_backup argument
+2. Verify compatible resource types (EFS, RDS, etc.)
+3. Validate IAM permissions for continuous backup
+4. Review security implications
+5. Check example configurations
+6. Verify documentation accuracy"
 ```
 
-#### Integration Tests (requires AWS credentials)
-
+#### Security Audit
 ```bash
-cd test
-go test -v -timeout 30m -run TestBasicBackupPlan
-go test -v -timeout 30m -run TestIAMRoleCreation
+Task Agent (general-purpose): "Perform security audit of aws_backup_vault configurations:
+1. Verify KMS encryption is enforced
+2. Check vault access policies for least privilege
+3. Validate vault lock configurations
+4. Review cross-account access patterns
+5. Analyze SNS notification encryption"
 ```
 
-#### Security Scanning
+### Security Scanning
+
+Security scanning remains automated:
 
 ```bash
 # Install tools
@@ -336,36 +355,15 @@ checkov -d . --framework terraform
 tfsec .
 ```
 
-### CI/CD Workflows
-
-The module includes automated testing through GitHub Actions:
-
-- **Validate Workflow**: Runs on every push/PR - Terraform validation and format checking
-- **Security Workflow**: Runs on every push/PR and weekly - Security scanning with checkov/tfsec
-- **Test Workflow**: Manual trigger and weekly schedule - Comprehensive integration testing
-
-### Test Coverage
-
-The test suite covers:
-
-- ✅ Basic backup plan creation
-- ✅ Multiple backup plans
-- ✅ Cross-region backup scenarios
-- ✅ IAM role and policy validation
-- ✅ Backup vault configuration
-- ✅ Notification integration
-- ✅ All example configurations
-- ✅ Security best practices
-- ✅ Multi-version compatibility (Terraform 1.0+, AWS Provider 4.0+)
-
 ### Contributing
 
 When contributing to this module:
 
-1. Ensure all tests pass: `cd test && go test -v ./...`
+1. Run `terraform fmt` and `terraform validate` on modified files
 2. Run security scans: `checkov -d . && tfsec .`
-3. Update examples if adding new features
-4. Add integration tests for new functionality
+3. Request AI validation for changes (see [CLAUDE.md](CLAUDE.md) AI-Powered Validation section)
+4. Update examples if adding new features
+5. Update documentation for variable changes
 
 ## Troubleshooting
 
