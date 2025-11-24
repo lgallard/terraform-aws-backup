@@ -2,8 +2,8 @@
 name: 🐛 AWS Backup Bug Fix
 about: Auto-discovered bug fix in AWS Backup provider requiring module updates
 title: "fix: Address [BUG_DESCRIPTION]"
-labels: ["bug", "aws-provider-update", "auto-discovered"]
-assignees: []
+labels: ["bug", "aws-backup", "auto-discovered"]
+assignees: ["@me"]
 ---
 
 ## 🐛 AWS Backup Provider Bug Fix

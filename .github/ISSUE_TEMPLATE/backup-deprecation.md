@@ -2,8 +2,8 @@
 name: ⚠️ AWS Backup Feature Deprecation
 about: Auto-discovered deprecated AWS Backup feature requiring action
 title: "chore: Handle deprecation of [DEPRECATED_FEATURE]"
-labels: ["deprecation", "breaking-change", "aws-provider-update", "auto-discovered"]
-assignees: []
+labels: ["deprecation", "breaking-change", "aws-backup", "auto-discovered"]
+assignees: ["@me"]
 ---
 
 ## ⚠️ AWS Backup Feature Deprecation Notice

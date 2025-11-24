@@ -2,8 +2,8 @@
 name: 🚀 New AWS Backup Feature
 about: Auto-discovered new AWS Backup feature for implementation
 title: "feat: Add support for [FEATURE_NAME]"
-labels: ["enhancement", "aws-provider-update", "auto-discovered"]
-assignees: []
+labels: ["enhancement", "aws-backup", "auto-discovered"]
+assignees: ["@me"]
 ---
 
 ## 🚀 New AWS Backup Feature Discovery
