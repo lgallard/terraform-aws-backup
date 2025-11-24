@@ -90,8 +90,8 @@ jobs:
             exit 1
           fi
 
-          # Sanitize and export validated inputs
-          VALIDATED_PROVIDER_VERSION=$(echo "$PROVIDER_VERSION_INPUT" | tr -cd '[:alnum:].-')
+          # Sanitize and export validated inputs (include + for semver)
+          VALIDATED_PROVIDER_VERSION=$(echo "$PROVIDER_VERSION_INPUT" | tr -cd '[:alnum:].-+')
           echo "VALIDATED_PROVIDER_VERSION=$VALIDATED_PROVIDER_VERSION" >> $GITHUB_ENV
           echo "VALIDATED_DRY_RUN=$DRY_RUN_INPUT" >> $GITHUB_ENV
           echo "VALIDATED_FORCE_SCAN=$FORCE_SCAN_INPUT" >> $GITHUB_ENV
@@ -488,8 +488,15 @@ jobs:
             # Process pending features from tracker
             while IFS= read -r feature_data; do
               if [ -n "$feature_data" ]; then
-                # Decode base64 and extract fields
+                # Decode base64 and validate JSON before processing
                 FEATURE_JSON=$(echo "$feature_data" | base64 --decode)
+
+                # Validate JSON structure before parsing
+                if ! echo "$FEATURE_JSON" | jq empty 2>/dev/null; then
+                  echo "⚠️  Invalid JSON in feature data, skipping"
+                  continue
+                fi
+
                 RESOURCE=$(echo "$FEATURE_JSON" | jq -r '.resource')
                 TITLE=$(echo "$FEATURE_JSON" | jq -r '.title')
                 ISSUE_TYPE=$(echo "$FEATURE_JSON" | jq -r '.issue_type // "new-feature"')
@@ -547,14 +554,23 @@ jobs:
                 TOTAL_ISSUES_CREATED=$((TOTAL_ISSUES_CREATED + 1))
 
 
-                # Update the tracker file to mark as created
+                # Update the tracker file to mark as created (atomic write)
+                TEMP_FILE="${TRACKER_FILE}.tmp.$$"
                 jq --arg resource "$RESOURCE" --arg issue_num "$ISSUE_NUMBER" --arg issue_url "$ISSUE_URL" '
                   (.issues_created[] | select(.resource == $resource)) |= (
                     .status = "created" |
                     .issue_number = ($issue_num | tonumber) |
                     .issue_url = $issue_url |
                     .actual_creation_date = now | strftime("%Y-%m-%dT%H:%M:%SZ")
-                  )' "$TRACKER_FILE" > "${TRACKER_FILE}.tmp" && mv "${TRACKER_FILE}.tmp" "$TRACKER_FILE"
+                  )' "$TRACKER_FILE" > "$TEMP_FILE"
+
+                # Validate before moving
+                if jq empty "$TEMP_FILE" 2>/dev/null; then
+                  mv "$TEMP_FILE" "$TRACKER_FILE"
+                else
+                  echo "⚠️  Failed to update tracker, invalid JSON generated"
+                  rm -f "$TEMP_FILE"
+                fi
               fi
             done <<< "$PENDING_FEATURES"
 
@@ -568,9 +584,24 @@ jobs:
           # Process structured JSON output
           echo "📋 Processing structured output from Claude Code..."
 
-          # Validate JSON structure
+          # Validate JSON structure and schema
           if ! jq empty "$DISCOVERED_FILE" 2>/dev/null; then
             echo "❌ Invalid JSON in discovered features file"
+            exit 1
+          fi
+
+          # Validate required schema fields exist
+          REQUIRED_FIELDS=("scan_metadata" "discovered_features")
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            if ! jq -e ".$field" "$DISCOVERED_FILE" >/dev/null 2>&1; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+          done
+
+          # Validate discovered_features is an array
+          if ! jq -e '.discovered_features | type == "array"' "$DISCOVERED_FILE" >/dev/null 2>&1; then
+            echo "❌ discovered_features must be an array"
             exit 1
           fi
 
@@ -589,6 +620,13 @@ jobs:
           jq -r '.discovered_features[] | @base64' "$DISCOVERED_FILE" | while IFS= read -r feature_data; do
             if [ -n "$feature_data" ]; then
               FEATURE_JSON=$(echo "$feature_data" | base64 --decode)
+
+              # Validate decoded JSON
+              if ! echo "$FEATURE_JSON" | jq empty 2>/dev/null; then
+                echo "⚠️  Invalid JSON in feature data, skipping"
+                continue
+              fi
+
               FEATURE_TYPE=$(echo "$FEATURE_JSON" | jq -r '.type')
               RESOURCE_NAME=$(echo "$FEATURE_JSON" | jq -r '.resource_name')
               ISSUE_TITLE=$(echo "$FEATURE_JSON" | jq -r '.issue_title')
@@ -710,6 +748,9 @@ jobs:
           fi
 
           for ISSUE_NUM in $CREATED_ISSUES; do
+            # Rate limiting: sleep to avoid GitHub API throttling
+            sleep 1
+
             # Verify issue has auto-discovered label (safety check)
             HAS_LABEL=$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[].name' | grep -c "auto-discovered" || echo "0")
 
@@ -736,11 +777,20 @@ jobs:
 
               echo "$TACKLE_COMMENT" | gh issue comment "$ISSUE_NUM" --body-file -
 
-              # Update tracker to mark automation as triggered
+              # Update tracker to mark automation as triggered (atomic write)
+              TEMP_FILE="${TRACKER_FILE}.tmp.$$"
               jq --arg issue_num "$ISSUE_NUM" '
                 (.issues_created[] | select(.issue_number == ($issue_num | tonumber))) |= (
                   . + {"automation_triggered": true, "automation_date": (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}
-                )' "$TRACKER_FILE" > "${TRACKER_FILE}.tmp" && mv "${TRACKER_FILE}.tmp" "$TRACKER_FILE"
+                )' "$TRACKER_FILE" > "$TEMP_FILE"
+
+              # Validate before moving
+              if jq empty "$TEMP_FILE" 2>/dev/null; then
+                mv "$TEMP_FILE" "$TRACKER_FILE"
+              else
+                echo "⚠️  Failed to update tracker for issue #$ISSUE_NUM"
+                rm -f "$TEMP_FILE"
+              fi
 
               AUTOMATION_COUNT=$((AUTOMATION_COUNT + 1))
               echo "✅ Automation added to issue #$ISSUE_NUM"
