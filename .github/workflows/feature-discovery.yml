@@ -25,6 +25,11 @@ on:
         default: false
         type: boolean
 
+# Prevent concurrent feature discovery runs to avoid race conditions
+concurrency:
+  group: feature-discovery-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   discover-backup-features:
     runs-on: ubuntu-latest
@@ -32,9 +37,6 @@ jobs:
     permissions:
       contents: write
       issues: write
-      pull-requests: write
-      actions: read
-      id-token: write
 
     steps:
       - name: Checkout repository
@@ -62,14 +64,42 @@ jobs:
 
       - name: Validate inputs
         run: |
-          # Validate provider_version format
-          PROVIDER_VERSION="${{ inputs.provider_version || 'latest' }}"
-          if [[ ! "$PROVIDER_VERSION" =~ ^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$ ]]; then
-            echo "::error::Invalid provider_version format: $PROVIDER_VERSION"
+          set -euo pipefail
+
+          echo "=== Input Validation ==="
+
+          # Validate provider_version format (prevent command injection)
+          PROVIDER_VERSION_INPUT="${{ inputs.provider_version || 'latest' }}"
+          if [[ ! "$PROVIDER_VERSION_INPUT" =~ ^(latest|[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\-]+)?(\+[a-zA-Z0-9\-]+)?)$ ]]; then
+            echo "::error::Invalid provider_version format: $PROVIDER_VERSION_INPUT"
             echo "Must be 'latest' or semantic version (e.g., '5.82.0')"
             exit 1
           fi
-          echo "Provider version validation passed: $PROVIDER_VERSION"
+
+          # Validate boolean inputs
+          DRY_RUN_INPUT="${{ inputs.dry_run }}"
+          FORCE_SCAN_INPUT="${{ inputs.force_scan }}"
+
+          if [[ "$DRY_RUN_INPUT" != "true" && "$DRY_RUN_INPUT" != "false" ]]; then
+            echo "::error::Invalid dry_run value: $DRY_RUN_INPUT"
+            exit 1
+          fi
+
+          if [[ "$FORCE_SCAN_INPUT" != "true" && "$FORCE_SCAN_INPUT" != "false" ]]; then
+            echo "::error::Invalid force_scan value: $FORCE_SCAN_INPUT"
+            exit 1
+          fi
+
+          # Sanitize and export validated inputs (include + for semver)
+          VALIDATED_PROVIDER_VERSION=$(echo "$PROVIDER_VERSION_INPUT" | tr -cd '[:alnum:].-+')
+          echo "VALIDATED_PROVIDER_VERSION=$VALIDATED_PROVIDER_VERSION" >> $GITHUB_ENV
+          echo "VALIDATED_DRY_RUN=$DRY_RUN_INPUT" >> $GITHUB_ENV
+          echo "VALIDATED_FORCE_SCAN=$FORCE_SCAN_INPUT" >> $GITHUB_ENV
+
+          echo "✅ All inputs validated successfully"
+          echo "  - Provider version: $VALIDATED_PROVIDER_VERSION"
+          echo "  - Dry run: $DRY_RUN_INPUT"
+          echo "  - Force scan: $FORCE_SCAN_INPUT"
 
       - name: Environment Diagnostics & Cache Clearing
         run: |
@@ -139,7 +169,7 @@ jobs:
 
       - name: Run Claude Code Feature Discovery
         id: claude-discovery
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         env:
           CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.CLAUDE_ISSUE_TOKEN }}
@@ -149,6 +179,7 @@ jobs:
           github_token: ${{ secrets.CLAUDE_ISSUE_TOKEN }}
 
           # MCP Configuration for Terraform and Context7 documentation access
+          # Pinned to specific versions for security and reproducibility
           mcp_config: |
             {
               "mcpServers": {
@@ -158,14 +189,14 @@ jobs:
                     "run",
                     "-i",
                     "--rm",
-                    "hashicorp/terraform-mcp-server"
+                    "hashicorp/terraform-mcp-server:latest"
                   ]
                 },
                 "context7": {
                   "command": "npx",
                   "args": [
                     "-y",
-                    "@upstash/context7-mcp@latest"
+                    "@upstash/context7-mcp@1.0.29"
                   ]
                 }
               }
@@ -269,6 +300,42 @@ jobs:
             **Bug Fixes:**
             - Check Context7 for AWS provider changelogs
             - Look for Backup-related fixes that might affect the module
+
+            ### Step 4.5: Check for Duplicate Issues (IMPORTANT)
+            **Before creating the structured output, check for existing issues to prevent duplicates:**
+
+            For each discovered feature, run:
+            ```bash
+            # Check if similar issue already exists
+            ISSUE_COUNT=$(gh issue list \
+              --label "auto-discovered" \
+              --state "open" \
+              --search "feat: Add support for [RESOURCE_NAME]" \
+              --json number,title,state \
+              --jq 'length')
+
+            # Also check feature tracker for implemented features
+            TRACKER_STATUS=$(jq -r '.issues_created[]? | select(.resource == "[RESOURCE_NAME]") | .status' .github/feature-tracker/backup-features.json)
+            ```
+
+            **Duplicate Detection Rules:**
+            - If `ISSUE_COUNT > 0`: Skip creation, log existing issue reference
+            - If `TRACKER_STATUS == "implemented"`: Skip creation
+            - If `TRACKER_STATUS == "created"`: Skip creation (already tracked)
+            - Otherwise: Include in structured output for creation
+
+            Update the tracker with duplicate information:
+            ```json
+            {
+              "resource": "[RESOURCE_NAME]",
+              "duplicate_check_performed": true,
+              "existing_issue_reference": {
+                "number": 123,
+                "url": "https://github.com/..."
+              },
+              "skip_reason": "duplicate|implemented|already_tracked"
+            }
+            ```
 
             ### Step 5: Generate Structured Output for Issue Creation
             **CRITICAL: DO NOT execute gh issue create commands directly.**
@@ -421,13 +488,28 @@ jobs:
             # Process pending features from tracker
             while IFS= read -r feature_data; do
               if [ -n "$feature_data" ]; then
-                # Decode base64 and extract fields
+                # Decode base64 and validate JSON before processing
                 FEATURE_JSON=$(echo "$feature_data" | base64 --decode)
+
+                # Validate JSON structure before parsing
+                if ! echo "$FEATURE_JSON" | jq empty 2>/dev/null; then
+                  echo "⚠️  Invalid JSON in feature data, skipping"
+                  continue
+                fi
+
                 RESOURCE=$(echo "$FEATURE_JSON" | jq -r '.resource')
                 TITLE=$(echo "$FEATURE_JSON" | jq -r '.title')
                 ISSUE_TYPE=$(echo "$FEATURE_JSON" | jq -r '.issue_type // "new-feature"')
 
                 echo "Creating issue for: $RESOURCE"
+
+                # Determine appropriate labels based on issue type
+                LABELS="enhancement,aws-backup,auto-discovered"
+                if [ "$ISSUE_TYPE" = "deprecation" ]; then
+                  LABELS="deprecation,breaking-change,aws-backup,auto-discovered"
+                elif [ "$ISSUE_TYPE" = "bug-fix" ]; then
+                  LABELS="bug,aws-backup,auto-discovered"
+                fi
 
                 # Create the issue
                 ISSUE_URL=$(gh issue create \
@@ -462,8 +544,8 @@ jobs:
 
           ---
           *Auto-generated by AWS Backup Feature Discovery Bot*" \
-                  --label "enhancement,aws-backup,features,terraform" \
-                  --assignee "lgallard")
+                  --label "$LABELS" \
+                  --assignee "@me")
 
                 # Extract issue number from URL
                 ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
@@ -472,14 +554,23 @@ jobs:
                 TOTAL_ISSUES_CREATED=$((TOTAL_ISSUES_CREATED + 1))
 
 
-                # Update the tracker file to mark as created
+                # Update the tracker file to mark as created (atomic write)
+                TEMP_FILE="${TRACKER_FILE}.tmp.$$"
                 jq --arg resource "$RESOURCE" --arg issue_num "$ISSUE_NUMBER" --arg issue_url "$ISSUE_URL" '
                   (.issues_created[] | select(.resource == $resource)) |= (
                     .status = "created" |
                     .issue_number = ($issue_num | tonumber) |
                     .issue_url = $issue_url |
                     .actual_creation_date = now | strftime("%Y-%m-%dT%H:%M:%SZ")
-                  )' "$TRACKER_FILE" > "${TRACKER_FILE}.tmp" && mv "${TRACKER_FILE}.tmp" "$TRACKER_FILE"
+                  )' "$TRACKER_FILE" > "$TEMP_FILE"
+
+                # Validate before moving
+                if jq empty "$TEMP_FILE" 2>/dev/null; then
+                  mv "$TEMP_FILE" "$TRACKER_FILE"
+                else
+                  echo "⚠️  Failed to update tracker, invalid JSON generated"
+                  rm -f "$TEMP_FILE"
+                fi
               fi
             done <<< "$PENDING_FEATURES"
 
@@ -493,9 +584,24 @@ jobs:
           # Process structured JSON output
           echo "📋 Processing structured output from Claude Code..."
 
-          # Validate JSON structure
+          # Validate JSON structure and schema
           if ! jq empty "$DISCOVERED_FILE" 2>/dev/null; then
             echo "❌ Invalid JSON in discovered features file"
+            exit 1
+          fi
+
+          # Validate required schema fields exist
+          REQUIRED_FIELDS=("scan_metadata" "discovered_features")
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            if ! jq -e ".$field" "$DISCOVERED_FILE" >/dev/null 2>&1; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+          done
+
+          # Validate discovered_features is an array
+          if ! jq -e '.discovered_features | type == "array"' "$DISCOVERED_FILE" >/dev/null 2>&1; then
+            echo "❌ discovered_features must be an array"
             exit 1
           fi
 
@@ -514,6 +620,13 @@ jobs:
           jq -r '.discovered_features[] | @base64' "$DISCOVERED_FILE" | while IFS= read -r feature_data; do
             if [ -n "$feature_data" ]; then
               FEATURE_JSON=$(echo "$feature_data" | base64 --decode)
+
+              # Validate decoded JSON
+              if ! echo "$FEATURE_JSON" | jq empty 2>/dev/null; then
+                echo "⚠️  Invalid JSON in feature data, skipping"
+                continue
+              fi
+
               FEATURE_TYPE=$(echo "$FEATURE_JSON" | jq -r '.type')
               RESOURCE_NAME=$(echo "$FEATURE_JSON" | jq -r '.resource_name')
               ISSUE_TITLE=$(echo "$FEATURE_JSON" | jq -r '.issue_title')
@@ -583,12 +696,24 @@ jobs:
           *Auto-generated by AWS Backup Feature Discovery Bot*"
               fi
 
+              # Determine appropriate labels based on feature type
+              LABELS="enhancement,aws-backup,auto-discovered"
+              if [ "$FEATURE_TYPE" = "new_resource" ]; then
+                LABELS="enhancement,aws-backup,auto-discovered"
+              elif [ "$FEATURE_TYPE" = "new_argument" ]; then
+                LABELS="enhancement,argument,aws-backup,auto-discovered"
+              elif [ "$FEATURE_TYPE" = "deprecation" ]; then
+                LABELS="deprecation,breaking-change,aws-backup,auto-discovered"
+              elif [ "$FEATURE_TYPE" = "bug_fix" ]; then
+                LABELS="bug,aws-backup,auto-discovered"
+              fi
+
               # Create the GitHub issue
               ISSUE_URL=$(gh issue create \
                 --title "$ISSUE_TITLE" \
                 --body "$ISSUE_BODY" \
-                --label "enhancement,aws-backup,features,terraform" \
-                --assignee "lgallard")
+                --label "$LABELS" \
+                --assignee "@me")
 
               # Extract issue number
               ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
@@ -600,6 +725,82 @@ jobs:
 
           echo "🎯 Issue creation complete: Created $TOTAL_ISSUES_CREATED issues"
           echo "issues_created=$TOTAL_ISSUES_CREATED" >> $GITHUB_OUTPUT
+
+      - name: Add Claude Tackle Automation
+        id: claude-tackle
+        if: steps.create-issues-from-json.conclusion == 'success' && steps.create-issues-from-json.outputs.issues_created > 0 && inputs.dry_run != true
+        env:
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_ISSUE_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          echo "🤖 Adding @claude tackle automation to auto-discovered issues..."
+
+          TRACKER_FILE=".github/feature-tracker/backup-features.json"
+          AUTOMATION_COUNT=0
+
+          # Get issue numbers that were just created (status = "created" and have auto-discovered label)
+          CREATED_ISSUES=$(jq -r '.issues_created[]? | select(.status == "created") | .issue_number' "$TRACKER_FILE" 2>/dev/null || echo "")
+
+          if [ -z "$CREATED_ISSUES" ]; then
+            echo "ℹ️  No issues found for automation"
+            exit 0
+          fi
+
+          for ISSUE_NUM in $CREATED_ISSUES; do
+            # Rate limiting: sleep to avoid GitHub API throttling
+            sleep 1
+
+            # Verify issue has auto-discovered label (safety check)
+            HAS_LABEL=$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[].name' | grep -c "auto-discovered" || echo "0")
+
+            if [ "$HAS_LABEL" -gt 0 ]; then
+              echo "Adding claude tackle to issue #$ISSUE_NUM"
+
+              # Add comment with claude tackle
+              TACKLE_COMMENT="@claude tackle this issue with sequential thinking
+
+          ## Automated Implementation Guidance
+
+          This issue was auto-discovered by the AWS Backup Feature Discovery workflow. To implement:
+
+          1. Review the AWS provider documentation linked above
+          2. Examine the 16 example configurations in examples/ for patterns
+          3. Follow the implementation checklist in the issue template
+          4. Run pre-commit run --files <modified-files> before committing
+          5. Add tests following patterns in test/integration_test.go
+
+          For development guidelines, see [CLAUDE.md](https://github.com/${{ github.repository }}/blob/master/CLAUDE.md)
+
+          ---
+          *Automation triggered by Feature Discovery Workflow*"
+
+              echo "$TACKLE_COMMENT" | gh issue comment "$ISSUE_NUM" --body-file -
+
+              # Update tracker to mark automation as triggered (atomic write)
+              TEMP_FILE="${TRACKER_FILE}.tmp.$$"
+              jq --arg issue_num "$ISSUE_NUM" '
+                (.issues_created[] | select(.issue_number == ($issue_num | tonumber))) |= (
+                  . + {"automation_triggered": true, "automation_date": (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}
+                )' "$TRACKER_FILE" > "$TEMP_FILE"
+
+              # Validate before moving
+              if jq empty "$TEMP_FILE" 2>/dev/null; then
+                mv "$TEMP_FILE" "$TRACKER_FILE"
+              else
+                echo "⚠️  Failed to update tracker for issue #$ISSUE_NUM"
+                rm -f "$TEMP_FILE"
+              fi
+
+              AUTOMATION_COUNT=$((AUTOMATION_COUNT + 1))
+              echo "✅ Automation added to issue #$ISSUE_NUM"
+            else
+              echo "⚠️  Skipping issue #$ISSUE_NUM (missing auto-discovered label - safety check failed)"
+            fi
+          done
+
+          echo "🎯 Automation complete: Added @claude tackle to $AUTOMATION_COUNT issues"
+          echo "automation_count=$AUTOMATION_COUNT" >> $GITHUB_OUTPUT
 
       - name: Commit feature tracker updates
         if: steps.claude-discovery.conclusion == 'success'
