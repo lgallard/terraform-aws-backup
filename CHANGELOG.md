@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.6.0](https://github.com/lgallard/terraform-aws-backup/compare/1.5.0...1.6.0) (2025-11-24)
+
+
+### Features
+
+* add aws_backup_selection data source support and documentation ([#311](https://github.com/lgallard/terraform-aws-backup/issues/311)) ([d768d50](https://github.com/lgallard/terraform-aws-backup/commit/d768d5082f508a78520f01b9eb0934cec118d8ae))
+* enhance feature discovery workflow with security and automation improvements ([#312](https://github.com/lgallard/terraform-aws-backup/issues/312)) ([8b2fbc5](https://github.com/lgallard/terraform-aws-backup/commit/8b2fbc5c5a11f4c2fd199d68eef175b904f5b78b))
+
 ## [1.5.0](https://github.com/lgallard/terraform-aws-backup/compare/1.4.1...1.5.0) (2025-11-23)
 
 
