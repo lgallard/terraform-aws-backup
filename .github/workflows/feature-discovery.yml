@@ -533,7 +533,7 @@ jobs:
           1. Review AWS provider documentation for this resource
           2. Analyze integration requirements with existing module
           3. Design implementation approach
-          4. Add comprehensive tests
+          4. Request AI validation using specialized subagents (see CLAUDE.md)
           5. Update documentation and examples
 
           ### Implementation Priority
