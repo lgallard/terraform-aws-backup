@@ -533,7 +533,7 @@ jobs:
           1. Review AWS provider documentation for this resource
           2. Analyze integration requirements with existing module
           3. Design implementation approach
-          4. Add comprehensive tests
+          4. Request AI validation using specialized subagents (see CLAUDE.md)
           5. Update documentation and examples
 
           ### Implementation Priority
@@ -768,7 +768,7 @@ jobs:
           2. Examine the 16 example configurations in examples/ for patterns
           3. Follow the implementation checklist in the issue template
           4. Run pre-commit run --files <modified-files> before committing
-          5. Add tests following patterns in test/integration_test.go
+          5. Request AI validation using specialized subagents (see CLAUDE.md AI-Powered Validation section)
 
           For development guidelines, see [CLAUDE.md](https://github.com/${{ github.repository }}/blob/master/CLAUDE.md)
 
