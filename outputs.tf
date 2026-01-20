@@ -68,6 +68,42 @@ output "airgapped_vault_arn" {
 #   sensitive   = true
 # }
 
+# Vault Policy
+output "vault_policy_attached" {
+  description = "Whether a vault access policy is attached to the backup vault"
+  value       = length(aws_backup_vault_policy.ab_vault_policy) > 0
+}
+
+output "vault_policy_details" {
+  description = "Vault policy configuration details and management information"
+  value = length(aws_backup_vault_policy.ab_vault_policy) > 0 ? {
+    vault_name    = try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, null)
+    policy_length = try(length(aws_backup_vault_policy.ab_vault_policy[0].policy), 0)
+    
+    # Management information
+    management_commands = {
+      describe_policy = "aws backup get-backup-vault-access-policy --backup-vault-name ${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
+      delete_policy   = "aws backup delete-backup-vault-access-policy --backup-vault-name ${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
+      list_vaults     = "aws backup list-backup-vaults"
+    }
+    
+    # Security and usage notes
+    security_notes = {
+      purpose = "Controls access to backup vault for cross-account scenarios and compliance"
+      scope   = "Applied to backup vault: ${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "unknown")}"
+      use_cases = [
+        "Cross-account backup copy operations",
+        "Centralized backup management",
+        "Compliance and audit requirements",
+        "Resource-specific access control"
+      ]
+    }
+    
+    # Console URL for policy management
+    console_url = "https://console.aws.amazon.com/backup/home#/backupvaults/details/${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
+  } : null
+}
+
 # Legacy Plan
 output "plan_id" {
   description = "The id of the backup plan"

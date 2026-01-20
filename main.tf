@@ -31,6 +31,9 @@ locals {
     local.should_create_airgapped_vault ? try(aws_backup_logically_air_gapped_vault.ab_airgapped_vault[0].name, null) : null
   )
 
+  # Vault policy configuration
+  should_create_vault_policy = var.enabled && var.vault_policy != null && local.should_create_vault
+
   # Rule processing (matching existing logic for compatibility)
   rule = var.rule_name == null ? [] : [{
     name                         = var.rule_name
@@ -147,6 +150,19 @@ resource "aws_backup_vault_lock_configuration" "ab_vault_lock_configuration" {
       error_message = "When vault locking is enabled (locked = true), min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
     }
   }
+}
+
+# AWS Backup vault access policy
+resource "aws_backup_vault_policy" "ab_vault_policy" {
+  count = local.should_create_vault_policy ? 1 : 0
+
+  backup_vault_name = local.vault_name
+  policy            = var.vault_policy
+
+  depends_on = [
+    aws_backup_vault.ab_vault,
+    aws_backup_logically_air_gapped_vault.ab_airgapped_vault
+  ]
 }
 
 # Legacy AWS Backup plan (for backward compatibility) with optimized timeouts
