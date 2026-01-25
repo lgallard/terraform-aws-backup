@@ -83,11 +83,8 @@ variable "vault_policy" {
   }
 
   validation {
-    condition = var.vault_policy == null || var.vault_policy_bypass_security_validation ? true : (
-      can(jsondecode(var.vault_policy)) ?
-      !contains(lower(var.vault_policy), "\"*\"") : true
-    )
-    error_message = "The vault_policy contains wildcard permissions (*) which may be overly permissive. Review security implications or set vault_policy_bypass_security_validation=true to override this check."
+    condition = var.vault_policy == null ? true : can(jsondecode(var.vault_policy))
+    error_message = "The vault_policy must be valid JSON when provided."
   }
 }
 

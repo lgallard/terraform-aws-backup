@@ -33,6 +33,14 @@ locals {
 
   # Vault policy configuration
   should_create_vault_policy = var.enabled && var.vault_policy != null && local.should_create_vault
+  
+  # Vault policy security validation (moved from variables.tf due to cross-variable reference restriction)
+  vault_policy_security_check = var.vault_policy != null && !var.vault_policy_bypass_security_validation ? (
+    can(jsondecode(var.vault_policy)) ? !contains(lower(var.vault_policy), "\"*\"") : true
+  ) : true
+  
+  # Validate security check - will fail plan if wildcard is detected and bypass is not enabled
+  _validate_vault_policy_security = local.vault_policy_security_check ? null : tobool("The vault_policy contains wildcard permissions (*) which may be overly permissive. Review security implications or set vault_policy_bypass_security_validation=true to override this check.")
 
   # Rule processing (matching existing logic for compatibility)
   rule = var.rule_name == null ? [] : [{
