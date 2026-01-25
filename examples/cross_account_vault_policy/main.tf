@@ -20,12 +20,18 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
       "backup:CopyIntoBackupVault"
     ]
 
-    resources = ["*"]
+    resources = ["arn:aws:backup:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
 
     condition {
       test     = "StringEquals"
       variable = "backup:CopySourceRegion"
       values   = var.allowed_source_regions
+    }
+
+    condition {
+      test     = "Null"
+      variable = "backup:CopySourceRegion"
+      values   = ["false"]
     }
   }
 
@@ -44,7 +50,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
       "backup:ListRecoveryPointsByBackupVault"
     ]
 
-    resources = ["*"]
+    resources = ["arn:aws:backup:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
   }
 }
 
@@ -53,7 +59,7 @@ module "aws_backup_cross_account" {
   source = "../.."
 
   # Vault configuration
-  vault_name           = "dr-vault-${random_id.vault_suffix.hex}"
+  vault_name           = "${var.vault_name_prefix}-${random_id.vault_suffix.hex}"
   vault_kms_key_arn   = aws_kms_key.backup_vault_key.arn
 
   # Vault access policy for cross-account scenarios
@@ -111,7 +117,16 @@ resource "aws_kms_key" "backup_vault_key" {
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
-        Action   = "kms:*"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey",
+          "kms:CreateGrant",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GetKeyPolicy",
+          "kms:PutKeyPolicy"
+        ]
         Resource = "*"
       },
       {

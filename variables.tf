@@ -82,10 +82,6 @@ variable "vault_policy" {
     error_message = "The vault_policy must include a Version field (typically '2012-10-17')."
   }
 
-  validation {
-    condition = var.vault_policy == null ? true : can(jsondecode(var.vault_policy))
-    error_message = "The vault_policy must be valid JSON when provided."
-  }
 }
 
 #
