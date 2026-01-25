@@ -58,6 +58,12 @@ variable "vault_type" {
 #
 # AWS Backup vault policy configuration
 #
+variable "vault_policy_bypass_security_validation" {
+  description = "Bypass security validations for vault policy (wildcard permissions check). Enable for advanced use cases that require broad permissions. Use with caution."
+  type        = bool
+  default     = false
+}
+
 variable "vault_policy" {
   description = "IAM policy document for the backup vault access control. Enables cross-account backup access, resource-specific permissions, and compliance controls. Must be valid JSON. Leave null to disable vault policy."
   type        = string
@@ -83,12 +89,6 @@ variable "vault_policy" {
     )
     error_message = "The vault_policy contains wildcard permissions (*) which may be overly permissive. Review security implications or set vault_policy_bypass_security_validation=true to override this check."
   }
-}
-
-variable "vault_policy_bypass_security_validation" {
-  description = "Bypass security validations for vault policy (wildcard permissions check). Enable for advanced use cases that require broad permissions. Use with caution."
-  type        = bool
-  default     = false
 }
 
 #

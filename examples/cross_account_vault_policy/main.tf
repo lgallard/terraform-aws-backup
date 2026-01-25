@@ -13,10 +13,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = [
-        "arn:aws:iam::123456789012:root",  # Source account 1
-        "arn:aws:iam::987654321098:root"   # Source account 2
-      ]
+      identifiers = [for id in var.source_account_ids : "arn:aws:iam::${id}:root"]
     }
 
     actions = [
@@ -28,7 +25,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
     condition {
       test     = "StringEquals"
       variable = "backup:CopySourceRegion"
-      values   = ["us-east-1", "us-west-2"]
+      values   = var.allowed_source_regions
     }
   }
 
@@ -39,7 +36,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::999999999999:role/AWSBackupAuditRole"]
+      identifiers = [var.audit_role_arn]
     }
 
     actions = [
@@ -134,10 +131,7 @@ resource "aws_kms_key" "backup_vault_key" {
         Sid    = "Allow Cross Account Access for Backup Copy"
         Effect = "Allow"
         Principal = {
-          AWS = [
-            "arn:aws:iam::123456789012:root",
-            "arn:aws:iam::987654321098:root"
-          ]
+          AWS = [for id in var.source_account_ids : "arn:aws:iam::${id}:root"]
         }
         Action = [
           "kms:Decrypt",
