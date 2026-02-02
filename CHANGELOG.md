@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.7.0](https://github.com/lgallard/terraform-aws-backup/compare/1.6.0...1.7.0) (2026-02-02)
+
+
+### Features
+
+* add support for backup vault access policies ([#319](https://github.com/lgallard/terraform-aws-backup/issues/319)) ([d9ee6b3](https://github.com/lgallard/terraform-aws-backup/commit/d9ee6b3fc63f18923c4b59e85910bd32b2161ffa))
+
 ## [1.6.0](https://github.com/lgallard/terraform-aws-backup/compare/1.5.0...1.6.0) (2025-11-24)
 
 
