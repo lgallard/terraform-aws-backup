@@ -46,14 +46,14 @@ output "cross_account_setup_summary" {
   value = {
     destination_account = data.aws_caller_identity.current.account_id
     destination_region  = data.aws_region.current.name
-    vault_name         = module.aws_backup_cross_account.vault_id
-    vault_arn          = module.aws_backup_cross_account.vault_arn
-    
+    vault_name          = module.aws_backup_cross_account.vault_id
+    vault_arn           = module.aws_backup_cross_account.vault_arn
+
     source_accounts = {
       allowed_account_ids = var.source_account_ids
       allowed_regions     = var.allowed_source_regions
     }
-    
+
     compliance_features = {
       vault_lock_enabled     = var.enable_vault_lock
       min_retention_days     = var.min_retention_days
@@ -61,11 +61,11 @@ output "cross_account_setup_summary" {
       kms_encryption_enabled = true
       audit_access_enabled   = true
     }
-    
+
     policy_configuration = {
       vault_policy_attached = module.aws_backup_cross_account.vault_policy_attached
       policy_principals     = var.source_account_ids
-      audit_role_arn       = var.audit_role_arn
+      audit_role_arn        = var.audit_role_arn
     }
   }
 }
@@ -75,7 +75,7 @@ output "source_account_instructions" {
   description = "Instructions for configuring source accounts"
   value = {
     description = "Configuration steps for source accounts to copy backups to this destination vault"
-    
+
     step_1_iam_policy = {
       description = "Create IAM policy in source accounts with these permissions"
       policy_document = jsonencode({
@@ -111,18 +111,18 @@ output "source_account_instructions" {
         ]
       })
     }
-    
+
     step_2_backup_plan = {
       description = "Configure backup plans in source accounts with copy actions"
       copy_action_example = {
         destination_vault_arn = module.aws_backup_cross_account.vault_arn
         lifecycle = {
           cold_storage_after = var.cold_storage_after_days
-          delete_after      = var.delete_after_days
+          delete_after       = var.delete_after_days
         }
       }
     }
-    
+
     step_3_testing = {
       description = "Test cross-account backup copy"
       test_commands = [
@@ -146,17 +146,17 @@ output "management_information" {
       list_recovery_points = "aws backup list-recovery-points-by-backup-vault --backup-vault-name ${module.aws_backup_cross_account.vault_id}"
       describe_kms_key     = "aws kms describe-key --key-id ${aws_kms_key.backup_vault_key.key_id}"
     }
-    
+
     console_urls = {
       backup_vault = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.name}#/backupvaults/details/${module.aws_backup_cross_account.vault_id}"
       backup_plan  = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.name}#/plans"
       kms_key      = "https://console.aws.amazon.com/kms/home?region=${data.aws_region.current.name}#/kms/keys/${aws_kms_key.backup_vault_key.key_id}"
     }
-    
+
     monitoring = {
       cloudwatch_metrics = [
         "AWS/Backup NumberOfBackupJobsCreated",
-        "AWS/Backup NumberOfBackupJobsCompleted", 
+        "AWS/Backup NumberOfBackupJobsCompleted",
         "AWS/Backup NumberOfBackupJobsFailed"
       ]
       cloudtrail_events = [
@@ -173,29 +173,29 @@ output "security_notes" {
   description = "Important security considerations for cross-account backup setup"
   value = {
     kms_encryption = {
-      status      = "Enabled with customer-managed key"
-      key_id      = aws_kms_key.backup_vault_key.key_id
-      key_arn     = aws_kms_key.backup_vault_key.arn
-      rotation    = var.enable_kms_key_rotation ? "Enabled" : "Disabled"
-      note        = "Source accounts need kms:Decrypt and kms:GenerateDataKey permissions"
+      status   = "Enabled with customer-managed key"
+      key_id   = aws_kms_key.backup_vault_key.key_id
+      key_arn  = aws_kms_key.backup_vault_key.arn
+      rotation = var.enable_kms_key_rotation ? "Enabled" : "Disabled"
+      note     = "Source accounts need kms:Decrypt and kms:GenerateDataKey permissions"
     }
-    
+
     vault_lock = {
-      status              = var.enable_vault_lock ? "Enabled" : "Disabled"
-      mode                = var.lock_changeable_for_days != null ? "Compliance (${var.lock_changeable_for_days} day grace period)" : "Governance"
-      min_retention       = var.min_retention_days
-      max_retention       = var.max_retention_days
-      immutable_after     = var.lock_changeable_for_days != null ? "${var.lock_changeable_for_days} days" : "Never (governance mode)"
+      status          = var.enable_vault_lock ? "Enabled" : "Disabled"
+      mode            = var.lock_changeable_for_days != null ? "Compliance (${var.lock_changeable_for_days} day grace period)" : "Governance"
+      min_retention   = var.min_retention_days
+      max_retention   = var.max_retention_days
+      immutable_after = var.lock_changeable_for_days != null ? "${var.lock_changeable_for_days} days" : "Never (governance mode)"
     }
-    
+
     access_control = {
-      vault_policy        = "Cross-account access restricted to specified accounts and regions"
-      audit_access        = "Audit role can describe vault and list recovery points"
-      source_account_ids  = var.source_account_ids
-      allowed_regions     = var.allowed_source_regions
+      vault_policy                 = "Cross-account access restricted to specified accounts and regions"
+      audit_access                 = "Audit role can describe vault and list recovery points"
+      source_account_ids           = var.source_account_ids
+      allowed_regions              = var.allowed_source_regions
       principle_of_least_privilege = "Policy follows least privilege - only necessary permissions granted"
     }
-    
+
     recommendations = [
       "Review source account permissions regularly",
       "Monitor CloudTrail for unusual cross-account backup activity",

@@ -147,10 +147,10 @@ module "advanced_cross_account_backup" {
 
   vault_name   = "secure-dr-vault"
   vault_policy = data.aws_iam_policy_document.custom_vault_policy.json
-  
+
   # Additional security configuration
   vault_policy_bypass_security_validation = false  # Strict security validation
-  
+
   # ... other configuration
 }
 ```
@@ -214,7 +214,7 @@ resource "aws_backup_plan" "source_plan" {
     # Copy to DR account
     copy_action {
       destination_vault_arn = "arn:aws:backup:us-east-1:DR_ACCOUNT_ID:backup-vault:dr-vault-xxx"
-      
+
       lifecycle {
         cold_storage_after = 30
         delete_after      = 2555  # 7 years in DR account
@@ -264,7 +264,7 @@ resource "aws_backup_plan" "source_plan" {
 notifications = {
   backup_vault_events = [
     "BACKUP_JOB_STARTED",
-    "BACKUP_JOB_COMPLETED", 
+    "BACKUP_JOB_COMPLETED",
     "BACKUP_JOB_FAILED",
     "COPY_JOB_STARTED",
     "COPY_JOB_SUCCESSFUL",
@@ -343,12 +343,12 @@ resource "aws_organizations_policy" "backup_policy" {
   name        = "CrossAccountBackupPolicy"
   description = "Backup policy for all organization accounts"
   type        = "BACKUP_POLICY"
-  
+
   content = jsonencode({
     plans = {
       OrgBackupPlan = {
         regions = ["us-east-1", "us-west-2"]
-        
+
         copy_actions = {
           arn:aws:backup:us-east-1:DR_ACCOUNT_ID:backup-vault:dr-vault = {
             target_backup_vault_arn = "arn:aws:backup:us-east-1:DR_ACCOUNT_ID:backup-vault:dr-vault"
@@ -373,7 +373,7 @@ resource "aws_config_config_rule" "backup_vault_policy_check" {
     owner             = "AWS"
     source_identifier = "BACKUP_VAULT_ACCESS_POLICY_CONFIGURED"
   }
-  
+
   depends_on = [aws_config_configuration_recorder.recorder]
 }
 ```

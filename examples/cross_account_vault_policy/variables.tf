@@ -7,7 +7,7 @@ variable "source_account_ids" {
 
   validation {
     condition = alltrue([
-      for account_id in var.source_account_ids : 
+      for account_id in var.source_account_ids :
       can(regex("^[0-9]{12}$", account_id))
     ])
     error_message = "All account IDs must be exactly 12 digits."
@@ -21,7 +21,7 @@ variable "allowed_source_regions" {
 
   validation {
     condition = alltrue([
-      for region in var.allowed_source_regions : 
+      for region in var.allowed_source_regions :
       can(regex("^[a-z]{2}-[a-z]+-[0-9]{1}$", region))
     ])
     error_message = "All regions must be valid AWS region names (e.g., us-east-1, eu-west-1)."
@@ -89,65 +89,10 @@ variable "lock_changeable_for_days" {
   }
 }
 
-variable "tags" {
-  description = "A mapping of tags to assign to all resources"
-  type        = map(string)
-  default = {
-    Purpose     = "CrossAccountBackup"
-    Environment = "production"
-    Compliance  = "SOX"
-    CostCenter  = "IT-DR"
-  }
-}
-
 variable "enable_kms_key_rotation" {
   description = "Enable automatic rotation of the KMS key used for vault encryption"
   type        = bool
   default     = true
-}
-
-variable "kms_key_deletion_window" {
-  description = "Number of days to wait before deleting the KMS key when destroyed"
-  type        = number
-  default     = 7
-
-  validation {
-    condition     = var.kms_key_deletion_window >= 7 && var.kms_key_deletion_window <= 30
-    error_message = "The kms_key_deletion_window must be between 7 and 30 days."
-  }
-}
-
-variable "backup_schedule" {
-  description = "Cron expression for backup schedule (default: daily at 2 AM)"
-  type        = string
-  default     = "cron(0 2 * * ? *)"
-
-  validation {
-    condition     = can(regex("^cron\\([^)]+\\)$", var.backup_schedule))
-    error_message = "The backup_schedule must be a valid cron expression (e.g., 'cron(0 2 * * ? *)')."
-  }
-}
-
-variable "backup_start_window" {
-  description = "Number of minutes before beginning a backup job"
-  type        = number
-  default     = 480
-
-  validation {
-    condition     = var.backup_start_window >= 60 && var.backup_start_window <= 43200
-    error_message = "The backup_start_window must be between 60 and 43200 minutes."
-  }
-}
-
-variable "backup_completion_window" {
-  description = "Number of minutes for AWS Backup to complete a backup job"
-  type        = number
-  default     = 720
-
-  validation {
-    condition     = var.backup_completion_window >= 120 && var.backup_completion_window <= 43200
-    error_message = "The backup_completion_window must be between 120 and 43200 minutes."
-  }
 }
 
 variable "cold_storage_after_days" {

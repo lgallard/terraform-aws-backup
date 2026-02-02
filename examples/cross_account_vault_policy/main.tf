@@ -59,30 +59,30 @@ module "aws_backup_cross_account" {
   source = "../.."
 
   # Vault configuration
-  vault_name           = "${var.vault_name_prefix}-${random_id.vault_suffix.hex}"
-  vault_kms_key_arn   = aws_kms_key.backup_vault_key.arn
+  vault_name        = "${var.vault_name_prefix}-${random_id.vault_suffix.hex}"
+  vault_kms_key_arn = aws_kms_key.backup_vault_key.arn
 
   # Vault access policy for cross-account scenarios
   vault_policy = data.aws_iam_policy_document.cross_account_vault_policy.json
 
   # Vault lock for compliance (optional)
-  locked             = true
-  min_retention_days = 30
-  max_retention_days = 365
-  changeable_for_days = 7  # Governance mode for 7 days, then compliance mode
+  locked              = true
+  min_retention_days  = 30
+  max_retention_days  = 365
+  changeable_for_days = 7 # Governance mode for 7 days, then compliance mode
 
   # Basic backup plan for the destination vault
   plan_name = "cross-account-dr-plan"
-  
+
   rules = [
     {
       name              = "daily-backup"
-      schedule          = "cron(0 2 * * ? *)"  # 2 AM daily
-      start_window      = 480  # 8 hours
-      completion_window = 720  # 12 hours
+      schedule          = "cron(0 2 * * ? *)" # 2 AM daily
+      start_window      = 480                 # 8 hours
+      completion_window = 720                 # 12 hours
       lifecycle = {
-        cold_storage_after = 30   # Move to cold storage after 30 days
-        delete_after      = 365   # Keep for 1 year
+        cold_storage_after = var.cold_storage_after_days
+        delete_after       = var.delete_after_days
       }
       recovery_point_tags = {
         BackupType = "CrossAccountDR"
@@ -106,7 +106,7 @@ module "aws_backup_cross_account" {
 resource "aws_kms_key" "backup_vault_key" {
   description             = "KMS key for cross-account backup vault"
   deletion_window_in_days = 7
-  enable_key_rotation     = true
+  enable_key_rotation     = var.enable_kms_key_rotation
 
   policy = jsonencode({
     Version = "2012-10-17"

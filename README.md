@@ -151,6 +151,7 @@ No modules.
 | [aws_backup_vault.ab_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault) | resource |
 | [aws_backup_vault_lock_configuration.ab_vault_lock_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_lock_configuration) | resource |
 | [aws_backup_vault_notifications.backup_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_notifications) | resource |
+| [aws_backup_vault_policy.ab_vault_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_policy) | resource |
 | [aws_iam_policy.ab_tag_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.restore_testing_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.ab_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
@@ -230,6 +231,7 @@ No modules.
 | <a name="input_vault_kms_key_arn"></a> [vault\_kms\_key\_arn](#input\_vault\_kms\_key\_arn) | The server-side encryption key that is used to protect your backups | `string` | `null` | no |
 | <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create. If not given, AWS use default | `string` | `null` | no |
 | <a name="input_vault_name_validation_bypass"></a> [vault\_name\_validation\_bypass](#input\_vault\_name\_validation\_bypass) | Bypass the vault name word validation (test, temp, delete, remove, default). Set to true for existing vaults with these words. Only disables word validation, format validation remains active. | `bool` | `false` | no |
+| <a name="input_vault_policy"></a> [vault\_policy](#input\_vault\_policy) | IAM policy document for the backup vault access control. Enables cross-account backup access, resource-specific permissions, and compliance controls. Must be valid JSON. Leave null to disable vault policy. | `string` | `null` | no |
 | <a name="input_vault_type"></a> [vault\_type](#input\_vault\_type) | Type of backup vault to create. Valid values are 'standard' (default) or 'logically\_air\_gapped' | `string` | `"standard"` | no |
 | <a name="input_windows_vss_backup"></a> [windows\_vss\_backup](#input\_windows\_vss\_backup) | Enable Windows VSS backup option and create a VSS Windows backup | `bool` | `false` | no |
 
@@ -266,6 +268,8 @@ No modules.
 | <a name="output_restore_testing_summary"></a> [restore\_testing\_summary](#output\_restore\_testing\_summary) | Summary of restore testing configuration and quick reference |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | The ARN of the vault |
 | <a name="output_vault_id"></a> [vault\_id](#output\_vault\_id) | The name of the vault |
+| <a name="output_vault_policy_attached"></a> [vault\_policy\_attached](#output\_vault\_policy\_attached) | Whether a vault access policy is attached to the backup vault |
+| <a name="output_vault_policy_details"></a> [vault\_policy\_details](#output\_vault\_policy\_details) | Vault policy configuration details and management information |
 | <a name="output_vault_type"></a> [vault\_type](#output\_vault\_type) | The type of vault created |
 <!-- END_TF_DOCS -->
 

@@ -79,14 +79,14 @@ output "vault_policy_details" {
   value = length(aws_backup_vault_policy.ab_vault_policy) > 0 ? {
     vault_name    = try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, null)
     policy_length = try(length(aws_backup_vault_policy.ab_vault_policy[0].policy), 0)
-    
+
     # Management information
     management_commands = {
       describe_policy = "aws backup get-backup-vault-access-policy --backup-vault-name ${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
       delete_policy   = "aws backup delete-backup-vault-access-policy --backup-vault-name ${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
       list_vaults     = "aws backup list-backup-vaults"
     }
-    
+
     # Security and usage notes
     security_notes = {
       purpose = "Controls access to backup vault for cross-account scenarios and compliance"
@@ -98,7 +98,7 @@ output "vault_policy_details" {
         "Resource-specific access control"
       ]
     }
-    
+
     # Console URL for policy management
     console_url = "https://console.aws.amazon.com/backup/home#/backupvaults/details/${try(aws_backup_vault_policy.ab_vault_policy[0].backup_vault_name, "VAULT_NAME")}"
   } : null
