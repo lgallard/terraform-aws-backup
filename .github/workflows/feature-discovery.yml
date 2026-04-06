@@ -76,9 +76,9 @@ jobs:
             exit 1
           fi
 
-          # Validate boolean inputs
-          DRY_RUN_INPUT="${{ inputs.dry_run }}"
-          FORCE_SCAN_INPUT="${{ inputs.force_scan }}"
+          # Validate boolean inputs (default to false for schedule triggers where inputs are empty)
+          DRY_RUN_INPUT="${{ inputs.dry_run || 'false' }}"
+          FORCE_SCAN_INPUT="${{ inputs.force_scan || 'false' }}"
 
           if [[ "$DRY_RUN_INPUT" != "true" && "$DRY_RUN_INPUT" != "false" ]]; then
             echo "::error::Invalid dry_run value: $DRY_RUN_INPUT"
