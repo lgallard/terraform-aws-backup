@@ -148,10 +148,14 @@ jobs:
         id: pr-checkout-info
         if: github.event_name == 'issue_comment'
         timeout-minutes: 2
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          PR_NUMBER="${{ github.event.issue.number }}"
+          PR_NUMBER="$ISSUE_NUMBER"
 
           # Validate PR number
           if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
@@ -164,9 +168,9 @@ jobs:
           # Get PR head ref with retry logic
           for attempt in {1..3}; do
             if PR_DATA=$(curl -sS --max-time 30 --retry 2 \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"); then
+              "https://api.github.com/repos/${REPO_NAME}/pulls/$PR_NUMBER"); then
 
               if echo "$PR_DATA" | jq empty 2>/dev/null; then
                 HEAD_REF=$(echo "$PR_DATA" | jq -r '.head.ref // empty')
@@ -201,6 +205,10 @@ jobs:
       - name: Refresh git state
         id: git-refresh
         timeout-minutes: 3
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ steps.pr-checkout-info.outputs.pr_head_sha }}
+          PR_HEAD_REF: ${{ steps.pr-checkout-info.outputs.pr_head_ref }}
         run: |
           set -euo pipefail
 
@@ -218,19 +226,18 @@ jobs:
           git fetch --all --prune
 
           # For issue_comment events, ensure we're on the latest commit of the PR branch
-          if [ "${{ github.event_name }}" = "issue_comment" ]; then
-            EXPECTED_SHA="${{ steps.pr-checkout-info.outputs.pr_head_sha }}"
+          if [ "$EVENT_NAME" = "issue_comment" ]; then
+            EXPECTED_SHA="$PR_HEAD_SHA"
             echo "Expected SHA from PR: $EXPECTED_SHA"
 
             # Fetch the specific PR branch to get latest changes
-            PR_HEAD_REF="${{ steps.pr-checkout-info.outputs.pr_head_ref }}"
             if [ -n "$PR_HEAD_REF" ]; then
-              echo "Fetching latest changes for PR branch: $PR_HEAD_REF"
-              git fetch origin "$PR_HEAD_REF:$PR_HEAD_REF" 2>/dev/null || true
+              echo "Fetching latest changes for PR branch: ${PR_HEAD_REF}"
+              git fetch origin "${PR_HEAD_REF}:${PR_HEAD_REF}" 2>/dev/null || true
 
               # Reset to the latest commit on the PR branch
-              echo "Resetting to latest commit on $PR_HEAD_REF"
-              git reset --hard "origin/$PR_HEAD_REF"
+              echo "Resetting to latest commit on ${PR_HEAD_REF}"
+              git reset --hard "origin/${PR_HEAD_REF}"
 
               NEW_SHA=$(git rev-parse HEAD)
               echo "Updated to SHA: $NEW_SHA"
@@ -273,6 +280,7 @@ jobs:
         timeout-minutes: 2
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail  # Enhanced error handling
 
@@ -293,7 +301,7 @@ jobs:
           echo "full_analysis=false" >> $GITHUB_OUTPUT
 
           # Parse comment content for commands (using safe variable)
-          if [ "${{ github.event_name }}" == "issue_comment" ] || [ "${{ github.event_name }}" == "pull_request_review_comment" ]; then
+          if [ "$EVENT_NAME" == "issue_comment" ] || [ "$EVENT_NAME" == "pull_request_review_comment" ]; then
             # Use grep with fixed strings where possible for security
             if echo "$SAFE_COMMENT" | grep -qiF "codebot hunt"; then
               echo "mode=hunt" >> $GITHUB_OUTPUT
@@ -349,6 +357,13 @@ jobs:
       - name: Get PR information
         id: pr-info
         timeout-minutes: 3
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          PR_EVENT_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          ISSUE_EVENT_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           set -euo pipefail  # Enhanced error handling
 
@@ -357,11 +372,11 @@ jobs:
           BASE_REF=""
 
           # Handle different trigger types with validation
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
-          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
-            PR_NUMBER="${{ github.event.issue.number }}"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            PR_NUMBER="$PR_EVENT_NUMBER"
+            BASE_REF="$PR_EVENT_BASE_REF"
+          elif [ "$EVENT_NAME" = "issue_comment" ]; then
+            PR_NUMBER="$ISSUE_EVENT_NUMBER"
 
             # Validate PR number is numeric
             if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
@@ -373,9 +388,9 @@ jobs:
             for attempt in {1..3}; do
               echo "Attempt $attempt: Fetching PR data for PR #$PR_NUMBER"
               if PR_DATA=$(curl -sS --max-time 30 --retry 2 \
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER"); then
+                "https://api.github.com/repos/${REPO_NAME}/pulls/$PR_NUMBER"); then
 
                 # Validate JSON response
                 if echo "$PR_DATA" | jq empty 2>/dev/null; then
@@ -396,11 +411,11 @@ jobs:
               sleep $((2 ** attempt))
             done
 
-          elif [ "${{ github.event_name }}" = "pull_request_review_comment" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          elif [ "$EVENT_NAME" = "pull_request_review_comment" ]; then
+            PR_NUMBER="$PR_EVENT_NUMBER"
+            BASE_REF="$PR_EVENT_BASE_REF"
           else
-            echo "Error: Unsupported event type: ${{ github.event_name }}"
+            echo "Error: Unsupported event type: $EVENT_NAME"
             exit 1
           fi
 
@@ -424,13 +439,13 @@ jobs:
       - name: Get changed files
         id: changes
         if: steps.parse-command.outputs.full_analysis == 'false'
+        env:
+          BASE_REF: ${{ steps.pr-info.outputs.base_ref }}
+          CURRENT_SHA: ${{ steps.git-refresh.outputs.current_sha }}
+          CURRENT_BRANCH: ${{ steps.git-refresh.outputs.current_branch }}
         run: |
 
           set -euo pipefail
-
-          BASE_REF="${{ steps.pr-info.outputs.base_ref }}"
-          CURRENT_SHA="${{ steps.git-refresh.outputs.current_sha }}"
-          CURRENT_BRANCH="${{ steps.git-refresh.outputs.current_branch }}"
 
           echo "🔍 Detecting changed files for analysis"
           echo "Base branch: $BASE_REF"
@@ -533,14 +548,19 @@ jobs:
       - name: Verify commit SHA and git state
         id: verify-state
         timeout-minutes: 2
+        env:
+          REFRESHED_SHA: ${{ steps.git-refresh.outputs.current_sha }}
+          REFRESHED_BRANCH: ${{ steps.git-refresh.outputs.current_branch }}
+          REPO_NAME: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
 
           echo "🔍 Verifying git state before analysis"
 
-          CURRENT_SHA="${{ steps.git-refresh.outputs.current_sha }}"
+          CURRENT_SHA="$REFRESHED_SHA"
           ACTUAL_SHA=$(git rev-parse HEAD)
-          CURRENT_BRANCH="${{ steps.git-refresh.outputs.current_branch }}"
+          CURRENT_BRANCH="$REFRESHED_BRANCH"
 
           # Verify SHA consistency
           if [ "$CURRENT_SHA" != "$ACTUAL_SHA" ]; then
@@ -561,8 +581,8 @@ jobs:
           echo "📊 Git state summary:"
           echo "  Commit SHA: $CURRENT_SHA"
           echo "  Branch: $CURRENT_BRANCH"
-          echo "  Repository: ${{ github.repository }}"
-          echo "  Event: ${{ github.event_name }}"
+          echo "  Repository: $REPO_NAME"
+          echo "  Event: $EVENT_NAME"
 
           # Get commit info for better context
           COMMIT_MSG=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "Unable to get commit message")
@@ -574,7 +594,7 @@ jobs:
           echo "  Date: $COMMIT_DATE"
 
           # Create unique identifier for cache invalidation
-          REVIEW_ID="${CURRENT_SHA:0:8}-${{ github.event_name }}-$(date +%s)"
+          REVIEW_ID="${CURRENT_SHA:0:8}-${EVENT_NAME}-$(date +%s)"
           echo "  Review ID: $REVIEW_ID"
 
           # Output additional context
@@ -669,6 +689,25 @@ jobs:
       - name: Workflow Summary
         if: always()
         timeout-minutes: 2
+        env:
+          # Pass all step outputs via env vars to prevent command injection
+          # (attacker-controlled data like commit messages and filenames must never
+          # be interpolated directly into shell commands via ${{ }})
+          REVIEW_MODE: ${{ steps.parse-command.outputs.mode }}
+          FOCUS_AREAS: ${{ steps.parse-command.outputs.focus }}
+          VERBOSE_OUTPUT: ${{ steps.parse-command.outputs.verbose }}
+          FULL_ANALYSIS: ${{ steps.parse-command.outputs.full_analysis || 'false' }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
+          CHANGED_COUNT: ${{ steps.changes.outputs.changed_count || '0' }}
+          DIFF_SUCCESSFUL: ${{ steps.changes.outputs.diff_successful }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number || 'N/A' }}
+          BASE_BRANCH: ${{ steps.pr-info.outputs.base_ref || 'N/A' }}
+          COMMIT_SHA: ${{ steps.verify-state.outputs.current_sha || steps.git-refresh.outputs.current_sha || 'Unknown' }}
+          REVIEW_ID: ${{ steps.verify-state.outputs.review_id || 'N/A' }}
+          CURRENT_BRANCH: ${{ steps.git-refresh.outputs.current_branch || 'Unknown' }}
+          COMMIT_MESSAGE: ${{ steps.verify-state.outputs.commit_message || 'Unknown' }}
+          COMMIT_AUTHOR: ${{ steps.verify-state.outputs.commit_author || 'Unknown' }}
+          COMMIT_DATE: ${{ steps.verify-state.outputs.commit_date || 'Unknown' }}
         run: |
           set -euo pipefail  # Enhanced error handling
 
@@ -685,35 +724,40 @@ jobs:
 
           # Review Configuration
           echo "### ⚙️ Review Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "**Review Mode:** \`${{ steps.parse-command.outputs.mode }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Focus Areas:** \`${{ steps.parse-command.outputs.focus }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Verbose Output:** \`${{ steps.parse-command.outputs.verbose }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Full Analysis:** \`${{ steps.parse-command.outputs.full_analysis || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.parse-command.outputs.full_analysis }}" != "true" ]; then
-            echo "**Changed Files:** \`${{ steps.changes.outputs.changed_count || '0' }}\` files" >> $GITHUB_STEP_SUMMARY
-            echo "**Diff Detection:** \`${{ steps.changes.outputs.diff_successful == 'true' && 'Successful' || 'Failed' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Review Mode:** \`${REVIEW_MODE}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Focus Areas:** \`${FOCUS_AREAS}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Verbose Output:** \`${VERBOSE_OUTPUT}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Full Analysis:** \`${FULL_ANALYSIS}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "$FULL_ANALYSIS" != "true" ]; then
+            DIFF_STATUS="Failed"
+            if [ "$DIFF_SUCCESSFUL" = "true" ]; then
+              DIFF_STATUS="Successful"
+            fi
+            echo "**Changed Files:** \`${CHANGED_COUNT}\` files" >> $GITHUB_STEP_SUMMARY
+            echo "**Diff Detection:** \`${DIFF_STATUS}\`" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "**PR Number:** \`${{ steps.pr-info.outputs.pr_number || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Base Branch:** \`${{ steps.pr-info.outputs.base_ref || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**PR Number:** \`${PR_NUMBER}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Base Branch:** \`${BASE_BRANCH}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Git State Information
           echo "### 📊 Git State Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit SHA:** \`${{ steps.verify-state.outputs.current_sha || steps.git-refresh.outputs.current_sha || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Review ID:** \`${{ steps.verify-state.outputs.review_id || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Current Branch:** \`${{ steps.git-refresh.outputs.current_branch || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Last Commit:** \"${{ steps.verify-state.outputs.commit_message || 'Unknown' }}\"" >> $GITHUB_STEP_SUMMARY
-          echo "**Author:** \`${{ steps.verify-state.outputs.commit_author || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Date:** \`${{ steps.verify-state.outputs.commit_date || 'Unknown' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** \`${COMMIT_SHA}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Review ID:** \`${REVIEW_ID}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Branch:** \`${CURRENT_BRANCH}\`" >> $GITHUB_STEP_SUMMARY
+          # Use printf to safely handle special characters in commit messages
+          printf '**Last Commit:** "%s"\n' "$COMMIT_MESSAGE" >> $GITHUB_STEP_SUMMARY
+          printf '**Author:** `%s`\n' "$COMMIT_AUTHOR" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** \`${COMMIT_DATE}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Analysis Scope Details
-          if [ "${{ steps.parse-command.outputs.full_analysis }}" != "true" ] && [ "${{ steps.changes.outputs.changed_count || '0' }}" -gt "0" ]; then
+          if [ "$FULL_ANALYSIS" != "true" ] && [ "${CHANGED_COUNT:-0}" -gt "0" ] 2>/dev/null; then
             echo "### 📄 Files Being Analyzed" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.changes.outputs.changed_files }}" | tr ' ' '\n' | grep -v '^$' | head -20 >> $GITHUB_STEP_SUMMARY
-            if [ "${{ steps.changes.outputs.changed_count }}" -gt "20" ]; then
-              echo "... and $((${{ steps.changes.outputs.changed_count }} - 20)) more files" >> $GITHUB_STEP_SUMMARY
+            echo "$CHANGED_FILES" | tr ' ' '\n' | grep -v '^$' | head -20 >> $GITHUB_STEP_SUMMARY
+            if [ "${CHANGED_COUNT:-0}" -gt "20" ] 2>/dev/null; then
+              echo "... and $((CHANGED_COUNT - 20)) more files" >> $GITHUB_STEP_SUMMARY
             fi
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
