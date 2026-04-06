@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.7.1](https://github.com/lgallard/terraform-aws-backup/compare/1.7.0...1.7.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* handle empty inputs in feature-discovery workflow for schedule triggers ([#324](https://github.com/lgallard/terraform-aws-backup/issues/324)) ([4018a84](https://github.com/lgallard/terraform-aws-backup/commit/4018a84b030502d8b45a6faffc662f73c6cbe210))
+* prevent command injection in claude-code-review workflow ([#327](https://github.com/lgallard/terraform-aws-backup/issues/327)) ([bad9f85](https://github.com/lgallard/terraform-aws-backup/commit/bad9f85bb01e99984515674895bb2da5eaab93aa)), closes [#325](https://github.com/lgallard/terraform-aws-backup/issues/325)
+
 ## [1.7.0](https://github.com/lgallard/terraform-aws-backup/compare/1.6.0...1.7.0) (2026-02-02)
 
 
