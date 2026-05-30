@@ -28,8 +28,8 @@ resource "aws_backup_region_settings" "this" {
   lifecycle {
     # Optional strict region validation (opt-in feature)
     precondition {
-      condition     = !var.enable_strict_region_validation || var.expected_region == null || try(data.aws_region.current[0].id, "") == var.expected_region
-      error_message = "Region mismatch detected: Provider is configured for '${try(data.aws_region.current[0].id, "unknown")}' but expected_region is set to '${var.expected_region}'. This could lead to compliance violations. To bypass this check, set enable_strict_region_validation = false."
+      condition     = !var.enable_strict_region_validation || var.expected_region == null || try(data.aws_region.current[0].region, "") == var.expected_region
+      error_message = "Region mismatch detected: Provider is configured for '${try(data.aws_region.current[0].region, "unknown")}' but expected_region is set to '${var.expected_region}'. This could lead to compliance violations. To bypass this check, set enable_strict_region_validation = false."
     }
   }
 }

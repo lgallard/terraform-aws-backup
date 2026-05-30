@@ -69,7 +69,7 @@ output "backup_dashboard_name" {
 
 output "backup_dashboard_url" {
   description = "URL to the backup monitoring dashboard"
-  value       = "https://console.aws.amazon.com/cloudwatch/home?region=${data.aws_region.current.id}#dashboards:name=${aws_cloudwatch_dashboard.backup_dashboard.dashboard_name}"
+  value       = "https://console.aws.amazon.com/cloudwatch/home?region=${data.aws_region.current.region}#dashboards:name=${aws_cloudwatch_dashboard.backup_dashboard.dashboard_name}"
 }
 
 output "sns_topic_arn" {
