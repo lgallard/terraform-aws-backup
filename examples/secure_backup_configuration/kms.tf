@@ -24,7 +24,7 @@ resource "aws_kms_key" "backup_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "backup.${data.aws_region.current.id}.amazonaws.com"
+            "kms:ViaService" = "backup.${data.aws_region.current.region}.amazonaws.com"
           }
         }
       },
@@ -53,7 +53,7 @@ resource "aws_kms_key" "backup_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "backup.${data.aws_region.current.id}.amazonaws.com"
+            "kms:ViaService" = "backup.${data.aws_region.current.region}.amazonaws.com"
           }
         }
       },
@@ -61,7 +61,7 @@ resource "aws_kms_key" "backup_key" {
         Sid    = "AllowCloudWatchLogsAccess"
         Effect = "Allow"
         Principal = {
-          Service = "logs.${data.aws_region.current.id}.amazonaws.com"
+          Service = "logs.${data.aws_region.current.region}.amazonaws.com"
         }
         Action = [
           "kms:Encrypt",
@@ -73,7 +73,7 @@ resource "aws_kms_key" "backup_key" {
         Resource = "*"
         Condition = {
           ArnEquals = {
-            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/backup/*"
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/backup/*"
           }
         }
       }
@@ -158,7 +158,7 @@ resource "aws_kms_key" "cross_region_backup_key" {
         Condition = {
           StringEquals = {
             "kms:ViaService" = [
-              "backup.${data.aws_region.current.id}.amazonaws.com",
+              "backup.${data.aws_region.current.region}.amazonaws.com",
               "backup.${var.cross_region}.amazonaws.com"
             ]
           }
@@ -179,7 +179,7 @@ resource "aws_kms_key" "cross_region_backup_key" {
         Condition = {
           StringEquals = {
             "kms:ViaService" = [
-              "backup.${data.aws_region.current.id}.amazonaws.com",
+              "backup.${data.aws_region.current.region}.amazonaws.com",
               "backup.${var.cross_region}.amazonaws.com"
             ]
           }

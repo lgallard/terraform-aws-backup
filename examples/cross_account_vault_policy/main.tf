@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
       "backup:CopyIntoBackupVault"
     ]
 
-    resources = ["arn:aws:backup:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
+    resources = ["arn:aws:backup:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
 
     condition {
       test     = "StringEquals"
@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "cross_account_vault_policy" {
       "backup:ListRecoveryPointsByBackupVault"
     ]
 
-    resources = ["arn:aws:backup:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
+    resources = ["arn:aws:backup:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.vault_name_prefix}-*"]
   }
 }
 
@@ -156,7 +156,7 @@ resource "aws_kms_key" "backup_vault_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "backup.${data.aws_region.current.name}.amazonaws.com"
+            "kms:ViaService" = "backup.${data.aws_region.current.region}.amazonaws.com"
           }
         }
       }

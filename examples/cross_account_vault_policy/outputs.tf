@@ -45,7 +45,7 @@ output "cross_account_setup_summary" {
   description = "Summary of cross-account backup configuration"
   value = {
     destination_account = data.aws_caller_identity.current.account_id
-    destination_region  = data.aws_region.current.name
+    destination_region  = data.aws_region.current.region
     vault_name          = module.aws_backup_cross_account.vault_id
     vault_arn           = module.aws_backup_cross_account.vault_arn
 
@@ -104,7 +104,7 @@ output "source_account_instructions" {
             Resource = aws_kms_key.backup_vault_key.arn
             Condition = {
               StringEquals = {
-                "kms:ViaService" = "backup.${data.aws_region.current.name}.amazonaws.com"
+                "kms:ViaService" = "backup.${data.aws_region.current.region}.amazonaws.com"
               }
             }
           }
@@ -148,9 +148,9 @@ output "management_information" {
     }
 
     console_urls = {
-      backup_vault = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.name}#/backupvaults/details/${module.aws_backup_cross_account.vault_id}"
-      backup_plan  = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.name}#/plans"
-      kms_key      = "https://console.aws.amazon.com/kms/home?region=${data.aws_region.current.name}#/kms/keys/${aws_kms_key.backup_vault_key.key_id}"
+      backup_vault = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.region}#/backupvaults/details/${module.aws_backup_cross_account.vault_id}"
+      backup_plan  = "https://console.aws.amazon.com/backup/home?region=${data.aws_region.current.region}#/plans"
+      kms_key      = "https://console.aws.amazon.com/kms/home?region=${data.aws_region.current.region}#/kms/keys/${aws_kms_key.backup_vault_key.key_id}"
     }
 
     monitoring = {

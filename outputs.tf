@@ -400,11 +400,11 @@ output "region_settings_hash" {
 output "configuration_health_check" {
   description = "Configuration health check and validation status for region settings"
   value = var.enable_region_settings ? {
-    provider_region     = try(data.aws_region.current[0].id, "unknown")
+    provider_region     = try(data.aws_region.current[0].region, "unknown")
     expected_region     = var.expected_region
     strict_validation   = var.enable_strict_region_validation
-    is_region_validated = var.expected_region == null ? null : try(data.aws_region.current[0].id, "") == var.expected_region
-    validation_status   = var.expected_region == null ? "No expected region configured - validation skipped" : (try(data.aws_region.current[0].id, "") == var.expected_region ? "✓ Region validated successfully" : "⚠ WARNING: Region mismatch detected")
-    recommendation      = var.expected_region == null ? "Consider setting expected_region for multi-region deployments" : (try(data.aws_region.current[0].id, "") == var.expected_region ? "Configuration is correctly applied to the expected region" : "ATTENTION: Settings may be applied to the wrong region. Review your provider configuration or enable strict validation.")
+    is_region_validated = var.expected_region == null ? null : try(data.aws_region.current[0].region, "") == var.expected_region
+    validation_status   = var.expected_region == null ? "No expected region configured - validation skipped" : (try(data.aws_region.current[0].region, "") == var.expected_region ? "✓ Region validated successfully" : "⚠ WARNING: Region mismatch detected")
+    recommendation      = var.expected_region == null ? "Consider setting expected_region for multi-region deployments" : (try(data.aws_region.current[0].region, "") == var.expected_region ? "Configuration is correctly applied to the expected region" : "ATTENTION: Settings may be applied to the wrong region. Review your provider configuration or enable strict validation.")
   } : null
 }
