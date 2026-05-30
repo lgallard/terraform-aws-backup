@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.7.2](https://github.com/lgallard/terraform-aws-backup/compare/1.7.1...1.7.2) (2026-05-30)
+
+
+### Bug Fixes
+
+* replace deprecated aws_region attributes with region ([04dbabd](https://github.com/lgallard/terraform-aws-backup/commit/04dbabdd29521cc23c6c251120f2a779e2eb08f3))
+
 ## [1.7.1](https://github.com/lgallard/terraform-aws-backup/compare/1.7.0...1.7.1) (2026-04-06)
 
 
