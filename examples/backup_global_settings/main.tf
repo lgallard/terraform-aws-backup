@@ -1,5 +1,5 @@
 # AWS Backup Global Settings Example
-# 
+#
 # This example demonstrates how to configure AWS Backup global settings
 # for centralized cross-account backup governance.
 
