@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.7.3](https://github.com/lgallard/terraform-aws-backup/compare/1.7.2...1.7.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* resolve pre-commit formatting issues ([#333](https://github.com/lgallard/terraform-aws-backup/issues/333)) ([b2401c7](https://github.com/lgallard/terraform-aws-backup/commit/b2401c751c176532b27c2f23cd753fc60f15aacd))
+
 ## [1.7.2](https://github.com/lgallard/terraform-aws-backup/compare/1.7.1...1.7.2) (2026-05-30)
 
 
