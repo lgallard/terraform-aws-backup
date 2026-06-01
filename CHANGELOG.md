@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.7.4](https://github.com/lgallard/terraform-aws-backup/compare/1.7.3...1.7.4) (2026-06-01)
+
+
+### Bug Fixes
+
+* make secure backup configuration example validate ([#338](https://github.com/lgallard/terraform-aws-backup/issues/338)) ([863bffd](https://github.com/lgallard/terraform-aws-backup/commit/863bffda54812f59471606acf519f19c24b7866c))
+
 ## [1.7.3](https://github.com/lgallard/terraform-aws-backup/compare/1.7.2...1.7.3) (2026-05-31)
 
 
