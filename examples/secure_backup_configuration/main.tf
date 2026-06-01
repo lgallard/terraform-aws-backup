@@ -34,7 +34,7 @@ locals {
         delete_after       = var.backup_retention_days
       }
       copy_actions = var.enable_cross_region_backup ? [{
-        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        destination_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
         lifecycle = {
           cold_storage_after = 30
           delete_after       = var.backup_retention_days
@@ -58,7 +58,7 @@ locals {
         delete_after       = var.weekly_backup_retention_days
       }
       copy_actions = var.enable_cross_region_backup ? [{
-        destination_backup_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
+        destination_vault_arn = "arn:aws:backup:${var.cross_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${local.vault_name}-cross-region"
         lifecycle = {
           cold_storage_after = 7
           delete_after       = var.weekly_backup_retention_days
@@ -81,51 +81,25 @@ locals {
       name = "production-databases-secure"
       # Use tag-based selection for better security instead of wildcard ARNs
       resources = ["*"]
-      conditions = [
-        {
-          string_equals = {
-            key   = "aws:tag/Environment"
-            value = var.environment
-          }
-        },
-        {
-          string_equals = {
-            key   = "aws:tag/BackupRequired"
-            value = "true"
-          }
-        },
-        {
-          string_equals = {
-            key   = "aws:tag/ResourceType"
-            value = "Database"
-          }
+      conditions = {
+        string_equals = {
+          "aws:tag/Environment"    = var.environment
+          "aws:tag/BackupRequired" = "true"
+          "aws:tag/ResourceType"   = "Database"
         }
-      ]
+      }
     }
     critical_file_systems = {
       name = "critical-file-systems-secure"
       # Use tag-based selection for better security
       resources = ["*"]
-      conditions = [
-        {
-          string_equals = {
-            key   = "aws:tag/Environment"
-            value = var.environment
-          }
-        },
-        {
-          string_equals = {
-            key   = "aws:tag/BackupTier"
-            value = "critical"
-          }
-        },
-        {
-          string_equals = {
-            key   = "aws:tag/ResourceType"
-            value = "FileSystem"
-          }
+      conditions = {
+        string_equals = {
+          "aws:tag/Environment"  = var.environment
+          "aws:tag/BackupTier"   = "critical"
+          "aws:tag/ResourceType" = "FileSystem"
         }
-      ]
+      }
     }
   }
 }
@@ -154,7 +128,7 @@ module "backup" {
   }
 
   # Secure backup selections
-  backup_selections = values(local.backup_selections)
+  backup_selections = local.backup_selections
 
   # Security and compliance tags
   tags = local.common_tags
