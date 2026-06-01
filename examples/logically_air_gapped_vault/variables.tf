@@ -36,6 +36,12 @@ variable "max_retention_days" {
   }
 }
 
+variable "vault_kms_key_arn" {
+  description = "Optional customer-managed KMS key ARN used to encrypt the logically air-gapped backup vault. If null, AWS Backup uses an AWS-owned key managed by AWS Backup."
+  type        = string
+  default     = null
+}
+
 variable "plan_name" {
   description = "The display name of a backup plan"
   type        = string

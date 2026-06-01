@@ -5,6 +5,7 @@ This example shows how to create an AWS Backup plan with a **logically air gappe
 ## Features
 
 - **Logically Air Gapped Vault**: Enhanced isolation for backup data
+- **Optional Customer-Managed KMS Key**: Use `vault_kms_key_arn` when compliance requires a CMK
 - **Mandatory Retention Policies**: Built-in retention enforcement (7-year retention for compliance)
 - **Compliance Ready**: Designed for SOX, PCI-DSS, HIPAA, and other regulatory requirements
 - **Daily Backup Schedule**: Automated daily backups at 1 AM
@@ -14,7 +15,7 @@ This example shows how to create an AWS Backup plan with a **logically air gappe
 
 | Feature | Standard Vault | Logically Air Gapped Vault |
 |---------|-----------------|---------------------------|
-| **Encryption** | Optional KMS encryption | AWS-managed encryption (always on) |
+| **Encryption** | Optional customer-managed KMS key | Optional customer-managed KMS key; AWS Backup uses an AWS-owned key when omitted |
 | **Retention** | Optional vault lock | **Mandatory** min/max retention days |
 | **Use Case** | General backup storage | High-security, compliance environments |
 | **Recovery** | Standard recovery process | Enhanced security controls |
@@ -81,6 +82,7 @@ module "compliance_backup" {
   # Air Gapped Vault Configuration
   vault_name         = "compliance-air-gapped-vault"
   vault_type         = "logically_air_gapped"
+  # vault_kms_key_arn = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
   min_retention_days = 7     # AWS minimum for flexibility
   max_retention_days = 2555  # 7 years for compliance
 
@@ -109,10 +111,11 @@ module "compliance_backup" {
 ## Important Notes
 
 1. **Retention Requirements**: Air gapped vaults **require** both `min_retention_days` and `max_retention_days` to be specified
-2. **AWS Provider Version**: Requires AWS provider version >= 6.11.0 for air gapped vault support
-3. **Cost Implications**: Air gapped vaults may have different pricing than standard vaults
-4. **Recovery Process**: Recovery from air gapped vaults follows enhanced security procedures
-5. **Destruction Limitations**: Air gapped vaults do not support `force_destroy` - vaults with recovery points cannot be destroyed until retention periods expire
+2. **KMS Encryption**: Set `vault_kms_key_arn` to use a customer-managed KMS key. If omitted, AWS Backup encrypts the vault with an AWS-owned key managed by AWS Backup.
+3. **AWS Provider Version**: Requires AWS provider version >= 6.11.0 for air gapped vault support
+4. **Cost Implications**: Air gapped vaults may have different pricing than standard vaults
+5. **Recovery Process**: Recovery from air gapped vaults follows enhanced security procedures
+6. **Destruction Limitations**: Air gapped vaults do not support `force_destroy` - vaults with recovery points cannot be destroyed until retention periods expire
 
 ## Outputs
 
@@ -127,14 +130,14 @@ module "compliance_backup" {
 
 ## Security Considerations
 
-- Air gapped vaults provide enhanced isolation but cannot use custom KMS keys
+- Air gapped vaults provide enhanced isolation and can use customer-managed KMS keys for encryption
 - Retention policies are immutable once set
 - Access patterns are logged for compliance auditing
 - Recovery operations require additional authentication steps
 
 ## AWS Limitations for Air Gapped Vaults
 
-- **No KMS Support**: Custom KMS encryption keys are not supported (AWS-managed encryption only)
+- **Optional KMS Support**: Custom KMS encryption keys are supported through `vault_kms_key_arn`; if omitted, AWS Backup uses an AWS-owned key
 - **No Force Destroy**: Cannot use `force_destroy` parameter - vaults must be manually emptied before deletion
-- **Limited Parameters**: Only supports `name`, `min_retention_days`, `max_retention_days`, `tags`, and `region`
+- **Limited Parameters**: Supports `name`, `encryption_key_arn`, `min_retention_days`, `max_retention_days`, `tags`, and `region`
 - **API Constraints**: Some AWS Backup APIs may have throttling limitations for air gapped operations

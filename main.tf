@@ -129,6 +129,7 @@ resource "aws_backup_logically_air_gapped_vault" "ab_airgapped_vault" {
   count = local.should_create_airgapped_vault ? 1 : 0
 
   name               = var.vault_name
+  encryption_key_arn = var.vault_kms_key_arn
   min_retention_days = var.min_retention_days
   max_retention_days = var.max_retention_days
   tags               = var.tags
