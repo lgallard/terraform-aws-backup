@@ -37,13 +37,13 @@ Note that this example creates resources which cost money. Run `terraform destro
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.11.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.11.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.47.0 |
 
 ## Modules
 
@@ -112,7 +112,7 @@ module "compliance_backup" {
 
 1. **Retention Requirements**: Air gapped vaults **require** both `min_retention_days` and `max_retention_days` to be specified
 2. **KMS Encryption**: Set `vault_kms_key_arn` to use a customer-managed KMS key. If omitted, AWS Backup encrypts the vault with an AWS-owned key managed by AWS Backup.
-3. **AWS Provider Version**: Requires AWS provider version >= 6.11.0 for air gapped vault support
+3. **AWS Provider Version**: Requires AWS provider version >= 6.47.0 for air gapped vault customer-managed KMS key support
 4. **Cost Implications**: Air gapped vaults may have different pricing than standard vaults
 5. **Recovery Process**: Recovery from air gapped vaults follows enhanced security procedures
 6. **Destruction Limitations**: Air gapped vaults do not support `force_destroy` - vaults with recovery points cannot be destroyed until retention periods expire
