@@ -87,7 +87,7 @@ resource "aws_cloudwatch_metric_alarm" "backup_job_success" {
 }
 
 # CloudWatch Metric Filter for backup vault events (using CloudTrail patterns)
-resource "aws_logs_metric_filter" "vault_access" {
+resource "aws_cloudwatch_log_metric_filter" "vault_access" {
   name           = "${var.project_name}-${var.environment}-vault-access"
   log_group_name = aws_cloudwatch_log_group.backup_logs.name
   # Updated pattern to match actual AWS Backup CloudTrail events
@@ -177,10 +177,6 @@ resource "aws_cloudwatch_dashboard" "backup_dashboard" {
         }
       }
     ]
-  })
-
-  tags = merge(local.common_tags, {
-    Purpose = "security-monitoring"
   })
 }
 

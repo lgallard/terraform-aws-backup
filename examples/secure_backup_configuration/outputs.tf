@@ -12,7 +12,7 @@ output "backup_vault_arn" {
 
 output "backup_vault_recovery_points" {
   description = "Number of recovery points in the backup vault"
-  value       = module.backup.vault_recovery_points
+  value       = try(module.backup.vault_recovery_points, null)
 }
 
 output "backup_kms_key_id" {
@@ -95,10 +95,10 @@ output "cross_region_replication_enabled" {
 
 output "backup_plan_names" {
   description = "Names of the backup plans created"
-  value       = module.backup.plan_names
+  value       = { for key, plan in module.backup.plans : key => plan.name }
 }
 
 output "backup_plan_ids" {
   description = "IDs of the backup plans created"
-  value       = module.backup.plan_ids
+  value       = { for key, plan in module.backup.plans : key => plan.id }
 }
