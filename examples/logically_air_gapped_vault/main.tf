@@ -19,6 +19,7 @@ module "aws_backup_plan" {
   # Vault configuration - Air Gapped
   vault_name         = var.vault_name
   vault_type         = "logically_air_gapped"
+  vault_kms_key_arn  = var.vault_kms_key_arn
   min_retention_days = var.min_retention_days
   max_retention_days = var.max_retention_days
 

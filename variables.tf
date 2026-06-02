@@ -19,7 +19,7 @@ variable "vault_name_validation_bypass" {
 }
 
 variable "vault_kms_key_arn" {
-  description = "The server-side encryption key that is used to protect your backups"
+  description = "The customer-managed KMS key ARN used to encrypt the backup vault. For standard vaults this maps to kms_key_arn; for logically air-gapped vaults this maps to encryption_key_arn. If null, AWS Backup uses its default vault encryption behavior."
   type        = string
   default     = null
 
