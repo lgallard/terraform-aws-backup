@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.0](https://github.com/lgallard/terraform-aws-backup/compare/1.7.4...1.8.0) (2026-06-02)
+
+
+### Features
+
+* support KMS encryption for logically air-gapped vaults ([#340](https://github.com/lgallard/terraform-aws-backup/issues/340)) ([970aa6b](https://github.com/lgallard/terraform-aws-backup/commit/970aa6baa3dc3416bde6d54124a1f937aa8377de))
+
 ## [1.7.4](https://github.com/lgallard/terraform-aws-backup/compare/1.7.3...1.7.4) (2026-06-01)
 
 
