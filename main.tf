@@ -175,14 +175,15 @@ resource "aws_backup_plan" "ab_plan" {
   dynamic "rule" {
     for_each = local.rules
     content {
-      rule_name                    = try(rule.value.name, null)
-      target_vault_name            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
-      schedule                     = try(rule.value.schedule, null)
-      schedule_expression_timezone = try(rule.value.schedule_expression_timezone, null)
-      start_window                 = try(rule.value.start_window, null)
-      completion_window            = try(rule.value.completion_window, null)
-      enable_continuous_backup     = try(rule.value.enable_continuous_backup, null)
-      recovery_point_tags          = coalesce(rule.value.recovery_point_tags, var.tags)
+      rule_name                                    = try(rule.value.name, null)
+      target_vault_name                            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
+      target_logically_air_gapped_backup_vault_arn = try(rule.value.target_logically_air_gapped_backup_vault_arn, null)
+      schedule                                     = try(rule.value.schedule, null)
+      schedule_expression_timezone                 = try(rule.value.schedule_expression_timezone, null)
+      start_window                                 = try(rule.value.start_window, null)
+      completion_window                            = try(rule.value.completion_window, null)
+      enable_continuous_backup                     = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags                          = coalesce(rule.value.recovery_point_tags, var.tags)
 
       # Lifecycle
       dynamic "lifecycle" {
@@ -211,6 +212,25 @@ resource "aws_backup_plan" "ab_plan" {
           }
         }
       }
+
+      # Malware scan action
+      dynamic "scan_action" {
+        for_each = try(rule.value.scan_action, null) == null ? [] : [rule.value.scan_action]
+        content {
+          malware_scanner = scan_action.value.malware_scanner
+          scan_mode       = scan_action.value.scan_mode
+        }
+      }
+    }
+  }
+
+  # Malware scan setting
+  dynamic "scan_setting" {
+    for_each = var.scan_setting == null ? [] : [var.scan_setting]
+    content {
+      malware_scanner  = scan_setting.value.malware_scanner
+      resource_types   = try(scan_setting.value.resource_types, null)
+      scanner_role_arn = scan_setting.value.scanner_role_arn
     }
   }
 
@@ -281,14 +301,15 @@ resource "aws_backup_plan" "ab_plans" {
   dynamic "rule" {
     for_each = each.value.rules
     content {
-      rule_name                    = try(rule.value.name, null)
-      target_vault_name            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
-      schedule                     = try(rule.value.schedule, null)
-      schedule_expression_timezone = try(rule.value.schedule_expression_timezone, null)
-      start_window                 = try(rule.value.start_window, null)
-      completion_window            = try(rule.value.completion_window, null)
-      enable_continuous_backup     = try(rule.value.enable_continuous_backup, null)
-      recovery_point_tags          = coalesce(rule.value.recovery_point_tags, var.tags)
+      rule_name                                    = try(rule.value.name, null)
+      target_vault_name                            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
+      target_logically_air_gapped_backup_vault_arn = try(rule.value.target_logically_air_gapped_backup_vault_arn, null)
+      schedule                                     = try(rule.value.schedule, null)
+      schedule_expression_timezone                 = try(rule.value.schedule_expression_timezone, null)
+      start_window                                 = try(rule.value.start_window, null)
+      completion_window                            = try(rule.value.completion_window, null)
+      enable_continuous_backup                     = try(rule.value.enable_continuous_backup, null)
+      recovery_point_tags                          = coalesce(rule.value.recovery_point_tags, var.tags)
 
       # Lifecycle
       dynamic "lifecycle" {
@@ -317,6 +338,25 @@ resource "aws_backup_plan" "ab_plans" {
           }
         }
       }
+
+      # Malware scan action
+      dynamic "scan_action" {
+        for_each = try(rule.value.scan_action, null) == null ? [] : [rule.value.scan_action]
+        content {
+          malware_scanner = scan_action.value.malware_scanner
+          scan_mode       = scan_action.value.scan_mode
+        }
+      }
+    }
+  }
+
+  # Malware scan setting
+  dynamic "scan_setting" {
+    for_each = try(each.value.scan_setting, null) == null ? [] : [each.value.scan_setting]
+    content {
+      malware_scanner  = scan_setting.value.malware_scanner
+      resource_types   = try(scan_setting.value.resource_types, null)
+      scanner_role_arn = scan_setting.value.scanner_role_arn
     }
   }
 

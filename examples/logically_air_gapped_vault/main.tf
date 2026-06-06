@@ -27,8 +27,28 @@ module "aws_backup_plan" {
   plan_name = var.plan_name
 
   # Rule configuration
-  rule_name     = var.rule_name
-  rule_schedule = var.rule_schedule
+  # Use `rules` instead of the single `rule_*` inputs to demonstrate
+  # primary logically air-gapped vault targets and malware scan actions.
+  rules = [
+    {
+      name                                         = var.rule_name
+      schedule                                     = var.rule_schedule
+      target_logically_air_gapped_backup_vault_arn = var.primary_logically_air_gapped_backup_vault_arn
+      scan_action = {
+        malware_scanner = "GUARDDUTY"
+        scan_mode       = "FULL_SCAN"
+      }
+      lifecycle = {
+        delete_after = 35
+      }
+    }
+  ]
+
+  scan_setting = {
+    malware_scanner  = "GUARDDUTY"
+    resource_types   = ["ALL"]
+    scanner_role_arn = var.malware_scanner_role_arn
+  }
 
   # Selection of resources
   selection_name      = var.selection_name

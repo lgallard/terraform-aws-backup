@@ -137,19 +137,24 @@ variable "plans" {
   type = map(object({
     name = optional(string)
     rules = list(object({
-      name                         = string
-      target_vault_name            = optional(string)
-      schedule                     = optional(string)
-      schedule_expression_timezone = optional(string)
-      start_window                 = optional(number)
-      completion_window            = optional(number)
-      enable_continuous_backup     = optional(bool)
+      name                                         = string
+      target_vault_name                            = optional(string)
+      target_logically_air_gapped_backup_vault_arn = optional(string)
+      schedule                                     = optional(string)
+      schedule_expression_timezone                 = optional(string)
+      start_window                                 = optional(number)
+      completion_window                            = optional(number)
+      enable_continuous_backup                     = optional(bool)
       lifecycle = optional(object({
         cold_storage_after                        = optional(number)
         delete_after                              = number
         opt_in_to_archive_for_supported_resources = optional(bool)
       }))
       recovery_point_tags = optional(map(string))
+      scan_action = optional(object({
+        malware_scanner = string
+        scan_mode       = string
+      }))
       copy_actions = optional(list(object({
         destination_vault_arn = string
         lifecycle = optional(object({
@@ -158,6 +163,11 @@ variable "plans" {
           opt_in_to_archive_for_supported_resources = optional(bool)
         }))
       })), [])
+    }))
+    scan_setting = optional(object({
+      malware_scanner  = string
+      resource_types   = optional(list(string), ["ALL"])
+      scanner_role_arn = string
     }))
     selections = optional(map(object({
       resources     = optional(list(string))
@@ -319,23 +329,38 @@ variable "rule_enable_continuous_backup" {
   default     = false
 }
 
+variable "scan_setting" {
+  description = "Malware scan settings for the legacy backup plan path. Set malware_scanner, resource_types, and scanner_role_arn to enable AWS Backup malware scanning. For multi-plan configurations, use plans[*].scan_setting."
+  type = object({
+    malware_scanner  = string
+    resource_types   = optional(list(string), ["ALL"])
+    scanner_role_arn = string
+  })
+  default = null
+}
+
 # Rules
 variable "rules" {
   description = "A list of rule maps"
   type = list(object({
-    name                         = string
-    target_vault_name            = optional(string)
-    schedule                     = optional(string)
-    schedule_expression_timezone = optional(string)
-    start_window                 = optional(number)
-    completion_window            = optional(number)
-    enable_continuous_backup     = optional(bool)
+    name                                         = string
+    target_vault_name                            = optional(string)
+    target_logically_air_gapped_backup_vault_arn = optional(string)
+    schedule                                     = optional(string)
+    schedule_expression_timezone                 = optional(string)
+    start_window                                 = optional(number)
+    completion_window                            = optional(number)
+    enable_continuous_backup                     = optional(bool)
     lifecycle = optional(object({
       cold_storage_after                        = optional(number)
       delete_after                              = number
       opt_in_to_archive_for_supported_resources = optional(bool)
     }))
     recovery_point_tags = optional(map(string))
+    scan_action = optional(object({
+      malware_scanner = string
+      scan_mode       = string
+    }))
     copy_actions = optional(list(object({
       destination_vault_arn = string
       lifecycle = optional(object({

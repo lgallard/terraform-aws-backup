@@ -56,6 +56,10 @@ content: |-
 
   See [examples/multiple_plans/main.tf](examples/multiple_plans/main.tf) for managing multiple backup plans.
 
+  ### Simple plan with Logically Air-Gapped Vault
+
+  See [examples/logically_air_gapped_vault/main.tf](examples/logically_air_gapped_vault/main.tf) for a backup plan that uses a logically air-gapped vault, a primary LAG target ARN, and AWS Backup malware scanning settings.
+
   ### Simple plan using AWS Organizations backup policies
 
   See [examples/organization_backup_policy/main.tf](examples/organization_backup_policy/main.tf) for organization-wide backup policies.
