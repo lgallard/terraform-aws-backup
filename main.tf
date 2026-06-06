@@ -175,6 +175,9 @@ resource "aws_backup_plan" "ab_plan" {
   dynamic "rule" {
     for_each = local.rules
     content {
+      # The AWS provider still marks target_vault_name as required in v6.47.0-v6.49.0,
+      # even when target_logically_air_gapped_backup_vault_arn is set.
+      # Keep the legacy fallback to preserve provider-schema compatibility.
       rule_name                                    = try(rule.value.name, null)
       target_vault_name                            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
       target_logically_air_gapped_backup_vault_arn = try(rule.value.target_logically_air_gapped_backup_vault_arn, null)
@@ -301,6 +304,9 @@ resource "aws_backup_plan" "ab_plans" {
   dynamic "rule" {
     for_each = each.value.rules
     content {
+      # The AWS provider still marks target_vault_name as required in v6.47.0-v6.49.0,
+      # even when target_logically_air_gapped_backup_vault_arn is set.
+      # Keep the legacy fallback to preserve provider-schema compatibility.
       rule_name                                    = try(rule.value.name, null)
       target_vault_name                            = try(rule.value.target_vault_name, null) != null ? rule.value.target_vault_name : var.vault_name != null ? local.vault_name : "Default"
       target_logically_air_gapped_backup_vault_arn = try(rule.value.target_logically_air_gapped_backup_vault_arn, null)
