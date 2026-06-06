@@ -60,6 +60,18 @@ variable "rule_schedule" {
   default     = "cron(0 1 ? * * *)" # Daily at 1 AM
 }
 
+variable "primary_logically_air_gapped_backup_vault_arn" {
+  description = "ARN of an existing logically air-gapped backup vault to use as the primary backup target for the plan rule. Replace the placeholder before apply."
+  type        = string
+  default     = "arn:aws:backup:us-east-1:123456789012:backup-vault:primary-logically-air-gapped-vault"
+}
+
+variable "malware_scanner_role_arn" {
+  description = "IAM role ARN that AWS Backup uses for malware scanning. Replace the placeholder before apply."
+  type        = string
+  default     = "arn:aws:iam::123456789012:role/aws-backup-malware-scanner"
+}
+
 variable "selection_name" {
   description = "The display name of a resource selection document"
   type        = string
