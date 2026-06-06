@@ -12,7 +12,7 @@ terraform {
 
   required_providers {
     aws = {
-      # v6.47.0 is the CI-tested floor and includes aws_backup_plan support for
+      # v1.9.0 is the CI-tested floor and includes aws_backup_plan support for
       # target_logically_air_gapped_backup_vault_arn, scan_action, and scan_setting.
       source  = "hashicorp/aws"
       version = ">= 6.47.0"
