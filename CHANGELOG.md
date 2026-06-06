@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.9.0](https://github.com/lgallard/terraform-aws-backup/compare/1.8.0...1.9.0) (2026-06-06)
+
+
+### Features
+
+* support LAG backup targets and malware scanning ([#343](https://github.com/lgallard/terraform-aws-backup/issues/343)) ([f01c821](https://github.com/lgallard/terraform-aws-backup/commit/f01c82158ad16072bc7e4627afa13c261fc0e87e))
+
 ## [1.8.0](https://github.com/lgallard/terraform-aws-backup/compare/1.7.4...1.8.0) (2026-06-02)
 
 
