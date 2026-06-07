@@ -7,12 +7,14 @@ on:
       - '**.tf'
       - '**.tfvars'
       - '.pre-commit-config.yaml'
+      - '.github/workflows/pre-commit.yml'
   push:
     branches: [master]
     paths:
       - '**.tf'
       - '**.tfvars'
       - '.pre-commit-config.yaml'
+      - '.github/workflows/pre-commit.yml'
 
 jobs:
   pre-commit:
