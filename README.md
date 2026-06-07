@@ -318,7 +318,7 @@ The module includes automated quality checks through GitHub Actions:
 
 - **Validate Workflow**: Runs on every push/PR - Terraform validation and format checking
 - **Security Workflow**: Runs on every push/PR and weekly - Security scanning with checkov/tfsec
-- **Feature Discovery**: Weekly automated discovery of new AWS Backup features
+- **Feature Discovery**: Weekly Hermes cron discovery of new AWS Backup features
 
 ### AI Validation Examples
 
@@ -419,59 +419,17 @@ For detailed troubleshooting steps:
 
 ## Automation & Feature Discovery
 
-### Automated Feature Discovery System
+### Hermes Feature Discovery Cron
 
-This module includes an automated feature discovery system that runs weekly to identify new AWS Backup features, deprecations, and bug fixes from the AWS provider. The system uses Claude Code with MCP (Model Context Protocol) servers to analyze provider documentation and automatically create GitHub issues for new functionality.
+This module uses a Terraform Hermes cron job for weekly AWS Backup feature discovery instead of a repository-hosted GitHub Actions workflow. The cron checks current Terraform AWS provider and AWS Backup sources, compares them against module coverage, searches for duplicate open issues, and creates a GitHub issue only when a finding is significant, actionable, and source-backed.
 
 #### How It Works
 
-1. **Weekly Scanning**: Every Sunday at 00:00 UTC, the system scans the latest AWS provider documentation
-2. **MCP Integration**: Uses Terraform and Context7 MCP servers to access up-to-date provider docs
-3. **Intelligent Analysis**: Compares provider capabilities with current module implementation
-4. **Automated Issues**: Creates categorized GitHub issues for discovered items:
-   - 🚀 **New Features** - Backup resources/arguments not yet implemented
-   - ⚠️ **Deprecations** - Features being phased out requiring action
-   - 🐛 **Bug Fixes** - Important provider fixes affecting the module
-
-#### Feature Discovery Workflow
-
-The discovery process follows this workflow:
-
-```
-┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
-│                 │    │                      │    │                     │
-│  Weekly Trigger │───▶│   Claude Code CLI    │───▶│   GitHub Issues     │
-│  (GitHub Action)│    │   + MCP Servers      │    │   (Auto-created)    │
-│                 │    │                      │    │                     │
-└─────────────────┘    └──────────────────────┘    └─────────────────────┘
-                                 │
-                                 ▼
-                       ┌──────────────────────┐
-                       │                      │
-                       │  Feature Tracking    │
-                       │    Database          │
-                       │  (.github/tracker/)  │
-                       │                      │
-                       └──────────────────────┘
-```
-
-#### Manual Discovery
-
-You can manually trigger feature discovery:
-
-```bash
-# Standard discovery
-gh workflow run feature-discovery.yml
-
-# Dry run mode (analyze without creating issues)
-gh workflow run feature-discovery.yml -f dry_run=true
-
-# Specific provider version
-gh workflow run feature-discovery.yml -f provider_version=5.82.0
-
-# Force full scan
-gh workflow run feature-discovery.yml -f force_scan=true
-```
+1. **Weekly Scanning**: Hermes runs the discovery job every Monday at 07:00 Europe/Madrid.
+2. **Current-source Lookup**: The job uses Terraform Registry MCP and AWS Docs MCP to check provider and AWS Backup changes.
+3. **Read-only Module Inspection**: The repo is inspected without editing local files or running Terraform apply.
+4. **Duplicate Checks**: Existing open issues are searched before any new issue is created.
+5. **Telegram Reporting**: The final run report is delivered to the AWS Backup Telegram topic for auditability.
 
 #### Discovery Categories
 
@@ -506,62 +464,8 @@ Each discovery type uses a structured template:
 - **Deprecations**: Migration guidance, timeline, impact assessment
 - **Bug Fixes**: Impact analysis, testing strategy, version requirements
 
-#### Feature Tracking
+#### Operational Notes
 
-All discoveries are tracked in `.github/feature-tracker/backup-features.json`:
-
-```json
-{
-  "metadata": {
-    "last_scan": "2025-01-21T00:00:00Z",
-    "provider_version": "5.82.0",
-    "scan_count": 42
-  },
-  "current_implementation": {
-    "resources": {
-      "aws_backup_vault": {
-        "implemented": ["name", "kms_key_arn", "force_destroy"],
-        "pending": ["backup_vault_lock_configuration"]
-      }
-    }
-  },
-  "discovered_features": {
-    "new_resources": {},
-    "deprecations": {},
-    "bug_fixes": {}
-  }
-}
-```
-
-#### MCP Server Integration
-
-The system leverages Model Context Protocol servers for real-time documentation access:
-
-- **Terraform MCP**: `@modelcontextprotocol/server-terraform@latest`
-  - AWS provider resource documentation
-  - Argument specifications and examples
-  - Version compatibility information
-
-- **Context7 MCP**: `@upstash/context7-mcp@latest`
-  - Provider changelogs and release notes
-  - Community discussions and best practices
-  - Historical change tracking
-
-#### Benefits
-
-- **Stay Current**: Never miss new AWS Backup features
-- **Proactive Maintenance**: Identify deprecations before they break
-- **Automated Tracking**: Comprehensive feature database
-- **Community Value**: Users benefit from latest AWS capabilities
-- **Reduced Manual Work**: No need for manual provider monitoring
-
-#### Contributing to Discovery
-
-The system is designed to minimize false positives, but you can help improve accuracy:
-
-1. **Review Auto-Created Issues**: Validate and prioritize discoveries
-2. **Update Tracking**: Mark features as implemented when complete
-3. **Improve Templates**: Suggest enhancements to issue templates
-4. **Report Gaps**: Let us know if the system misses important features
-
-For more details on the discovery system architecture, see `.github/scripts/discovery-prompt.md`.
+- The obsolete GitHub Actions feature-discovery workflow and JSON tracker file were removed when discovery moved to Hermes.
+- Cron output is kept in Hermes cron output storage and delivered to Telegram.
+- Manual discovery should be run from the Terraform Hermes profile by triggering the `terraform-aws-backup feature discovery` cron job.

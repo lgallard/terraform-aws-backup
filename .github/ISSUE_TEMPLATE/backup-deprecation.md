@@ -221,11 +221,11 @@ Review which of the 16 examples are affected:
 ---
 
 ### 🤖 Automation Details
-**Discovery Workflow:** `feature-discovery.yml`
+**Discovery System:** Terraform Hermes cron (`terraform-aws-backup feature discovery`)
 **Scan ID:** `[SCAN_ID]`
 **Detection Method:** AWS Provider deprecation analysis
 **Last Updated:** `[TIMESTAMP]`
 
 ---
 
-*This issue was automatically created by the AWS Backup Feature Discovery workflow. Please review the auto-generated content and prioritize based on removal timeline.*
+*This issue was automatically created by the AWS Backup feature discovery cron. Please review the auto-generated content and prioritize based on removal timeline.*
