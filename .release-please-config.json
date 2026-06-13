@@ -3,6 +3,12 @@
     ".": {
       "release-type": "terraform-module",
       "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance Improvements" },
+        { "type": "refactor", "section": "Code Refactoring" }
+      ],
       "include-v-in-tag": false,
       "include-component-in-tag": false
     }
