@@ -7,6 +7,7 @@ This example demonstrates how to create an AWS Backup Audit Framework with vario
 
 - Creates an AWS Backup Audit Framework
 - Configures multiple audit controls with different parameters
+- Demonstrates a control scope that targets a specific resource type
 - Demonstrates parameter handling for controls with and without parameters
 - Shows how to properly configure framework tags
 
@@ -28,7 +29,10 @@ module "aws_backup_example" {
       {
         name            = "BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK"
         parameter_name  = "maxRetentionDays"
-        parameter_value = "100"  # Maximum retention period allowed by vault lock
+        parameter_value = "100" # Maximum retention period allowed by vault lock
+        scope = {
+          compliance_resource_types = ["EBS"]
+        }
       },
     ]
   }
@@ -63,6 +67,7 @@ This example includes several controls:
 5. **BACKUP_RESOURCES_PROTECTED_BY_BACKUP_VAULT_LOCK**
    - Ensures resources are protected by vault lock
    - Parameter: maxRetentionDays = 100
+   - Scope: EBS resources
 
 6. **BACKUP_LAST_RECOVERY_POINT_CREATED**
    - Monitors recent backup creation
@@ -70,9 +75,10 @@ This example includes several controls:
 
 ## Notes
 
-1. Some controls don't accept parameters and should have parameter_name and parameter_value set to null
+1. Some controls don't accept parameters and should omit parameter_name and parameter_value
 2. The framework creation can take up to 20 minutes
-3. Tags are applied at the framework level
-4. Framework policy assignments must be managed through AWS Console or AWS CLI
-5. **Important:** For the Deployment Status of the Framework to be successful, you must enable AWS Config resource tracking to monitor configuration changes of your backup resources. This can be done from the AWS Console.
+3. Control scopes can target resource types, resource IDs, or a single tag key/value pair
+4. Tags are applied at the framework level
+5. Framework policy assignments must be managed through AWS Console or AWS CLI
+6. **Important:** For the Deployment Status of the Framework to be successful, you must enable AWS Config resource tracking to monitor configuration changes of your backup resources. This can be done from the AWS Console.
 <!-- END_TF_DOCS -->
