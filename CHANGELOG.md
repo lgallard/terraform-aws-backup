@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.10.0](https://github.com/lgallard/terraform-aws-backup/compare/1.9.0...1.10.0) (2026-07-04)
+
+
+### Features
+
+* support audit framework control scope ([#360](https://github.com/lgallard/terraform-aws-backup/issues/360)) ([4dff4d3](https://github.com/lgallard/terraform-aws-backup/commit/4dff4d305553072a566212f6273f419de350d38e))
+
 ## [1.9.0](https://github.com/lgallard/terraform-aws-backup/compare/1.8.0...1.9.0) (2026-06-06)
 
 
