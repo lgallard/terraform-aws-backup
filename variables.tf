@@ -535,6 +535,11 @@ variable "audit_framework" {
       name            = string
       parameter_name  = optional(string)
       parameter_value = optional(string)
+      scope = optional(object({
+        compliance_resource_ids   = optional(list(string))
+        compliance_resource_types = optional(list(string))
+        tags                      = optional(map(string))
+      }))
     }))
   })
   default = {
@@ -542,6 +547,45 @@ variable "audit_framework" {
     name        = null
     description = null
     controls    = []
+  }
+
+  validation {
+    condition = alltrue([
+      for control in var.audit_framework.controls :
+      try(control.scope.compliance_resource_ids, null) == null ? true : (
+        length(control.scope.compliance_resource_ids) >= 1 &&
+        length(control.scope.compliance_resource_ids) <= 100
+      )
+    ])
+    error_message = "audit_framework.controls[*].scope.compliance_resource_ids must contain between 1 and 100 resource IDs when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for control in var.audit_framework.controls :
+      try(control.scope.tags, null) == null ? true : length(control.scope.tags) == 1
+    ])
+    error_message = "audit_framework.controls[*].scope.tags must contain exactly one tag key/value pair when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for control in var.audit_framework.controls :
+      try(control.scope.compliance_resource_types, null) == null ? true : length(control.scope.compliance_resource_types) >= 1
+    ])
+    error_message = "audit_framework.controls[*].scope.compliance_resource_types must contain at least one resource type when specified."
+  }
+
+  validation {
+    condition = alltrue([
+      for control in var.audit_framework.controls :
+      try(control.scope, null) == null ? true : (
+        try(length(control.scope.compliance_resource_ids), 0) > 0 ||
+        try(length(control.scope.compliance_resource_types), 0) > 0 ||
+        try(length(control.scope.tags), 0) > 0
+      )
+    ])
+    error_message = "audit_framework.controls[*].scope must include at least one of compliance_resource_ids, compliance_resource_types, or tags."
   }
 }
 

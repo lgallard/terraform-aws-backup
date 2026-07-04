@@ -128,7 +128,7 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
 
@@ -182,7 +182,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_advanced_backup_settings"></a> [advanced\_backup\_settings](#input\_advanced\_backup\_settings) | Advanced backup settings by resource type | `map(map(string))` | `{}` | no |
-| <a name="input_audit_framework"></a> [audit\_framework](#input\_audit\_framework) | Configuration for AWS Backup Audit Manager framework | <pre>object({<br/>    create      = bool<br/>    name        = string<br/>    description = optional(string)<br/>    controls = list(object({<br/>      name            = string<br/>      parameter_name  = optional(string)<br/>      parameter_value = optional(string)<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controls": [],<br/>  "create": false,<br/>  "description": null,<br/>  "name": null<br/>}</pre> | no |
+| <a name="input_audit_framework"></a> [audit\_framework](#input\_audit\_framework) | Configuration for AWS Backup Audit Manager framework | <pre>object({<br/>    create      = bool<br/>    name        = string<br/>    description = optional(string)<br/>    controls = list(object({<br/>      name            = string<br/>      parameter_name  = optional(string)<br/>      parameter_value = optional(string)<br/>      scope = optional(object({<br/>        compliance_resource_ids   = optional(list(string))<br/>        compliance_resource_types = optional(list(string))<br/>        tags                      = optional(map(string))<br/>      }))<br/>    }))<br/>  })</pre> | <pre>{<br/>  "controls": [],<br/>  "create": false,<br/>  "description": null,<br/>  "name": null<br/>}</pre> | no |
 | <a name="input_backup_policies"></a> [backup\_policies](#input\_backup\_policies) | Map of backup policies to create | <pre>map(object({<br/>    target_vault_name = string<br/>    schedule          = string<br/>    start_window      = number<br/>    completion_window = number<br/>    lifecycle = object({<br/>      delete_after       = number<br/>      cold_storage_after = optional(number)<br/>    })<br/>    recovery_point_tags      = optional(map(string))<br/>    copy_actions             = optional(list(map(string)))<br/>    enable_continuous_backup = optional(bool)<br/>  }))</pre> | `{}` | no |
 | <a name="input_backup_regions"></a> [backup\_regions](#input\_backup\_regions) | List of regions where backups should be created | `list(string)` | `[]` | no |
 | <a name="input_backup_selections"></a> [backup\_selections](#input\_backup\_selections) | Map of backup selections | <pre>map(object({<br/>    resources     = optional(list(string))<br/>    not_resources = optional(list(string))<br/>    conditions = optional(object({<br/>      string_equals     = optional(map(string))<br/>      string_not_equals = optional(map(string))<br/>      string_like       = optional(map(string))<br/>      string_not_like   = optional(map(string))<br/>    }))<br/>    tags = optional(map(string))<br/>  }))</pre> | `{}` | no |

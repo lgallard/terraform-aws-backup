@@ -11,6 +11,8 @@ locals {
           value = control.parameter_value
         }
       ]
+      # Only create a scope block when one is explicitly configured
+      scope = try(control.scope, null) == null ? [] : [control.scope]
     }
   ]
 }
@@ -32,6 +34,16 @@ resource "aws_backup_framework" "ab_framework" {
         content {
           name  = input_parameter.value.name
           value = input_parameter.value.value
+        }
+      }
+
+      # Only create scope block if scope is provided
+      dynamic "scope" {
+        for_each = control.value.scope
+        content {
+          compliance_resource_ids   = scope.value.compliance_resource_ids
+          compliance_resource_types = scope.value.compliance_resource_types
+          tags                      = scope.value.tags
         }
       }
     }
