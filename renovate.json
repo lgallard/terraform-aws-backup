@@ -1,6 +1,6 @@
 {
   "extends": [
-    "config:recommended"
+    "github>lgallard/renovate-config"
   ],
   "terraform": {
     "ignoreDeps": [
@@ -42,13 +42,19 @@
       "ignoreUnstable": true
     },
     {
-      "matchDatasources": ["golang-version"],
+      "matchDatasources": [
+        "golang-version"
+      ],
       "ignoreUnstable": true,
       "enabled": true
     },
     {
-      "matchDepTypes": ["action"],
-      "matchPackageNames": ["actions/setup-go"],
+      "matchDepTypes": [
+        "action"
+      ],
+      "matchPackageNames": [
+        "actions/setup-go"
+      ],
       "extractVersion": "^v(?<version>.*)$",
       "versioning": "go-mod-directive",
       "ignoreUnstable": true
