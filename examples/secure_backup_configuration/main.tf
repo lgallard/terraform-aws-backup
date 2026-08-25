@@ -4,31 +4,31 @@
 # Data sources for account and region information
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
-data "aws_region" "cross_region" {
-  provider = aws.cross_region
-}
 
 # Local values for consistent resource naming and configuration
 locals {
   vault_name = "${var.project_name}-${var.environment}-backup-vault"
 
-  common_tags = {
-    Environment   = var.environment
-    Project       = var.project_name
-    ManagedBy     = "terraform"
-    Purpose       = "backup"
-    SecurityLevel = "high"
-    Compliance    = "required"
-    CreatedBy     = "secure-backup-example"
-  }
+  common_tags = merge({
+    Environment         = var.environment
+    Project             = var.project_name
+    Owner               = var.owner
+    ManagedBy           = "terraform"
+    Purpose             = "backup"
+    SecurityLevel       = "high"
+    Compliance          = "required"
+    ComplianceFramework = var.compliance_framework
+    CreatedBy           = "secure-backup-example"
+  }, var.additional_tags)
 
   # Security-focused backup rules with encryption and compliance
   backup_rules = {
     critical_daily = {
-      name              = "critical-daily-encrypted"
-      schedule          = "cron(0 3 ? * * *)"
-      start_window      = 60
-      completion_window = 300
+      name                     = "critical-daily-encrypted"
+      schedule                 = "cron(0 3 ? * * *)"
+      start_window             = 60
+      completion_window        = 300
+      enable_continuous_backup = var.enable_continuous_backup
       lifecycle = {
         cold_storage_after = 30
         delete_after       = var.backup_retention_days
@@ -76,32 +76,48 @@ locals {
   }
 
   # Security-focused backup selections with specific resource targeting
-  backup_selections = {
-    production_databases = {
-      name = "production-databases-secure"
-      # Use tag-based selection for better security instead of wildcard ARNs
-      resources = ["*"]
-      conditions = {
-        string_equals = {
-          "aws:tag/Environment"    = var.environment
-          "aws:tag/BackupRequired" = "true"
-          "aws:tag/ResourceType"   = "Database"
+  backup_selections = merge(
+    {
+      production_databases = {
+        name = "production-databases-secure"
+        # Use tag-based selection for better security instead of wildcard ARNs
+        resources = ["*"]
+        conditions = {
+          string_equals = {
+            "aws:tag/Environment"    = var.environment
+            "aws:tag/BackupRequired" = "true"
+            "aws:tag/ResourceType"   = "Database"
+          }
         }
       }
-    }
-    critical_file_systems = {
-      name = "critical-file-systems-secure"
-      # Use tag-based selection for better security
-      resources = ["*"]
-      conditions = {
-        string_equals = {
-          "aws:tag/Environment"  = var.environment
-          "aws:tag/BackupTier"   = "critical"
-          "aws:tag/ResourceType" = "FileSystem"
+      critical_file_systems = {
+        name = "critical-file-systems-secure"
+        # Use tag-based selection for better security
+        resources = ["*"]
+        conditions = {
+          string_equals = {
+            "aws:tag/Environment"  = var.environment
+            "aws:tag/BackupTier"   = "critical"
+            "aws:tag/ResourceType" = "FileSystem"
+          }
         }
       }
-    }
-  }
+    },
+    # Explicit ARN-based selections, for databases/volumes that aren't (or
+    # can't be) tagged for the conditions above.
+    length(var.database_resources) > 0 ? {
+      explicit_databases = {
+        name      = "explicit-databases-secure"
+        resources = var.database_resources
+      }
+    } : {},
+    length(var.volume_resources) > 0 ? {
+      explicit_volumes = {
+        name      = "explicit-volumes-secure"
+        resources = var.volume_resources
+      }
+    } : {}
+  )
 }
 
 # Secure backup module configuration

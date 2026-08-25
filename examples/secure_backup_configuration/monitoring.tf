@@ -195,6 +195,15 @@ resource "aws_sns_topic" "backup_security_alerts" {
   })
 }
 
+# Email subscription for backup security alerts (conditional)
+resource "aws_sns_topic_subscription" "backup_security_alerts_email" {
+  count = var.create_sns_topic && var.notification_email != "" ? 1 : 0
+
+  topic_arn = aws_sns_topic.backup_security_alerts[0].arn
+  protocol  = "email"
+  endpoint  = var.notification_email
+}
+
 # SNS topic policy for secure access
 resource "aws_sns_topic_policy" "backup_security_alerts" {
   count = var.create_sns_topic ? 1 : 0

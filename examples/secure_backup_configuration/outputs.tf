@@ -77,6 +77,11 @@ output "sns_topic_arn" {
   value       = var.create_sns_topic ? aws_sns_topic.backup_security_alerts[0].arn : null
 }
 
+output "notification_email_subscribed" {
+  description = "Whether an email subscription was created for backup security alerts"
+  value       = var.create_sns_topic && var.notification_email != ""
+}
+
 # Security compliance outputs
 output "vault_lock_enabled" {
   description = "Whether vault lock is enabled for compliance"

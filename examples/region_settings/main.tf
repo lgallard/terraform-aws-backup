@@ -16,8 +16,6 @@ provider "aws" {
   region = var.region
 }
 
-data "aws_caller_identity" "current" {}
-
 # Configure region settings to enable specific AWS services for backup
 module "region_settings" {
   source = "../.."
