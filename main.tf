@@ -42,7 +42,7 @@ locals {
     schedule_expression_timezone = var.rule_schedule_expression_timezone
     start_window                 = var.rule_start_window
     completion_window            = var.rule_completion_window
-    lifecycle = var.rule_lifecycle_cold_storage_after == null ? {} : {
+    lifecycle = var.rule_lifecycle_cold_storage_after == null ? null : {
       cold_storage_after                        = var.rule_lifecycle_cold_storage_after
       delete_after                              = var.rule_lifecycle_delete_after
       opt_in_to_archive_for_supported_resources = var.rule_lifecycle_opt_in_to_archive
@@ -72,7 +72,7 @@ locals {
   # Lifecycle validations
   lifecycle_validations = alltrue([
     for rule in local.rules : (
-      length(try(rule.lifecycle, {})) == 0 ? true : (
+      try(length(rule.lifecycle), 0) == 0 ? true : (
         # Only validate the comparison if both values are non-null
         (try(rule.lifecycle.cold_storage_after, null) == null || try(rule.lifecycle.delete_after, null) == null) ? true :
         coalesce(rule.lifecycle.cold_storage_after, 0) <= coalesce(rule.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
@@ -80,7 +80,7 @@ locals {
     ) &&
     alltrue([
       for copy_action in try(rule.copy_actions, []) : (
-        length(try(copy_action.lifecycle, {})) == 0 ? true : (
+        try(length(copy_action.lifecycle), 0) == 0 ? true : (
           # Only validate the comparison if both values are non-null
           (try(copy_action.lifecycle.cold_storage_after, null) == null || try(copy_action.lifecycle.delete_after, null) == null) ? true :
           coalesce(copy_action.lifecycle.cold_storage_after, 0) <= coalesce(copy_action.lifecycle.delete_after, var.default_lifecycle_delete_after_days)
@@ -190,7 +190,7 @@ resource "aws_backup_plan" "ab_plan" {
 
       # Lifecycle
       dynamic "lifecycle" {
-        for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
+        for_each = try(length(rule.value.lifecycle), 0) == 0 ? [] : [rule.value.lifecycle]
         content {
           cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
           delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
@@ -206,7 +206,7 @@ resource "aws_backup_plan" "ab_plan" {
 
           # Copy Action Lifecycle
           dynamic "lifecycle" {
-            for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
+            for_each = try(length(copy_action.value.lifecycle), 0) == 0 ? [] : [copy_action.value.lifecycle]
             content {
               cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
               delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
@@ -319,7 +319,7 @@ resource "aws_backup_plan" "ab_plans" {
 
       # Lifecycle
       dynamic "lifecycle" {
-        for_each = length(try(rule.value.lifecycle, {})) == 0 ? [] : [rule.value.lifecycle]
+        for_each = try(length(rule.value.lifecycle), 0) == 0 ? [] : [rule.value.lifecycle]
         content {
           cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
           delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)
@@ -335,7 +335,7 @@ resource "aws_backup_plan" "ab_plans" {
 
           # Copy Action Lifecycle
           dynamic "lifecycle" {
-            for_each = length(try(copy_action.value.lifecycle, {})) == 0 ? [] : [copy_action.value.lifecycle]
+            for_each = try(length(copy_action.value.lifecycle), 0) == 0 ? [] : [copy_action.value.lifecycle]
             content {
               cold_storage_after                        = try(lifecycle.value.cold_storage_after, var.default_lifecycle_cold_storage_after_days)
               delete_after                              = try(lifecycle.value.delete_after, var.default_lifecycle_delete_after_days)

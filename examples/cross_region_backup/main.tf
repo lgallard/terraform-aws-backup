@@ -23,10 +23,6 @@ provider "aws" {
   region = var.secondary_region
 }
 
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 # Create destination vault in secondary region
 resource "aws_backup_vault" "secondary_vault" {
   provider = aws.secondary
