@@ -30,56 +30,40 @@ jobs:
         with:
           fetch-depth: 1
 
+      # MCP servers for Terraform registry and library documentation lookups.
+      # Written to a file so the JSON stays readable in claude_args.
+      - name: Create MCP config
+        run: |
+          cat > "${RUNNER_TEMP}/mcp-config.json" << 'EOF'
+          {
+            "mcpServers": {
+              "terraform": {
+                "command": "docker",
+                "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server:1.3.0"]
+              },
+              "context7": {
+                "command": "npx",
+                "args": ["-y", "@upstash/context7-mcp@1.0.29"]
+              }
+            }
+          }
+          EOF
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@a92e7c70a4da9793dc164451d829089dc057a464 # v1.0.159
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: "--model claude-sonnet-4-6"
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
 
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-sonnet-4-6"
-
-          # Optional: Customize the trigger phrase (default: @claude)
-          # trigger_phrase: "/claude"
-
-          # Optional: Trigger when specific user is assigned to an issue
-          # assignee_trigger: "claude-bot"
-
-          # MCP Configuration for Terraform and Context7 documentation access
-          mcp_config: |
-            {
-              "mcpServers": {
-                "terraform": {
-                  "command": "npx",
-                  "args": [
-                    "-y",
-                    "@modelcontextprotocol/server-terraform@latest"
-                  ]
-                },
-                "context7": {
-                  "command": "npx",
-                  "args": [
-                    "-y",
-                    "@upstash/context7-mcp@latest"
-                  ]
-                }
-              }
-            }
-
-          # Allow Bash permissions for pre-commit hooks and documentation updates + MCP tools
-          allowed_tools: "Bash(pre-commit run --files),Bash(terraform fmt),Bash(terraform validate),Bash(terraform-docs),mcp__terraform-server__getProviderDocs,mcp__terraform-server__resolveProviderDocID,mcp__terraform-server__searchModules,mcp__terraform-server__moduleDetails,mcp__context7__resolve-library-id,mcp__context7__get-library-docs"
-
-          # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
-
-          # Optional: Custom environment variables for Claude
-          # claude_env: |
-          #   NODE_ENV: test
+          # v1 consolidates model, tool permissions and MCP config into claude_args.
+          # The old mcp_config/allowed_tools/model inputs are rejected as
+          # "Unexpected input(s)" and silently ignored.
+          # https://github.com/anthropics/claude-code-action/blob/main/docs/migration-guide.md
+          claude_args: |
+            --model claude-sonnet-4-6
+            --mcp-config ${{ runner.temp }}/mcp-config.json
+            --allowedTools "Bash(terraform fmt:*),Bash(terraform validate:*),Bash(terraform-docs:*),Bash(pre-commit run --files:*),mcp__terraform__search_providers,mcp__terraform__get_provider_details,mcp__terraform__get_latest_provider_version,mcp__terraform__search_modules,mcp__terraform__get_module_details,mcp__context7__resolve-library-id,mcp__context7__get-library-docs"

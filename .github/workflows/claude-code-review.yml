@@ -139,8 +139,8 @@ jobs:
     timeout-minutes: 15  # Prevent runaway executions
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write # Claude posts the review back onto the PR
+      issues: write
       id-token: write
 
     steps:
@@ -199,8 +199,11 @@ jobs:
         with:
           fetch-depth: 0  # Full history for reliable diff comparisons
           token: ${{ secrets.GITHUB_TOKEN }}
-          # For issue_comment events, checkout the PR branch
-          ref: ${{ github.event_name == 'issue_comment' && steps.pr-checkout-info.outputs.pr_head_ref || github.ref }}
+          # For issue_comment events, checkout the PR head via refs/pull/<n>/head.
+          # The head branch name only resolves for same-repo PRs; a fork PR's
+          # branch does not exist in this repo, so checking it out by name fails
+          # with "A branch or tag with the name '<branch>' could not be found".
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.ref }}
 
       - name: Refresh git state
         id: git-refresh
@@ -208,7 +211,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           PR_HEAD_SHA: ${{ steps.pr-checkout-info.outputs.pr_head_sha }}
-          PR_HEAD_REF: ${{ steps.pr-checkout-info.outputs.pr_head_ref }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
 
@@ -230,14 +233,14 @@ jobs:
             EXPECTED_SHA="$PR_HEAD_SHA"
             echo "Expected SHA from PR: $EXPECTED_SHA"
 
-            # Fetch the specific PR branch to get latest changes
-            if [ -n "$PR_HEAD_REF" ]; then
-              echo "Fetching latest changes for PR branch: ${PR_HEAD_REF}"
-              git fetch origin "${PR_HEAD_REF}:${PR_HEAD_REF}" 2>/dev/null || true
+            # Fetch the PR head through the pull ref so fork PRs resolve too
+            if [ -n "$PR_NUMBER" ]; then
+              echo "Fetching latest changes for PR #${PR_NUMBER}"
+              git fetch origin "refs/pull/${PR_NUMBER}/head"
 
-              # Reset to the latest commit on the PR branch
-              echo "Resetting to latest commit on ${PR_HEAD_REF}"
-              git reset --hard "origin/${PR_HEAD_REF}"
+              # Reset to the latest commit on the PR head
+              echo "Resetting to latest commit on refs/pull/${PR_NUMBER}/head"
+              git reset --hard FETCH_HEAD
 
               NEW_SHA=$(git rev-parse HEAD)
               echo "Updated to SHA: $NEW_SHA"
@@ -609,13 +612,24 @@ jobs:
         uses: anthropics/claude-code-action@a92e7c70a4da9793dc164451d829089dc057a464 # v1.0.159
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: "--model claude-sonnet-4-6"
 
-          # Allow Bash permissions for pre-commit hooks and documentation updates
-          allowed_tools: "Bash(pre-commit run --files),Bash(terraform fmt),Bash(terraform validate),Bash(terraform-docs)"
+          # v1 consolidates model and tool permissions into claude_args. The old
+          # allowed_tools/direct_prompt inputs are rejected as "Unexpected input(s)".
+          # https://github.com/anthropics/claude-code-action/blob/main/docs/migration-guide.md
+          claude_args: |
+            --model claude-sonnet-4-6
+            --allowedTools "Bash(terraform fmt:*),Bash(terraform validate:*),Bash(terraform-docs:*),Bash(pre-commit run --files:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"
 
           # Dynamic prompt based on review mode
-          direct_prompt: |
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+
+            Publish your findings on the PR itself: `gh pr comment` for the
+            summary, and `mcp__github_inline_comment__create_inline_comment`
+            (with `confirmed: true`) for specific lines. Do not return the
+            review only as a chat message.
+
             🔄 **COMMIT ANALYSIS CONTEXT**
             - **Commit SHA**: `${{ steps.verify-state.outputs.current_sha }}`
             - **Review ID**: `${{ steps.verify-state.outputs.review_id }}`

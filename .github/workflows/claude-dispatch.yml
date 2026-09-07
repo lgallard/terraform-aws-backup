@@ -32,20 +32,17 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@a92e7c70a4da9793dc164451d829089dc057a464 # v1.0.159
         with:
-          claude_args: "--model claude-sonnet-4-6"
-          mode: 'remote-agent'
-          # Optional: Specify an API key, otherwise we'll use your Claude account automatically
-          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-sonnet-4-6"
+          # v1 auto-detects the execution mode; the old `mode` input was removed
+          # and is rejected as "Unexpected input(s)".
+          # https://github.com/anthropics/claude-code-action/blob/main/docs/migration-guide.md
+          claude_args: |
+            --model claude-sonnet-4-6
 
           # Optional: Allow Claude to run specific commands
-          # allowed_tools: |
-          #   Bash(npm run lint)
-          #   Bash(npm run test)
-          #   Bash(npm run build)
+          # claude_args: |
+          #   --allowedTools "Bash(terraform fmt:*),Bash(terraform validate:*)"
 
           # Optional: Custom environment variables for Claude
-          # claude_env: |
-          #   NODE_ENV: test
+          # settings: '{"env":{"TF_IN_AUTOMATION":"1"}}'
