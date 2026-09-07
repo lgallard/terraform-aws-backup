@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.10.2](https://github.com/lgallard/terraform-aws-backup/compare/1.10.1...1.10.2) (2026-09-07)
+
+
+### Bug Fixes
+
+* treat null rule lifecycle as unconfigured ([da837f8](https://github.com/lgallard/terraform-aws-backup/commit/da837f83fd3b98843d6fba41f1593e09ff4d879c))
+
 ## [1.10.1](https://github.com/lgallard/terraform-aws-backup/compare/1.10.0...1.10.1) (2026-09-07)
 
 
