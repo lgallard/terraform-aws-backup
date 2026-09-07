@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.10.1](https://github.com/lgallard/terraform-aws-backup/compare/1.10.0...1.10.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* migrate Claude Code workflows to action v1 inputs ([#368](https://github.com/lgallard/terraform-aws-backup/issues/368)) ([d13ccff](https://github.com/lgallard/terraform-aws-backup/commit/d13ccfff6d2c4f903352c7e27ca557ef19b3f475))
+
 ## [1.10.0](https://github.com/lgallard/terraform-aws-backup/compare/1.9.0...1.10.0) (2026-07-04)
 
 
