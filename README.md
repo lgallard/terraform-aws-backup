@@ -128,9 +128,9 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.65.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.3.2 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.9.1 |
 
 ## Modules
 

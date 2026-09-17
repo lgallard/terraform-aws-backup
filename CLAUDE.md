@@ -108,11 +108,11 @@ locals {
 
 ## AI-Powered Validation & Analysis
 
-This module uses AI-powered validation instead of traditional automated tests. Claude AI with specialized subagents provides comprehensive code analysis, validation, and quality assurance.
+This module uses lightweight deterministic validation plus AI-powered review instead of default live AWS integration tests. Claude AI with specialized subagents provides comprehensive code analysis, validation, and quality assurance.
 
 ### Validation Philosophy
 
-Traditional testing frameworks require maintenance, can become outdated, and may not catch semantic issues or best practice violations. AI-powered validation provides:
+AWS-resource-dependent integration tests require maintenance, credentials, time, and cleanup. Keep cheap deterministic validation for syntax/schema/docs, and use AI-powered validation for semantic issues or best practice violations. AI-powered validation provides:
 
 - **Contextual Understanding**: Analyzes code semantically, not just syntactically
 - **Best Practices Enforcement**: Validates against AWS and Terraform best practices
@@ -321,15 +321,19 @@ Task Agent (general-purpose): "Evaluate performance of selection logic:
 
 ### Integration with Development Workflow
 
-Replace traditional test execution with AI validation:
+Replace live AWS integration test expectations with low-friction deterministic validation plus AI review:
 
-**Before (with traditional tests):**
-```bash
-cd test && go test -v -timeout 60m
-```
+**Before:** AWS-resource-dependent integration suites or example apply/destroy runs were treated as default validation.
 
-**Now (with AI validation):**
+**Now (default PR validation path):**
 ```bash
+terraform fmt -recursive
+terraform init -backend=false
+terraform validate
+terraform -chdir=examples/[touched-example] init -backend=false
+terraform -chdir=examples/[touched-example] validate
+pre-commit run --all-files
+
 # Request comprehensive AI validation
 Task Agent (general-purpose): "Validate all module changes:
 1. Terraform syntax and resource configurations
@@ -339,6 +343,8 @@ Task Agent (general-purpose): "Validate all module changes:
 5. Documentation and examples accuracy
 6. Backward compatibility"
 ```
+
+Live AWS integration checks may still be run manually for risky provider/API behavior, but they are optional and should not be the default requirement for PRs.
 
 ### Advantages of AI Validation
 

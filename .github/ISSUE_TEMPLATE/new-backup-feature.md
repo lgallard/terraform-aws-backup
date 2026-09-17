@@ -41,12 +41,12 @@ assignees: ["@me"]
 - [ ] Update main `README.md`
 - [ ] Add to `CHANGELOG.md` (will be automated by release-please)
 
-#### Testing & Validation
-- [ ] Add Terratest in `test/integration_test.go`
-- [ ] Add test fixtures in `test/fixtures/terraform/[feature-name]/`
-- [ ] Test with existing example scenarios
-- [ ] Run `terraform fmt`, `terraform validate`
-- [ ] Run `pre-commit run --all-files`
+#### Validation
+- [ ] Run `terraform fmt -recursive`
+- [ ] Run `terraform init -backend=false` and `terraform validate` for the root module
+- [ ] Validate touched examples with `terraform -chdir=examples/[feature-name] init -backend=false` and `terraform -chdir=examples/[feature-name] validate` where applicable
+- [ ] Run `pre-commit run --all-files` or targeted `pre-commit run --files ...`
+- [ ] Use AI/code review for AWS Backup behavior, security, documentation, and edge cases
 
 #### Quality Assurance
 - [ ] Follow existing code patterns and conventions
@@ -82,22 +82,22 @@ output "[feature_output]" {
 }
 ```
 
-### Testing Commands
+### Validation Commands
 ```bash
-# Test the specific example
-cd examples/[feature-name]
-terraform init
-terraform plan
-terraform apply
-terraform destroy
+# Root module validation
+terraform fmt -recursive
+terraform init -backend=false
+terraform validate
 
-# Run comprehensive tests
-cd test/
-go test -v -timeout 45m -run TestTerraformBackup[FeatureName]
+# Validate the specific example without creating AWS resources
+terraform -chdir=examples/[feature-name] init -backend=false
+terraform -chdir=examples/[feature-name] validate
 
-# Full test suite
-go test -v -timeout 60m ./...
+# Run repository hooks
+pre-commit run --all-files
 ```
+
+Live AWS integration checks are optional/manual only when explicitly needed; they are not required for the default PR validation path.
 
 ### Implementation Notes
 <!-- Additional context or considerations -->
@@ -122,8 +122,8 @@ go test -v -timeout 60m ./...
 
 ### Acceptance Criteria
 - [ ] Feature implemented following module patterns
-- [ ] All tests pass with retry logic for backup APIs
-- [ ] Examples work as documented
+- [ ] Lightweight validation passes without creating AWS resources
+- [ ] Examples validate and remain accurate as documentation
 - [ ] Pre-commit hooks pass
 - [ ] Documentation complete and accurate
 - [ ] No breaking changes to existing functionality

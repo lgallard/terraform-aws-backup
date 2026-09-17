@@ -40,7 +40,6 @@ assignees: ["@me"]
 - [ ] `variables.tf` - [VARIABLE_CHANGES]
 - [ ] `outputs.tf` - [OUTPUT_CHANGES]
 - [ ] `examples/*/` - [EXAMPLE_CHANGES]
-- [ ] `test/*/` - [TEST_UPDATES]
 
 ### Analysis Required
 
@@ -98,16 +97,16 @@ assignees: ["@me"]
   - [ ] Update README with new requirements
   - [ ] Check compatibility matrix
 
-#### Phase 3: Testing & Validation
-- [ ] **Comprehensive Testing**
-  - [ ] Test all affected examples (review all 16 examples)
-  - [ ] Run full test suite with backup API retry logic
+#### Phase 3: Validation
+- [ ] **Deterministic Validation**
+  - [ ] Validate all affected examples without creating AWS resources (review all 16 examples)
+  - [ ] Run root and touched-example `terraform validate` checks with `-backend=false`
   - [ ] Validate backward compatibility (if maintaining support for older versions)
-  - [ ] Test edge cases that might be affected
+  - [ ] Validate edge cases that might be affected
 - [ ] **Example Updates**
   - [ ] Update examples to use fixed behavior
   - [ ] Remove workaround code from examples
-  - [ ] Add test case that would have failed before fix
+  - [ ] Add validation scenario that would have failed before fix
 
 #### Phase 4: Documentation
 - [ ] **Update Documentation**
@@ -142,33 +141,33 @@ assignees: ["@me"]
   - [ ] Effect on CloudWatch integration
   - [ ] Changes to SNS notification delivery
 
-### Testing Strategy
+### Validation Strategy
 
-#### Test Cases to Create/Update
+#### Validation Scenarios to Cover
 ```bash
-# Test that would have failed before the fix
-[TEST_CASE_EXAMPLE]
+# Scenario that would have failed before the fix
+[VALIDATION_SCENARIO_EXAMPLE]
 
-# Regression test to ensure fix works
-[REGRESSION_TEST]
+# Regression validation to ensure fix works
+[REGRESSION_VALIDATION]
 ```
 
 #### Validation Commands
 ```bash
-# Test with examples
-cd examples/[affected-example]
-terraform init -upgrade
-terraform plan
-terraform apply
-terraform destroy
+# Root module validation
+terraform fmt -recursive
+terraform init -backend=false
+terraform validate
 
-# Run specific tests with retry logic
-cd test/
-go test -v -timeout 45m -run TestTerraformBackup[AffectedFeature]
+# Validate affected examples without creating AWS resources
+terraform -chdir=examples/[affected-example] init -backend=false
+terraform -chdir=examples/[affected-example] validate
 
-# Full test suite with extended timeout for backup operations
-go test -v -timeout 60m ./...
+# Run repository hooks
+pre-commit run --all-files
 ```
+
+Live AWS integration checks are optional/manual only when explicitly needed; they are not required for the default PR validation path.
 
 ### Provider Version Strategy
 **Current Requirement:** `>= [CURRENT_VERSION]`

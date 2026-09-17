@@ -83,14 +83,14 @@ assignees: ["@me"]
   - [ ] Include migration instructions in validation messages
   - [ ] Plan timeline for complete removal
 
-#### Phase 4: Testing & Validation
-- [ ] **Comprehensive Testing**
-  - [ ] Test all examples with new implementation
-  - [ ] Run full test suite with backup API retry logic
+#### Phase 4: Validation
+- [ ] **Deterministic Validation**
+  - [ ] Validate all affected examples with new implementation without creating AWS resources
+  - [ ] Run root and touched-example `terraform validate` checks with `-backend=false`
   - [ ] Validate backward compatibility
-  - [ ] Test upgrade scenarios
+  - [ ] Validate upgrade scenarios
 - [ ] **Quality Assurance**
-  - [ ] Run `terraform fmt`, `terraform validate`
+  - [ ] Run `terraform fmt -recursive`, `terraform init -backend=false`, and `terraform validate`
   - [ ] Run `pre-commit run --all-files`
   - [ ] Peer review migration approach
 
@@ -180,19 +180,22 @@ module "aws_backup_new" {
 }
 ```
 
-### Testing Commands
+### Validation Commands
 ```bash
-# Test with deprecated feature (should show warnings)
-terraform plan
+# Validate deprecated and replacement configurations without creating AWS resources
+terraform fmt -recursive
+terraform init -backend=false
+terraform validate
 
-# Test migration path
-terraform init -upgrade
-terraform plan
+# Validate affected examples or migration fixtures when present
+terraform -chdir=examples/[affected-example] init -backend=false
+terraform -chdir=examples/[affected-example] validate
 
-# Run comprehensive tests with retry logic
-cd test/
-go test -v -timeout 45m
+# Run repository hooks
+pre-commit run --all-files
 ```
+
+Live AWS integration checks are optional/manual only when explicitly needed; they are not required for the default PR validation path.
 
 ### Affected Examples Analysis
 Review which of the 16 examples are affected:
