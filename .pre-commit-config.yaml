@@ -1,7 +1,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
-# Global excludes for temporary and test files - comprehensive patterns
+# Global excludes for temporary formatting fixtures only
 exclude: '^.*test_formatting\.tf$|^test_.*\.tf$|.*_test\.tf$|.*test_formatting.*|^.*/test_formatting\.tf$'
 
 repos:
@@ -31,15 +31,15 @@ repos:
       - id: terraform_validate
         args:
           - --hook-config=--retry-once-with-cleanup=true  # Retry validation with cleanup
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*'
       - id: terraform_docs
         args:
           - --args=--config=.terraform-docs.yml  # Use config file for consistent documentation
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*'
       - id: terraform_tflint  # Added terraform linter
         args:
           - --args=--config=.tflint.hcl
-        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*|^test/fixtures/.*'
+        exclude: '^.*test_formatting\.tf$|.*test_formatting.*|^test_.*\.tf$|^examples/.*'
 # Temporarily disabled terraform_checkov due to missing checkov installation in CI
       # - id: terraform_checkov  # Added security scanner
       #   args:
@@ -52,7 +52,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: '.*/tests/.*'
+        exclude: '^test_.*\.md$|.*test_formatting.*'
   - repo: https://github.com/crate-ci/typos
     rev: v1.16.23
     hooks:
