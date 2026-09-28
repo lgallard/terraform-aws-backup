@@ -1,7 +1,7 @@
 # AWS Backup Global Settings Example
 #
-# This example demonstrates how to configure AWS Backup global settings
-# for centralized cross-account backup governance.
+# This example demonstrates how to configure all supported AWS Backup global
+# settings to avoid provider drift and enable centralized governance features.
 
 # AWS Backup with Global Settings
 module "aws_backup_global_settings" {
@@ -10,9 +10,13 @@ module "aws_backup_global_settings" {
   # Enable global settings management
   enable_global_settings = true
 
-  # Configure global settings for cross-account backup governance
+  # Configure all currently supported global settings explicitly.
+  # The AWS provider warns that omitted supported settings can cause perpetual
+  # diffs, so include false defaults for settings you do not enable.
   global_settings = {
-    "isCrossAccountBackupEnabled" = tostring(var.enable_cross_account_backup)
+    "isCrossAccountBackupEnabled"     = tostring(var.enable_cross_account_backup)
+    "isMpaEnabled"                    = tostring(var.enable_mpa)
+    "isDelegatedAdministratorEnabled" = tostring(var.enable_delegated_administrator)
   }
 
   # Basic vault configuration

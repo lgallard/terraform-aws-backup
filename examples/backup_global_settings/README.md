@@ -1,11 +1,13 @@
 # AWS Backup Global Settings Example
 
-This example demonstrates how to configure AWS Backup global settings for centralized cross-account backup governance.
+This example demonstrates how to configure AWS Backup global settings for centralized cross-account backup governance while explicitly setting all currently supported options to avoid provider drift.
 
 ## Features Demonstrated
 
 - **Global Settings Management**: Enable and configure AWS Backup global settings
 - **Cross-Account Backup**: Enable centralized backup governance across multiple AWS accounts
+- **Multi-Party Authorization Default**: Explicitly disable AWS Backup MPA unless you opt in
+- **Delegated Administrator Default**: Explicitly disable delegated administrator integration unless you opt in
 - **Enterprise Governance**: Account-level settings for backup operations
 - **Backup Configuration**: Basic vault, plan, and selection setup with global settings
 
@@ -14,7 +16,9 @@ This example demonstrates how to configure AWS Backup global settings for centra
 ```
 AWS Account (Management/Central)
 ├── Global Settings (Account-level)
-│   └── isCrossAccountBackupEnabled: true
+│   ├── isCrossAccountBackupEnabled: true
+│   ├── isMpaEnabled: false
+│   └── isDelegatedAdministratorEnabled: false
 ├── Backup Vault
 ├── Backup Plan
 └── Resource Selections
@@ -66,6 +70,8 @@ Created by the module:
 | <a name="input_backup_retention_days"></a> [backup\_retention\_days](#input\_backup\_retention\_days) | Number of days to retain backups | `number` | `30` | no |
 | <a name="input_backup_schedule"></a> [backup\_schedule](#input\_backup\_schedule) | Cron expression for backup schedule | `string` | `"cron(0 2 * * ? *)"` | no |
 | <a name="input_enable_cross_account_backup"></a> [enable\_cross\_account\_backup](#input\_enable\_cross\_account\_backup) | Enable cross-account backup functionality | `bool` | `true` | no |
+| <a name="input_enable_delegated_administrator"></a> [enable\_delegated\_administrator](#input\_enable\_delegated\_administrator) | Enable AWS Backup delegated administrator integration | `bool` | `false` | no |
+| <a name="input_enable_mpa"></a> [enable\_mpa](#input\_enable\_mpa) | Enable AWS Backup Multi-Party Authorization (MPA) | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A mapping of tags to assign to resources | `map(string)` | `{"BackupGovernance": "centralized", "Environment": "production", "Owner": "backup-team", "Terraform": true}` | no |
 | <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create | `string` | `"centralized-backup-vault"` | no |
 
@@ -74,13 +80,21 @@ Created by the module:
 | Name | Description |
 |------|-------------|
 | <a name="output_cross_account_backup_enabled"></a> [cross\_account\_backup\_enabled](#output\_cross\_account\_backup\_enabled) | Whether cross-account backup is enabled |
+| <a name="output_delegated_administrator_enabled"></a> [delegated\_administrator\_enabled](#output\_delegated\_administrator\_enabled) | Whether delegated administrator integration is enabled |
 | <a name="output_global_settings"></a> [global\_settings](#output\_global\_settings) | Configured global settings |
 | <a name="output_global_settings_id"></a> [global\_settings\_id](#output\_global\_settings\_id) | AWS Account ID where global settings are applied |
 | <a name="output_global_settings_summary"></a> [global\_settings\_summary](#output\_global\_settings\_summary) | Summary of global settings configuration |
+| <a name="output_mpa_enabled"></a> [mpa\_enabled](#output\_mpa\_enabled) | Whether Multi-Party Authorization (MPA) is enabled |
 | <a name="output_plan_arn"></a> [plan\_arn](#output\_plan\_arn) | ARN of the backup plan |
 | <a name="output_vault_arn"></a> [vault\_arn](#output\_vault\_arn) | ARN of the backup vault |
 
 ## Global Settings Configuration
+
+The AWS provider warns that `aws_backup_global_settings` can show perpetual differences for supported settings that are not explicitly configured. This example sets all currently documented settings:
+
+- `isCrossAccountBackupEnabled`
+- `isMpaEnabled`
+- `isDelegatedAdministratorEnabled`
 
 ### Cross-Account Backup Enablement
 

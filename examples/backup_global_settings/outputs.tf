@@ -14,6 +14,16 @@ output "cross_account_backup_enabled" {
   value       = module.aws_backup_global_settings.cross_account_backup_enabled
 }
 
+output "mpa_enabled" {
+  description = "Whether Multi-Party Authorization (MPA) is enabled"
+  value       = module.aws_backup_global_settings.mpa_enabled
+}
+
+output "delegated_administrator_enabled" {
+  description = "Whether delegated administrator integration is enabled"
+  value       = module.aws_backup_global_settings.delegated_administrator_enabled
+}
+
 output "global_settings_summary" {
   description = "Summary of global settings configuration"
   value       = module.aws_backup_global_settings.global_settings_summary

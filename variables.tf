@@ -899,10 +899,12 @@ variable "enable_global_settings" {
 }
 
 variable "global_settings" {
-  description = "Global settings for AWS Backup. Currently supports isCrossAccountBackupEnabled for centralized cross-account backup governance."
+  description = "Global settings for AWS Backup. Explicitly configure all currently supported settings to avoid provider drift: isCrossAccountBackupEnabled, isMpaEnabled, and isDelegatedAdministratorEnabled."
   type        = map(string)
   default = {
-    "isCrossAccountBackupEnabled" = "false"
+    "isCrossAccountBackupEnabled"     = "false"
+    "isMpaEnabled"                    = "false"
+    "isDelegatedAdministratorEnabled" = "false"
   }
 
   validation {
@@ -911,10 +913,20 @@ variable "global_settings" {
   }
 
   validation {
+    condition     = can(var.global_settings["isMpaEnabled"]) ? contains(["true", "false"], var.global_settings["isMpaEnabled"]) : true
+    error_message = "isMpaEnabled must be either 'true' or 'false' as a string (not boolean). This setting controls Multi-Party Authorization (MPA) for supported AWS Backup operations."
+  }
+
+  validation {
+    condition     = can(var.global_settings["isDelegatedAdministratorEnabled"]) ? contains(["true", "false"], var.global_settings["isDelegatedAdministratorEnabled"]) : true
+    error_message = "isDelegatedAdministratorEnabled must be either 'true' or 'false' as a string (not boolean). This setting controls delegated administrator integration for AWS Backup."
+  }
+
+  validation {
     condition = alltrue([
       for key, value in var.global_settings : can(regex("^[a-zA-Z][a-zA-Z0-9]*$", key))
     ])
-    error_message = "Global setting keys must start with a letter and contain only alphanumeric characters. Currently supported: 'isCrossAccountBackupEnabled'."
+    error_message = "Global setting keys must start with a letter and contain only alphanumeric characters. Currently supported: 'isCrossAccountBackupEnabled', 'isMpaEnabled', and 'isDelegatedAdministratorEnabled'."
   }
 
   validation {
