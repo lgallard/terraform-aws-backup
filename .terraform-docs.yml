@@ -40,6 +40,10 @@ content: |-
 
   Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
+  ## Upgrade notes
+
+  When upgrading from versions that only defaulted `global_settings` to `isCrossAccountBackupEnabled`, enabling `enable_global_settings` with the module default now explicitly manages all currently documented AWS Backup global settings. If `isMpaEnabled` or `isDelegatedAdministratorEnabled` were previously enabled outside Terraform, the next apply can set them to the module default of `"false"`. Set those keys explicitly in `global_settings` before upgrading if you need to preserve existing Multi-Party Authorization (MPA) or delegated administrator settings.
+
   ### Simple plan
 
   See [examples/simple_plan/main.tf](examples/simple_plan/main.tf) for a basic backup plan configuration.

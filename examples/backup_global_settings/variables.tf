@@ -12,6 +12,18 @@ variable "enable_cross_account_backup" {
   default     = true
 }
 
+variable "enable_mpa" {
+  description = "Enable AWS Backup Multi-Party Authorization (MPA)"
+  type        = bool
+  default     = false
+}
+
+variable "enable_delegated_administrator" {
+  description = "Enable AWS Backup delegated administrator integration"
+  type        = bool
+  default     = false
+}
+
 variable "backup_schedule" {
   description = "Cron expression for backup schedule"
   type        = string

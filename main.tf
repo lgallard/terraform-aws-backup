@@ -290,7 +290,7 @@ resource "aws_backup_global_settings" "ab_global_settings" {
   lifecycle {
     precondition {
       condition     = var.enable_global_settings ? length(var.global_settings) > 0 : true
-      error_message = "When enable_global_settings is true, global_settings map cannot be empty. At minimum, specify isCrossAccountBackupEnabled."
+      error_message = "When enable_global_settings is true, global_settings map cannot be empty. At minimum, specify supported AWS Backup global settings such as isCrossAccountBackupEnabled, isMpaEnabled, and isDelegatedAdministratorEnabled."
     }
   }
 }

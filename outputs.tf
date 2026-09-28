@@ -276,21 +276,35 @@ output "cross_account_backup_enabled" {
   value       = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], null) == "true"
 }
 
+output "mpa_enabled" {
+  description = "Whether Multi-Party Authorization (MPA) is enabled for supported AWS Backup operations"
+  value       = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isMpaEnabled"], null) == "true"
+}
+
+output "delegated_administrator_enabled" {
+  description = "Whether delegated administrator integration is enabled for AWS Backup"
+  value       = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isDelegatedAdministratorEnabled"], null) == "true"
+}
+
 #
 # Global Settings Summary
 #
 output "global_settings_summary" {
   description = "Summary of global settings configuration and governance capabilities"
   value = var.enable_global_settings ? {
-    enabled                      = true
-    cross_account_backup_enabled = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
-    account_id                   = try(aws_backup_global_settings.ab_global_settings[0].id, null)
-    configured_settings          = var.global_settings
+    enabled                         = true
+    cross_account_backup_enabled    = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
+    mpa_enabled                     = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isMpaEnabled"], "false") == "true"
+    delegated_administrator_enabled = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isDelegatedAdministratorEnabled"], "false") == "true"
+    account_id                      = try(aws_backup_global_settings.ab_global_settings[0].id, null)
+    configured_settings             = var.global_settings
 
     # Governance and compliance information
     governance_impact = {
-      "cross_account_backup" = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true" ? "Enabled - centralized backup governance active" : "Disabled - account-level backup management"
-      "enterprise_ready"     = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
+      "cross_account_backup"      = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true" ? "Enabled - centralized backup governance active" : "Disabled - account-level backup management"
+      "multi_party_authorization" = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isMpaEnabled"], "false") == "true" ? "Enabled - Multi-Party Authorization active" : "Disabled - standard authorization flow"
+      "delegated_administrator"   = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isDelegatedAdministratorEnabled"], "false") == "true" ? "Enabled - delegated administrator integration active" : "Disabled - no delegated administrator integration"
+      "enterprise_ready"          = try(aws_backup_global_settings.ab_global_settings[0].global_settings["isCrossAccountBackupEnabled"], "false") == "true"
     }
 
     # Next steps and recommendations

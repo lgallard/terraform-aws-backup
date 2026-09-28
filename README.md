@@ -87,6 +87,10 @@ You can use this module to create a simple plan using the module's `rule_*` vari
 
 Check the [examples](/examples/) folder where you can see how to configure backup plans with different selection criteria.
 
+## Upgrade notes
+
+When upgrading from versions that only defaulted `global_settings` to `isCrossAccountBackupEnabled`, enabling `enable_global_settings` with the module default now explicitly manages all currently documented AWS Backup global settings. If `isMpaEnabled` or `isDelegatedAdministratorEnabled` were previously enabled outside Terraform, the next apply can set them to the module default of `"false"`. Set those keys explicitly in `global_settings` before upgrading if you need to preserve existing Multi-Party Authorization (MPA) or delegated administrator settings.
+
 ### Simple plan
 
 See [examples/simple_plan/main.tf](examples/simple_plan/main.tf) for a basic backup plan configuration.
@@ -128,9 +132,9 @@ See [examples/simple_audit_framework/main.tf](examples/simple_audit_framework/ma
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.66.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.3.2 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.9.1 |
 
 ## Modules
 
@@ -195,7 +199,7 @@ No modules.
 | <a name="input_enable_strict_region_validation"></a> [enable\_strict\_region\_validation](#input\_enable\_strict\_region\_validation) | Enable strict validation that region settings apply to the expected region. Requires expected\_region to be set. When enabled, Terraform will fail if the provider region doesn't match expected\_region, preventing accidental misconfiguration in multi-region setups. | `bool` | `false` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Change to false to avoid deploying any AWS Backup resources | `bool` | `true` | no |
 | <a name="input_expected_region"></a> [expected\_region](#input\_expected\_region) | Expected AWS region for region settings deployment. Used with enable\_strict\_region\_validation to prevent applying settings to the wrong region in multi-provider configurations. If null, no region validation is performed. | `string` | `null` | no |
-| <a name="input_global_settings"></a> [global\_settings](#input\_global\_settings) | Global settings for AWS Backup. Currently supports isCrossAccountBackupEnabled for centralized cross-account backup governance. | `map(string)` | <pre>{<br/>  "isCrossAccountBackupEnabled": "false"<br/>}</pre> | no |
+| <a name="input_global_settings"></a> [global\_settings](#input\_global\_settings) | Global settings for AWS Backup. Explicitly configure all currently supported settings to avoid provider drift: isCrossAccountBackupEnabled, isMpaEnabled, and isDelegatedAdministratorEnabled. | `map(string)` | <pre>{<br/>  "isCrossAccountBackupEnabled": "false",<br/>  "isDelegatedAdministratorEnabled": "false",<br/>  "isMpaEnabled": "false"<br/>}</pre> | no |
 | <a name="input_iam_role_arn"></a> [iam\_role\_arn](#input\_iam\_role\_arn) | If configured, the module will attach this role to selections, instead of creating IAM resources by itself | `string` | `null` | no |
 | <a name="input_iam_role_name"></a> [iam\_role\_name](#input\_iam\_role\_name) | Allow to set IAM role name, otherwise use predefined default | `string` | `""` | no |
 | <a name="input_locked"></a> [locked](#input\_locked) | Change to true to add a lock configuration for the backup vault | `bool` | `false` | no |
@@ -248,6 +252,7 @@ No modules.
 | <a name="output_airgapped_vault_id"></a> [airgapped\_vault\_id](#output\_airgapped\_vault\_id) | The name of the air gapped vault |
 | <a name="output_configuration_health_check"></a> [configuration\_health\_check](#output\_configuration\_health\_check) | Configuration health check and validation status for region settings |
 | <a name="output_cross_account_backup_enabled"></a> [cross\_account\_backup\_enabled](#output\_cross\_account\_backup\_enabled) | Whether cross-account backup is enabled for centralized governance |
+| <a name="output_delegated_administrator_enabled"></a> [delegated\_administrator\_enabled](#output\_delegated\_administrator\_enabled) | Whether delegated administrator integration is enabled for AWS Backup |
 | <a name="output_framework_arn"></a> [framework\_arn](#output\_framework\_arn) | The ARN of the backup framework |
 | <a name="output_framework_creation_time"></a> [framework\_creation\_time](#output\_framework\_creation\_time) | The date and time that the backup framework was created |
 | <a name="output_framework_id"></a> [framework\_id](#output\_framework\_id) | The unique identifier of the backup framework |
@@ -255,6 +260,7 @@ No modules.
 | <a name="output_global_settings"></a> [global\_settings](#output\_global\_settings) | AWS Backup global settings configuration |
 | <a name="output_global_settings_id"></a> [global\_settings\_id](#output\_global\_settings\_id) | AWS Account ID where global settings are applied |
 | <a name="output_global_settings_summary"></a> [global\_settings\_summary](#output\_global\_settings\_summary) | Summary of global settings configuration and governance capabilities |
+| <a name="output_mpa_enabled"></a> [mpa\_enabled](#output\_mpa\_enabled) | Whether Multi-Party Authorization (MPA) is enabled for supported AWS Backup operations |
 | <a name="output_plan_arn"></a> [plan\_arn](#output\_plan\_arn) | The ARN of the backup plan |
 | <a name="output_plan_id"></a> [plan\_id](#output\_plan\_id) | The id of the backup plan |
 | <a name="output_plan_role"></a> [plan\_role](#output\_plan\_role) | The service role of the backup plan |
