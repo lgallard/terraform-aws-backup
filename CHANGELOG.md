@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.10.3](https://github.com/lgallard/terraform-aws-backup/compare/1.10.2...1.10.3) (2026-10-12)
+
+
+### Bug Fixes
+
+* allow 100-year backup vault lock retention ([#374](https://github.com/lgallard/terraform-aws-backup/issues/374)) ([c07b025](https://github.com/lgallard/terraform-aws-backup/commit/c07b025e14988e11a4f39340084d4ee66f09a49f))
+
 ## [1.10.2](https://github.com/lgallard/terraform-aws-backup/compare/1.10.1...1.10.2) (2026-09-07)
 
 
