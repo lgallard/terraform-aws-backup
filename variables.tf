@@ -104,8 +104,8 @@ variable "max_retention_days" {
   default     = null
 
   validation {
-    condition     = var.max_retention_days == null ? true : (var.max_retention_days >= 1 && var.max_retention_days <= 2555)
-    error_message = "The max_retention_days must be between 1 and 2555 days (7 years maximum for compliance)."
+    condition     = var.max_retention_days == null ? true : (var.max_retention_days >= 1 && var.max_retention_days <= 36500)
+    error_message = "The max_retention_days must be between 1 and 36500 days (approximately 100 years maximum)."
   }
 
 
@@ -117,8 +117,8 @@ variable "min_retention_days" {
   default     = null
 
   validation {
-    condition     = var.min_retention_days == null ? true : (var.min_retention_days >= 7 && var.min_retention_days <= 2555)
-    error_message = "The min_retention_days must be between 7 and 2555 days (minimum 7 days for compliance requirements)."
+    condition     = var.min_retention_days == null ? true : (var.min_retention_days >= 7 && var.min_retention_days <= 36500)
+    error_message = "The min_retention_days must be between 7 and 36500 days (approximately 100 years maximum)."
   }
 
 }

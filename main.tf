@@ -134,6 +134,12 @@ resource "aws_backup_logically_air_gapped_vault" "ab_airgapped_vault" {
   max_retention_days = var.max_retention_days
   tags               = var.tags
 
+  lifecycle {
+    precondition {
+      condition     = local.airgapped_vault_requirements_met && local.retention_days_cross_valid
+      error_message = "When vault_type is 'logically_air_gapped', min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
+    }
+  }
 }
 
 # AWS Backup vault lock configuration

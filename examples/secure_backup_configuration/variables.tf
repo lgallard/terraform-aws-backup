@@ -51,8 +51,8 @@ variable "min_retention_days" {
   default     = 30
 
   validation {
-    condition     = var.min_retention_days >= 7
-    error_message = "Minimum retention days must be at least 7 for compliance."
+    condition     = var.min_retention_days >= 7 && var.min_retention_days <= 36500
+    error_message = "Minimum retention days must be between 7 and 36500 days (approximately 100 years)."
   }
 }
 
@@ -62,8 +62,8 @@ variable "max_retention_days" {
   default     = 2555 # 7 years
 
   validation {
-    condition     = var.max_retention_days <= 2555
-    error_message = "Maximum retention days cannot exceed 2555 (7 years)."
+    condition     = var.max_retention_days >= 7 && var.max_retention_days <= 36500
+    error_message = "Maximum retention days must be between 7 and 36500 days (approximately 100 years)."
   }
 }
 
