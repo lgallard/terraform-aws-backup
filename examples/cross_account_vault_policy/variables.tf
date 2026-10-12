@@ -62,8 +62,8 @@ variable "min_retention_days" {
   default     = 30
 
   validation {
-    condition     = var.min_retention_days >= 7 && var.min_retention_days <= 2555
-    error_message = "The min_retention_days must be between 7 and 2555 days."
+    condition     = var.min_retention_days >= 7 && var.min_retention_days <= 36500
+    error_message = "The min_retention_days must be between 7 and 36500 days."
   }
 }
 
@@ -73,8 +73,8 @@ variable "max_retention_days" {
   default     = 365
 
   validation {
-    condition     = var.max_retention_days >= 7 && var.max_retention_days <= 2555
-    error_message = "The max_retention_days must be between 7 and 2555 days."
+    condition     = var.max_retention_days >= 7 && var.max_retention_days <= 36500
+    error_message = "The max_retention_days must be between 7 and 36500 days."
   }
 }
 
